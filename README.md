@@ -31,7 +31,7 @@ cd govd
 sh build.sh
 ```
 
-## Installation with Docker
+## installation with Docker
 first build the image using the dockerfile
 
 ```bash
@@ -43,7 +43,7 @@ then edit the .env file and match the DB properties with the MariaDB service env
 ```bash
 docker compose up -d
 ```
-=======
+
 ## env variables
 
 | variable              | description                                      | default                      |
