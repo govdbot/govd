@@ -13,6 +13,11 @@ RUN apk update && \
 
 WORKDIR /app
 
+<<<<<<< HEAD
+=======
+RUN mkdir downloads
+
+>>>>>>> c715f6a (Fix for download env)
 COPY . .
 
 RUN chmod +x build.sh

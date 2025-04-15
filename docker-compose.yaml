@@ -22,4 +22,8 @@ services:
 
 networks:
   govd-network:
+<<<<<<< HEAD
     driver: bridge
+=======
+    driver: bridge 
+>>>>>>> c715f6a (Fix for download env)
