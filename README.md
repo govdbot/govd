@@ -22,11 +22,6 @@ this project was born after the discontinuation of a highly popular bot known as
 - pkg-config
 - mysql db
 
-
-## botapi
-
-to avoid limits on files, you should host your own telegram botapi. public bot instance is currently running under a botapi fork, [tdlight-telegram-bot-api](https://github.com/tdlight-team/tdlight-telegram-bot-api)
-
 ## installation
 
 ```bash
@@ -48,6 +43,28 @@ then edit the .env file and match the DB properties with the MariaDB service env
 ```bash
 docker compose up -d
 ```
+=======
+## env variables
+
+| variable              | description                                      | default                      |
+|-----------------------|--------------------------------------------------|----------------------------------------|
+| `DB_HOST`             | database host                                    | `localhost`                            |
+| `DB_PORT`             | database port                                    | `3306`                                 |
+| `DB_NAME`             | database name                                    | `govd`                                 |
+| `DB_USER`             | database user                                    | `govd`                                 |
+| `DB_PASSWORD`         | database password                                | `password`                             |
+| `BOT_API_URL`*         | telegram bot api url                             | `https://api.telegram.org`             |
+| `BOT_TOKEN`           | telegram bot token                               | `12345678:ABC-DEF1234ghIkl-zyx57W2P0s` |
+| `CONCURRENT_UPDATES`  | max concurrent updates handled by the bot        | `50`                                   |
+| `LOG_DISPATCHER_ERRORS` | log dispatcher errors        | `0`                                    |
+| `DOWNLOADS_DIR`       | directory for downloaded files                   | `downloads`                            |
+| `HTTP_PROXY`          | http proxy (optional)                            |                                        |
+| `HTTPS_PROXY`         | http proxy (optional)                           |                                        |
+| `NO_PROXY`            | no proxy domains (optional)                      |                                        |
+| `REPO_URL`            | project repository url                           | `https://github.com/govdbot/govd`      |
+
+**note:**
+to avoid limits on files, you should host your own telegram botapi. public bot instance is currently running under a botapi fork, [tdlight-telegram-bot-api](https://github.com/tdlight-team/tdlight-telegram-bot-api), but you can use the official botapi client too.
 
 ## cookies
 
@@ -64,3 +81,4 @@ some extractors require cookies for download. to add your cookies, just insert a
 - [ ] add support for telegram wehbhooks
 - [ ] switch to pgsql (?)
 - [ ] better API (?)
+- [ ] better docs with multiple README

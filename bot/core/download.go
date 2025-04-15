@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 	"sync"
@@ -30,6 +31,18 @@ func downloadMediaItem(
 	fileName := format.GetFileName()
 	var filePath string
 	var thumbnailFilePath string
+
+	cleanup := true
+	defer func() {
+		if cleanup {
+			if filePath != "" {
+				os.Remove(filePath)
+			}
+			if thumbnailFilePath != "" {
+				os.Remove(thumbnailFilePath)
+			}
+		}
+	}()
 
 	if format.Type != enums.MediaTypePhoto {
 		if len(format.Segments) == 0 {
@@ -77,6 +90,8 @@ func downloadMediaItem(
 		filePath = path
 	}
 
+	// all good, no need to delete files
+	cleanup = false
 	return &models.DownloadedMedia{
 		FilePath:          filePath,
 		ThumbnailFilePath: thumbnailFilePath,

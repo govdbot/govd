@@ -3,6 +3,8 @@ package bot
 import (
 	"log"
 	"os"
+	"runtime/debug"
+	"strconv"
 	"time"
 
 	botHandlers "govd/bot/handlers"
@@ -33,12 +35,30 @@ func Start() {
 	if err != nil {
 		log.Fatalf("failed to create bot: %v", err)
 	}
+	concurrentUpdates, err := strconv.Atoi(os.Getenv("CONCURRENT_UPDATES"))
+	if err != nil {
+		log.Println("failed to parse CONCURRENT_UPDATES env, using 50")
+		concurrentUpdates = 50
+	}
+	logDispatcherErrors, err := strconv.ParseBool(os.Getenv("LOG_DISPATCHER_ERRORS"))
+	if err != nil {
+		log.Println("failed to parse LOG_DISPATCHER_ERRORS env, using false")
+		logDispatcherErrors = false
+	}
 	dispatcher := ext.NewDispatcher(&ext.DispatcherOpts{
 		Error: func(b *gotgbot.Bot, ctx *ext.Context, err error) ext.DispatcherAction {
-			// log.Println("an error occurred while handling update:", err.Error())
+			if logDispatcherErrors {
+				log.Printf("an error occurred while handling update: %v", err)
+			}
 			return ext.DispatcherActionNoop
 		},
-		MaxRoutines: 500,
+		Panic: func(b *gotgbot.Bot, ctx *ext.Context, r interface{}) {
+			if logDispatcherErrors {
+				log.Printf("panic occurred while handling update: %v\n", r)
+				log.Printf("stack trace:\n%s\n", debug.Stack())
+			}
+		},
+		MaxRoutines: concurrentUpdates,
 	})
 	updater := ext.NewUpdater(dispatcher, nil)
 	registerHandlers(dispatcher)

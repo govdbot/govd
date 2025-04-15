@@ -21,11 +21,15 @@ import (
 )
 
 func DefaultConfig() *models.DownloadConfig {
+	downloadsDir := os.Getenv("DOWNLOADS_DIR")
+	if downloadsDir == "" {
+		downloadsDir = "downloads"
+	}
 	return &models.DownloadConfig{
 		ChunkSize:     10 * 1024 * 1024, // 10MB
 		Concurrency:   4,
 		Timeout:       30 * time.Second,
-		DownloadDir:   "downloads",
+		DownloadDir:   downloadsDir,
 		RetryAttempts: 3,
 		RetryDelay:    2 * time.Second,
 		Remux:         true,
