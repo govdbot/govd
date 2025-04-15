@@ -11,13 +11,10 @@ RUN apk update && \
     pkgconfig \
     build-base
 
-WORKDIR /app
+WORKDIR /bot
 
-<<<<<<< HEAD
-=======
 RUN mkdir downloads
 
->>>>>>> c715f6a (Fix for download env)
 COPY . .
 
 RUN chmod +x build.sh
