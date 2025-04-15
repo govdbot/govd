@@ -1,0 +1,25 @@
+services:
+  govd-bot:
+    image: govd-bot
+    restart: unless-stopped
+    networks:
+      - govd-network
+    env_file:
+      - .env
+    depends_on:
+      - db    
+
+  db:
+    image: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: govd
+      MYSQL_USER: govd
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: example
+    networks:
+      - govd-network
+
+networks:
+  govd-network:
+    driver: bridge

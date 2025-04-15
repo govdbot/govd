@@ -36,6 +36,19 @@ cd govd
 sh build.sh
 ```
 
+## Installation with Docker
+first build the image using the dockerfile
+
+```bash
+docker build -t govd-bot .
+```
+
+then edit the .env file and match the DB properties with the MariaDB service environment variables in the docker-compose.yml file and run
+
+```bash
+docker compose up -d
+```
+
 ## cookies
 
 some extractors require cookies for download. to add your cookies, just insert a txt file in cookies folder (netscape format)
