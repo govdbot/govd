@@ -39,6 +39,7 @@ docker build -t govd-bot .
 ```
 
 next, update the .env file to ensure the database properties match the environment variables defined for the MariaDB service in the docker-compose.yml file 
+(while the default environment variables defined for the MariaDB service are acceptable, it is recommended to change the `MYSQL_PASSWORD` property in the docker-compose.yaml file for enhanced security and ensure that you also modify the .env file to reflect this change in the `DB_PASSWORD` property)
 
 the following line in the .env file MUST be set as shown below
 
