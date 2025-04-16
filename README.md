@@ -38,7 +38,15 @@ first build the image using the dockerfile
 docker build -t govd-bot .
 ```
 
-then edit the .env file and match the DB properties with the MariaDB service environment variables in the docker-compose.yml file and run
+next, update the .env file to ensure the database properties match the environment variables defined for the MariaDB service in the docker-compose.yml file 
+
+the following line in the .env file MUST be set as shown below
+
+```env
+DB_HOST=db
+```
+
+finally run the compose to start all services
 
 ```bash
 docker compose up -d
