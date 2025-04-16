@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"govd/models"
@@ -261,9 +262,8 @@ func runChunkedDownload(
 	var downloadErr error
 	var errOnce sync.Once
 
-	var completedChunks int64
-	var completedBytes int64
-	var progressMutex sync.Mutex
+	var completedChunks atomic.Int64
+	var completedBytes atomic.Int64
 
 	downloadCtx, cancelDownload := context.WithCancel(ctx)
 	defer cancelDownload()
@@ -303,11 +303,9 @@ func runChunkedDownload(
 
 			// update progress
 			chunkSize := chunk[1] - chunk[0] + 1
-			progressMutex.Lock()
-			completedChunks++
-			completedBytes += int64(chunkSize)
-			progress := float64(completedBytes) / float64(fileSize)
-			progressMutex.Unlock()
+			completedChunks.Add(1)
+			completedBytes.Add(int64(chunkSize))
+			progress := float64(completedBytes.Load()) / float64(fileSize)
 
 			// report progress if handler exists
 			if config.ProgressUpdater != nil {
@@ -492,13 +490,12 @@ func downloadSegments(
 	var wg sync.WaitGroup
 
 	errChan := make(chan error, len(segmentURLs))
-	var errMutex sync.Mutex
 
-	var firstErr error
+	var firstErr atomic.Value
 
 	downloadedFiles := make([]string, len(segmentURLs))
 	defer func() {
-		if firstErr != nil {
+		if firstErr.Load() != nil {
 			for _, path := range downloadedFiles {
 				if path != "" {
 					os.Remove(path)
@@ -541,12 +538,10 @@ func downloadSegments(
 			})
 
 			if err != nil {
-				errMutex.Lock()
-				if firstErr == nil {
-					firstErr = fmt.Errorf("failed to download segment %d: %w", idx, err)
+				if firstErr.Load() == nil {
+					firstErr.Store(fmt.Errorf("failed to download segment %d: %w", idx, err))
 					cancelDownload() // Cancella tutte le altre download
 				}
-				errMutex.Unlock()
 				return
 			}
 
