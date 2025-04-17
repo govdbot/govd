@@ -1,15 +1,15 @@
 package reddit
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"regexp"
 
 	"govd/enums"
 	"govd/models"
 	"govd/util"
+
+	"github.com/bytedance/sonic"
 )
 
 var (
@@ -255,13 +255,9 @@ func GetRedditData(host string, slug string) (RedditResponse, error) {
 		return GetRedditData(altHost, slug)
 	}
 
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
 	var response RedditResponse
-	err = json.Unmarshal(body, &response)
+	decoder := sonic.ConfigFastest.NewDecoder(res.Body)
+	err = decoder.Decode(&response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}

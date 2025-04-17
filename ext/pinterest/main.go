@@ -1,9 +1,7 @@
 package pinterest
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"regexp"
 	"strings"
@@ -11,6 +9,8 @@ import (
 	"govd/enums"
 	"govd/models"
 	"govd/util"
+
+	"github.com/bytedance/sonic"
 )
 
 const (
@@ -185,13 +185,9 @@ func GetPinData(pinID string) (*PinData, error) {
 		return nil, fmt.Errorf("bad response: %s", resp.Status)
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
 	var pinResponse PinResponse
-	err = json.Unmarshal(body, &pinResponse)
+	decoder := sonic.ConfigFastest.NewDecoder(resp.Body)
+	err = decoder.Decode(&pinResponse)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}

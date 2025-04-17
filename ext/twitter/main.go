@@ -1,7 +1,6 @@
 package twitter
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +9,8 @@ import (
 	"govd/enums"
 	"govd/models"
 	"govd/util"
+
+	"github.com/bytedance/sonic"
 )
 
 const (
@@ -168,13 +169,9 @@ func GetTweetAPI(tweetID string) (*Tweet, error) {
 		return nil, fmt.Errorf("invalid response code: %s", resp.Status)
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read body: %w", err)
-	}
-
 	var apiResponse APIResponse
-	err = json.Unmarshal(body, &apiResponse)
+	decoder := sonic.ConfigFastest.NewDecoder(resp.Body)
+	err = decoder.Decode(&apiResponse)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}

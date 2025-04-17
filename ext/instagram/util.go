@@ -3,7 +3,6 @@ package instagram
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"govd/util"
 	"html"
@@ -14,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bytedance/sonic"
 )
 
 var captionPattern = regexp.MustCompile(
@@ -40,7 +41,7 @@ func BuildSignedPayload(contentURL string) (io.Reader, error) {
 		"_tsc": "0", // ?
 		"_s":   secretString,
 	}
-	parsedPayload, err := json.Marshal(payload)
+	parsedPayload, err := sonic.ConfigFastest.Marshal(payload)
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling payload: %w", err)
 	}
@@ -50,15 +51,20 @@ func BuildSignedPayload(contentURL string) (io.Reader, error) {
 
 func ParseIGramResponse(body []byte) (*IGramResponse, error) {
 	var rawResponse interface{}
-	if err := json.Unmarshal(body, &rawResponse); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+	//move to the start of the body
+	// Use sonic's decoder to unmarshal the raw response
+	if err := sonic.ConfigFastest.Unmarshal(body, &rawResponse); err != nil {
+		return nil, fmt.Errorf("failed to decode response1: %w", err)
 	}
+	
+	
+
 	switch rawResponse.(type) {
 	case []interface{}:
 		// array of IGramMedia
 		var media []*IGramMedia
-		if err := json.Unmarshal(body, &media); err != nil {
-			return nil, fmt.Errorf("failed to decode response: %w", err)
+		if err := sonic.ConfigFastest.Unmarshal(body, &media); err != nil {
+			return nil, fmt.Errorf("failed to decode response2: %w", err)
 		}
 		return &IGramResponse{
 			Items: media,
@@ -66,8 +72,8 @@ func ParseIGramResponse(body []byte) (*IGramResponse, error) {
 	case map[string]interface{}:
 		// single IGramMedia
 		var media IGramMedia
-		if err := json.Unmarshal(body, &media); err != nil {
-			return nil, fmt.Errorf("failed to decode response: %w", err)
+		if err := sonic.ConfigFastest.Unmarshal(body, &media); err != nil {
+			return nil, fmt.Errorf("failed to decode response3: %w", err)
 		}
 		return &IGramResponse{
 			Items: []*IGramMedia{&media},

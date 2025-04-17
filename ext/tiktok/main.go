@@ -1,15 +1,15 @@
 package tiktok
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"regexp"
 
 	"govd/enums"
 	"govd/models"
 	"govd/util"
+
+	"github.com/bytedance/sonic"
 )
 
 const (
@@ -166,13 +166,10 @@ func GetVideoAPI(awemeID string) (*AwemeDetails, error) {
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
 	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
 
 	var data *Response
-	err = json.Unmarshal(body, &data)
+	decoder := sonic.ConfigFastest.NewDecoder(resp.Body)
+	err = decoder.Decode(&data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}

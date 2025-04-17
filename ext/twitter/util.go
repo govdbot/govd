@@ -1,7 +1,6 @@
 package twitter
 
 import (
-	"encoding/json"
 	"fmt"
 	"govd/enums"
 	"govd/models"
@@ -10,6 +9,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/bytedance/sonic"
 )
 
 const authToken = "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
@@ -75,8 +76,8 @@ func BuildAPIQuery(tweetID string) map[string]string {
 		"vibe_api_enabled":                                                        true,
 	}
 
-	variablesJSON, _ := json.Marshal(variables)
-	featuresJSON, _ := json.Marshal(features)
+	variablesJSON, _ := sonic.ConfigFastest.Marshal(variables)
+	featuresJSON, _ := sonic.ConfigFastest.Marshal(features)
 
 	return map[string]string{
 		"variables": string(variablesJSON),

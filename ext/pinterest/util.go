@@ -1,11 +1,12 @@
 package pinterest
 
 import (
-	"encoding/json"
 	"fmt"
 	"govd/enums"
 	"govd/models"
 	"govd/util/parser"
+
+	"github.com/bytedance/sonic"
 )
 
 func ParseVideoObject(videoObj *Videos) ([]*models.MediaFormat, error) {
@@ -48,7 +49,7 @@ func BuildPinRequestParams(pinID string) map[string]string {
 		},
 	}
 
-	jsonData, _ := json.Marshal(options)
+	jsonData, _ := sonic.ConfigFastest.Marshal(options)
 	return map[string]string{
 		"data": string(jsonData),
 	}

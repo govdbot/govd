@@ -20,7 +20,7 @@ this project was born after the discontinuation of a highly popular bot known as
 - ffmpeg >= 6.1.1
 - libheif >= 1.19.7
 - pkg-config
-- mysql db
+- mysql or mariadb
 
 ## installation
 
@@ -84,10 +84,8 @@ some extractors require cookies for download. to add your cookies, just insert a
 ## todo
 
 - [ ] add more extractors
-- [ ] switch to sonic json parser
 - [ ] switch to native libav
 - [ ] add tests
-- [ ] add dockerfile and compose
 - [ ] improve error handling
 - [ ] add support for telegram wehbhooks
 - [ ] switch to pgsql (?)
