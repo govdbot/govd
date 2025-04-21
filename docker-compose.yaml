@@ -1,7 +1,7 @@
 services:
   govd-bot:
-    image: govd-bot-dev
-    container_name: govd-bot-dev
+    image: govd-bot
+    container_name: govd-bot
     restart: unless-stopped
     networks:
       - govd-network
