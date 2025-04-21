@@ -46,8 +46,6 @@ _this method only works on linux and macos, if you want to build the bot on wind
     ```
 
 ## docker (recommended)
-> [!WARNING]  
-> this method is currently not working due to a wrong version of the libav (ffmpeg) library in the docker image. feel free to open a PR if you can fix it.
 
 1. build the image using the dockerfile:
 
