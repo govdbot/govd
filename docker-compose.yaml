@@ -1,22 +1,24 @@
 services:
   govd-bot:
-    image: govd-bot
+    image: govd-bot-dev
+    container_name: govd-bot-dev
     restart: unless-stopped
     networks:
       - govd-network
     env_file:
       - .env
     depends_on:
-      - db    
+      - db   
 
   db:
-    image: mysql
+    image: mariadb:latest
+    container_name: mariadb
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: govd
-      MYSQL_USER: govd
-      MYSQL_PASSWORD: password
-      MYSQL_ROOT_PASSWORD: example
+      MARIADB_DATABASE: govd
+      MARIADB_USER: govd
+      MARIADB_PASSWORD: password
+      MARIADB_ROOT_PASSWORD: example
     networks:
       - govd-network
 
