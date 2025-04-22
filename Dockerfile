@@ -1,6 +1,8 @@
 FROM golang:bookworm
 
-# Install dependencies
+ARG FFMPEG_VERSION=7.1
+ARG LIBHEIF_VERSION=1.19.7
+
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
@@ -12,44 +14,50 @@ RUN apt-get update && \
     wget \
     xz-utils \
     gcc \
-    cmake \
-    libjpeg-dev \
-    libpng-dev \
-    libtiff-dev \
-    libgif-dev \
-    libde265-dev \
-    libaom-dev \
-    libx264-dev \
-    libx265-dev && \
+    cmake \ 
+    libde265-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* 
 
-# download, build and install libheif-1.19.7
-RUN wget https://github.com/strukturag/libheif/releases/download/v1.19.7/libheif-1.19.7.tar.gz && \
-    tar -xzvf libheif-1.19.7.tar.gz && \
-    cd libheif-1.19.7 && \
+# libheif
+ENV LIBHEIF_BUILD="https://github.com/strukturag/libheif/releases/download/v${LIBHEIF_VERSION}/libheif-${LIBHEIF_VERSION}.tar.gz"
+RUN wget -O libheif.tar.gz ${LIBHEIF_BUILD} && \
+    mkdir -p libheif && \
+    tar -xzvf libheif.tar.gz -C libheif --strip-components=1 && \
+    rm libheif.tar.gz && \
+    cd libheif && \
     mkdir build && \
     cd build && \
-    cmake .. && \
+    cmake --preset=release .. && \
     make && \
     make install
 
-# create directories for ffmpeg
-RUN mkdir -p /usr/local/bin /usr/local/lib/pkgconfig/ /usr/local/lib/ /usr/local/include
+# ffmpeg
+RUN mkdir -p \
+    /usr/local/bin \
+    /usr/local/lib/pkgconfig/ \
+    /usr/local/lib/ \
+    /usr/local/include
 
-# download and extract FFmpeg 7.0
-RUN wget -O ffmpeg.tar.xz https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-04-30-12-51/ffmpeg-N-115029-g08781ebe1a-linux64-gpl-shared.tar.xz
-    
-RUN tar -xf ffmpeg.tar.xz
-
-RUN rm ffmpeg.tar.xz && \
-    cp -rv ffmpeg-N-115029-g08781ebe1a-linux64-gpl-shared/bin/* /usr/local/bin/ && \
-    cp -rv ffmpeg-N-115029-g08781ebe1a-linux64-gpl-shared/lib/* /usr/local/lib/ && \
-    cp -rv ffmpeg-N-115029-g08781ebe1a-linux64-gpl-shared/include/* /usr/local/include/ && \
-    cp -rv ffmpeg-N-115029-g08781ebe1a-linux64-gpl-shared/lib/pkgconfig/* /usr/local/lib/pkgconfig/ && \
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then \
+        echo "detected ARM architecture" && \
+        export FFMPEG_BUILD="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n${FFMPEG_VERSION}-latest-linuxarm64-gpl-shared-${FFMPEG_VERSION}.tar.xz"; \
+    else \
+        echo "detected x86_64 architecture" && \
+        export FFMPEG_BUILD="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n${FFMPEG_VERSION}-latest-linux64-gpl-shared-${FFMPEG_VERSION}.tar.xz"; \
+    fi && \
+    wget -O ffmpeg.tar.xz ${FFMPEG_BUILD} && \
+    mkdir -p ffmpeg && \
+    tar -xf ffmpeg.tar.xz -C ffmpeg --strip-components=1 && \
+    rm ffmpeg.tar.xz && \
+    cp -rv ffmpeg/bin/* /usr/local/bin/ && \
+    cp -rv ffmpeg/lib/* /usr/local/lib/ && \
+    cp -rv ffmpeg/include/* /usr/local/include/ && \
+    cp -rv ffmpeg/lib/pkgconfig/* /usr/local/lib/pkgconfig/ && \
     ldconfig /usr/local
 
-# set env for building
+# env for building
 ENV CGO_CFLAGS="-I/usr/local/include"
 ENV CGO_LDFLAGS="-L/usr/local/lib"  
 ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
