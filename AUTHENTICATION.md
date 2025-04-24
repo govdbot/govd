@@ -1,5 +1,5 @@
 # authentication
-some extractors require cookies to access the content. you can export them from your browser in netscape format and place the file in `cookies` folder (e.g. `cookies/reddit.txt`). you can easily export cookies using _Get cookies.txt LOCALLY_ extension for your browser ([chrome](https://chrome.google.com/webstore/detail/get-cookies-txt-locally/nhdogjmejiglipccpnnnanhbledajbpd) - [firefox](https://addons.mozilla.org/en-US/firefox/addon/get-cookies-txt-locally/)).
+some extractors require cookies to access the content. you can export them from your browser in netscape format and place the file in `cookies` folder (e.g. `cookies/reddit.txt`). you can easily export cookies using _Get cookies.txt LOCALLY_ extension for your browser ([chrome](https://chromewebstore.google.com/detail/cclelndahbckbenkjhflpdbgdldlbecc?utm_source=item-share-cb) - [firefox](https://addons.mozilla.org/en-US/firefox/addon/get-cookies-txt-locally/)).
 
 extractors that **need** authentication:
 - reddit
