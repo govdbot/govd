@@ -107,13 +107,10 @@ func copyHeaders(source, destination http.Header) {
 }
 
 func parseProxyResponse(proxyResp *http.Response, originalReq *http.Request) (*http.Response, error) {
-	body, err := io.ReadAll(proxyResp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error reading proxy response: %w", err)
-	}
 
 	var response models.EdgeProxyResponse
-	if err := sonic.ConfigFastest.Unmarshal(body, &response); err != nil {
+	decoder := sonic.ConfigFastest.NewDecoder(proxyResp.Body)
+	if err := decoder.Decode(&response); err != nil {
 		return nil, fmt.Errorf("error parsing proxy response: %w", err)
 	}
 

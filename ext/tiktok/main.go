@@ -176,7 +176,7 @@ func GetVideoAPI(
 	decoder := sonic.ConfigFastest.NewDecoder(resp.Body)
 	err = decoder.Decode(&data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 	videoData, err := FindVideoData(data, awemeID)
 	if err != nil {

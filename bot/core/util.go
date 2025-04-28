@@ -103,11 +103,11 @@ func StoreMedias(
 	msgs []gotgbot.Message,
 	medias []*models.DownloadedMedia,
 ) error {
-	var storedMedias []*models.Media
-
 	if len(medias) == 0 {
 		return errors.New("no media to store")
 	}
+
+	storedMedias := make([]*models.Media, 0, len(medias))
 
 	for idx, msg := range msgs {
 		fileID := GetMessageFileID(&msg)

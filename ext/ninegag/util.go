@@ -36,7 +36,6 @@ func FindBestPhoto(
 func ParseVideoFormats(
 	images map[string]*Media,
 ) ([]*models.MediaFormat, error) {
-	var formats []*models.MediaFormat
 	var video *Media
 	var thumbnailURL string
 
@@ -63,6 +62,8 @@ func ParseVideoFormats(
 		"av1Url":  {"Av1URL", enums.MediaCodecAV1},
 	}
 
+	formats := make([]*models.MediaFormat, 0, len(codecMapping))
+	
 	for _, mapping := range codecMapping {
 		url := getField(video, mapping.Field)
 		if url == "" {

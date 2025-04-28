@@ -45,12 +45,12 @@ var ShortExtractor = &models.Extractor{
 		if err != nil {
 			return nil, fmt.Errorf("failed to read body: %w", err)
 		}
-		matchedURL := Extractor.URLPattern.FindStringSubmatch(string(body))
+		matchedURL := Extractor.URLPattern.FindSubmatch(body)
 		if matchedURL == nil {
 			return nil, errors.New("failed to find url in body")
 		}
 		return &models.ExtractorResponse{
-			URL: matchedURL[0],
+			URL: string(matchedURL[0]),
 		}, nil
 	},
 }
@@ -174,13 +174,9 @@ func GetTweetAPI(
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("invalid response code: %s", resp.Status)
 	}
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read body: %w", err)
-	}
 
 	var apiResponse APIResponse
-	err = sonic.ConfigFastest.Unmarshal(body, &apiResponse)
+	err = sonic.ConfigFastest.NewDecoder(resp.Body).Decode(&apiResponse)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}

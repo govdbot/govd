@@ -6,6 +6,7 @@
 main_test.go
 
 old/
+bin/
 
 .env
 ext-cfg.yaml

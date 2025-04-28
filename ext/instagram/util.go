@@ -1,6 +1,7 @@
 package instagram
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -137,14 +138,14 @@ func ParseGQLMedia(
 func ParseEmbedGQL(
 	body []byte,
 ) (*Media, error) {
-	match := embedPattern.FindStringSubmatch(string(body))
+	match := embedPattern.FindSubmatch(body)
 	if len(match) < 2 {
 		return nil, errors.New("failed to find JSON in response")
 	}
 	jsonData := match[1]
 
 	var data map[string]any
-	if err := json5.Unmarshal([]byte(jsonData), &data); err != nil {
+	if err := json5.Unmarshal(jsonData, &data); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
 	igCtx := util.TraverseJSON(data, "contextJSON")
@@ -193,39 +194,27 @@ func BuildIGramPayload(contentURL string) (io.Reader, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling payload: %w", err)
 	}
-	reader := strings.NewReader(string(parsedPayload))
+	reader := bytes.NewReader(parsedPayload)
 	return reader, nil
 }
 
 func ParseIGramResponse(body []byte) (*IGramResponse, error) {
-	var rawResponse any
+	// try to unmarshal as a single IGramMedia and then as a slice
+	var media IGramMedia
 
-	if err := sonic.ConfigFastest.Unmarshal(body, &rawResponse); err != nil {
-		return nil, fmt.Errorf("failed to decode response1: %w", err)
-	}
-
-	switch rawResponse.(type) {
-	case []any:
-		// array of IGramMedia
-		var media []*IGramMedia
-		if err := sonic.ConfigFastest.Unmarshal(body, &media); err != nil {
-			return nil, fmt.Errorf("failed to decode response2: %w", err)
+	if err := sonic.ConfigFastest.Unmarshal(body, &media); err != nil {
+		// try with slice
+		var mediaList []*IGramMedia
+		if err := sonic.ConfigFastest.Unmarshal(body, &mediaList); err != nil {
+			return nil, fmt.Errorf("failed to decode response: %w", err)
 		}
 		return &IGramResponse{
-			Items: media,
+			Items: mediaList,
 		}, nil
-	case map[string]any:
-		// single IGramMedia
-		var media IGramMedia
-		if err := sonic.ConfigFastest.Unmarshal(body, &media); err != nil {
-			return nil, fmt.Errorf("failed to decode response3: %w", err)
 		}
-		return &IGramResponse{
-			Items: []*IGramMedia{&media},
-		}, nil
-	default:
-		return nil, fmt.Errorf("unexpected response type: %T", rawResponse)
-	}
+	return &IGramResponse{
+		Items: []*IGramMedia{&media},
+	}, nil
 }
 
 func GetCDNURL(contentURL string) (string, error) {

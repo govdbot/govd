@@ -114,7 +114,7 @@ func HandleDefaultStoredFormatDownload(
 		storedMedias[0],
 		isCaptionEnabled,
 	)
-	var medias []*models.DownloadedMedia
+	medias := make([]*models.DownloadedMedia, 0, len(storedMedias))
 	for _, media := range storedMedias {
 		medias = append(medias, &models.DownloadedMedia{
 			FilePath:          "",

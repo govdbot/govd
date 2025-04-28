@@ -1,0 +1,19 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - bodyclose
+    - gocritic
+    - unconvert
+    - ineffassign
+    - staticcheck
+    - prealloc
+    - nilerr
+    - gosimple
+    - asasalint
+  disable:
+    - errcheck
+
+issues:
+  exclude-use-default: false

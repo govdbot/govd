@@ -246,7 +246,7 @@ func (media *Media) GetSortedFormats() []*MediaFormat {
 	}
 
 	// combine the best video and audio into a final list
-	var finalSortedList []*MediaFormat
+	finalSortedList := make([]*MediaFormat, 0, len(groupedVideos)+len(groupedAudios)+len(media.Formats))
 	for _, best := range groupedVideos {
 		finalSortedList = append(finalSortedList, best)
 	}

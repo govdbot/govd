@@ -137,12 +137,12 @@ func GetEmbedMediaList(
 }
 
 func GetIGramMediaList(ctx *models.DownloadContext) ([]*models.Media, error) {
-	var mediaList []*models.Media
 	postURL := ctx.MatchedContentURL
 	details, err := GetFromIGram(ctx, postURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get post: %w", err)
 	}
+	mediaList := make([]*models.Media, 0, len(details.Items))
 	for _, item := range details.Items {
 		media := ctx.Extractor.NewMedia(
 			ctx.MatchedContentID,

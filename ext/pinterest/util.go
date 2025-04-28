@@ -31,6 +31,7 @@ func ParseVideoObject(videoObj *Videos) ([]*models.MediaFormat, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to extract hls formats: %w", err)
 			}
+			formats = make([]*models.MediaFormat, 0, len(hlsFormats))
 			for _, hlsFormat := range hlsFormats {
 				hlsFormat.Duration = video.Duration / 1000
 				hlsFormat.Thumbnail = []string{video.Thumbnail}
