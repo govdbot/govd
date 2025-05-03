@@ -3,6 +3,20 @@ FROM golang:bookworm
 ARG FFMPEG_VERSION=7.1
 ARG LIBHEIF_VERSION=1.19.7
 
+WORKDIR /bot
+
+COPY . .
+
+# check if .env exists, if not abort the build
+RUN if [ ! -f .env ]; then \
+        echo ".env file is missing. Build aborted."; \
+        exit 1; \
+    fi
+
+RUN mkdir -p downloads
+
+WORKDIR /bot/packages
+
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
@@ -63,16 +77,6 @@ ENV CGO_LDFLAGS="-L/usr/local/lib"
 ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
 
 WORKDIR /bot
-
-COPY . .
-
-# check if .env exists, if not create it
-RUN if [ ! -f .env ]; then \
-        echo ".env file is missing. Creating an empty one..."; \
-        touch .env; \
-    fi
-
-RUN mkdir -p downloads
 
 #build
 RUN chmod +x build.sh

@@ -47,19 +47,19 @@ this project draws significant inspiration from [yt-dlp](https://github.com/yt-d
     ```
 
 ## docker (recommended)
-1. build the image using the dockerfile:
-
-    ```bash
-    docker build -t govd-bot .
-    ```
-
-2. update the `.env` file to ensure the database properties match the environment variables defined for the mariadb service in the `docker-compose.yml` file.  
+1. Create or update the `.env` file to ensure the database properties match the environment variables defined for the mariadb service in the `docker-compose.yml` file.  
    for enhanced security, it is recommended to change the `MARIADB_PASSWORD` property in `docker-compose.yaml` and ensure `DB_PASSWORD` in `.env` matches it.
 
     the following line in the `.env` file **must** be set as:
 
     ```
     DB_HOST=db
+    ``` 
+
+2. build the image using the dockerfile:
+
+    ```bash
+    docker build -t govd-bot .
     ```
 
 3. run the compose to start all services:
@@ -67,6 +67,13 @@ this project draws significant inspiration from [yt-dlp](https://github.com/yt-d
     ```bash
     docker compose up -d
     ```
+
+> [!NOTE]
+> if you update your .env file, you don't need to rebuild the image, you only need to restart the containers to apply the changes using 
+> ```bash
+>    docker compose restart
+>    ``` 
+
 
 # configuration
 you can configure the bot using the `.env` file. here are the available options:
