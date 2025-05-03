@@ -19,6 +19,20 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* 
 
+WORKDIR /bot
+
+COPY . .
+
+# check if .env exists, if not create it
+RUN if [ ! -f .env ]; then \
+        echo ".env file is missing. Creating an empty one..."; \
+        touch .env; \
+    fi
+
+RUN mkdir -p downloads
+
+WORKDIR /bot/packages
+
 # libheif
 ENV LIBHEIF_BUILD="https://github.com/strukturag/libheif/releases/download/v${LIBHEIF_VERSION}/libheif-${LIBHEIF_VERSION}.tar.gz"
 RUN wget -O libheif.tar.gz ${LIBHEIF_BUILD} && \
@@ -61,13 +75,10 @@ RUN ARCH=$(uname -m) && \
 ENV CGO_CFLAGS="-I/usr/local/include"
 ENV CGO_LDFLAGS="-L/usr/local/lib"  
 ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
-    
-WORKDIR /bot
 
-RUN mkdir -p downloads
+WORKDIR /bot 
 
-COPY . .
-
+#build
 RUN chmod +x build.sh
 
 RUN ./build.sh
