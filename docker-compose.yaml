@@ -8,8 +8,8 @@ services:
     env_file:
       - .env
     volumes:
-      - ./ext-cfg.yaml:/bot/ext-cfg.yaml
-      - ./cookies:/bot/cookies
+      - ./ext-cfg.yaml:/app/ext-cfg.yaml
+      - ./cookies:/app/cookies
     depends_on:
       - db
 
