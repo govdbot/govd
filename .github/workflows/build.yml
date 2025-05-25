@@ -46,6 +46,8 @@ jobs:
       - name: Build and push ${{ matrix.arch }} image
         uses: docker/build-push-action@v6
         with:
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           context: .
           platforms: ${{ matrix.platform }}
           push: true
