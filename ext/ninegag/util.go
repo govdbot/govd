@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"govd/enums"
-	"govd/models"
-
-	"github.com/pkg/errors"
+	"github.com/govdbot/govd/enums"
+	"github.com/govdbot/govd/models"
 )
 
 func FindBestPhoto(
@@ -27,7 +25,7 @@ func FindBestPhoto(
 	}
 
 	if bestPhoto == nil {
-		return nil, errors.New("no photo found in post")
+		return nil, ErrNoPhotoFound
 	}
 
 	return bestPhoto, nil
@@ -48,7 +46,7 @@ func ParseVideoFormats(
 		}
 	}
 	if video == nil {
-		return nil, errors.New("no video found in post")
+		return nil, ErrNoVideoFound
 	}
 
 	codecMapping := map[string]struct {
@@ -63,7 +61,7 @@ func ParseVideoFormats(
 	}
 
 	formats := make([]*models.MediaFormat, 0, len(codecMapping))
-	
+
 	for _, mapping := range codecMapping {
 		url := getField(video, mapping.Field)
 		if url == "" {

@@ -1,10 +1,10 @@
 package database
 
 import (
-	"govd/models"
+	"github.com/govdbot/govd/config"
+	"github.com/govdbot/govd/models"
 
 	"fmt"
-	"os"
 	"time"
 
 	"go.uber.org/zap"
@@ -19,33 +19,29 @@ func Start() {
 	DB = connect()
 	sqlDB, err := DB.DB()
 	if err != nil {
-		zap.L().Fatal("failed to get database connection", zap.Error(err))
+		zap.S().Fatalf("failed to get database connection: %v", err)
 	}
 	sqlDB.SetMaxIdleConns(20)
 	sqlDB.SetMaxOpenConns(50)
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 	err = sqlDB.Ping()
 	if err != nil {
-		zap.L().Fatal("failed to ping database", zap.Error(err))
+		zap.S().Fatalf("failed to ping database: %v", err)
 	}
 	err = migrateDatabase()
 	if err != nil {
-		zap.L().Fatal("failed to migrate database", zap.Error(err))
+		zap.S().Fatalf("failed to migrate database: %v", err)
 	}
 }
 
 func connect() *gorm.DB {
-	host := os.Getenv("DB_HOST")
-	port := os.Getenv("DB_PORT")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
-
 	connectionString := fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True",
-		user, password, host, port, dbname,
+		"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True",
+		config.Env.DBUser, config.Env.DBPassword,
+		config.Env.DBHost, config.Env.DBPort,
+		config.Env.DBName,
 	)
-	zap.L().Debug("connecting to database")
+	zap.S().Debug("connecting to database")
 
 	var conn *gorm.DB
 	var err error
@@ -65,22 +61,22 @@ func connect() *gorm.DB {
 			break
 		}
 		retryCount++
-		zap.L().Warn("failed to connect to database",
-			zap.Int("attempt", retryCount),
-			zap.Int("max_retries", maxRetries),
+		zap.S().Warnf(
+			"failed to connect to database (%d/%d)",
+			retryCount, maxRetries,
 		)
 		if retryCount < maxRetries {
 			time.Sleep(2 * time.Second)
 		}
 	}
 	if err != nil {
-		zap.L().Fatal("failed to connect to database", zap.Error(err))
+		zap.S().Fatalf("failed to connect to database: %v", err)
 	}
 	return conn
 }
 
 func migrateDatabase() error {
-	zap.L().Debug("migrating database")
+	zap.S().Debug("migrating database")
 	err := DB.AutoMigrate(
 		&models.Media{},
 		&models.MediaFormat{},

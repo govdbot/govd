@@ -1,8 +1,11 @@
 package handlers
 
 import (
-	extractors "govd/ext"
+	"fmt"
 	"strings"
+
+	"github.com/govdbot/govd/config"
+	extractors "github.com/govdbot/govd/ext"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
@@ -14,10 +17,18 @@ func ExtractorsHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 	messageText := "available extractors:\n"
 	extractorNames := make([]string, 0, len(extractors.List))
 	for _, extractor := range extractors.List {
-		if extractor.IsRedirect {
+		if extractor.IsRedirect || extractor.IsHidden {
 			continue
 		}
-		extractorNames = append(extractorNames, extractor.Name)
+		cfg := config.GetExtractorConfig(extractor)
+		if cfg != nil && cfg.IsDisabled {
+			extractorNames = append(extractorNames, fmt.Sprintf(
+				"<s>%s</s> <i>(disabled)</i>",
+				extractor.Name,
+			))
+		} else {
+			extractorNames = append(extractorNames, extractor.Name)
+		}
 	}
 	messageText += strings.Join(extractorNames, ", ")
 

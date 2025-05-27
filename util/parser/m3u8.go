@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"govd/enums"
-	"govd/models"
+	"github.com/govdbot/govd/enums"
+	"github.com/govdbot/govd/models"
 
 	"github.com/grafov/m3u8"
 	"github.com/pkg/errors"

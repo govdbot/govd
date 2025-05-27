@@ -7,15 +7,14 @@ import (
 	"regexp"
 	"strings"
 
-	"govd/enums"
-	"govd/logger"
-	"govd/models"
-	"govd/plugins"
-	"govd/util"
-	"govd/util/networking"
+	"github.com/govdbot/govd/enums"
+	"github.com/govdbot/govd/logger"
+	"github.com/govdbot/govd/models"
+	"github.com/govdbot/govd/plugins"
+	"github.com/govdbot/govd/util"
+	"github.com/govdbot/govd/util/networking"
 
 	"github.com/bytedance/sonic"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -32,6 +31,7 @@ var ShortExtractor = &models.Extractor{
 	URLPattern: regexp.MustCompile(`https?:\/\/on\.soundcloud\.com\/(?P<id>\w+)`),
 	Host:       []string{"on.soundcloud"},
 	IsRedirect: true,
+	IsHidden:   true,
 
 	Run: func(ctx *models.DownloadContext) (*models.ExtractorResponse, error) {
 		client := networking.GetExtractorHTTPClient(ctx.Extractor)
@@ -88,10 +88,10 @@ func GetTrackMediaList(ctx *models.DownloadContext) ([]*models.Media, error) {
 		}
 	} else {
 		uploader := ctx.MatchedGroups["uploader"]
-		resolveTitle := fmt.Sprintf("%s/%s", uploader, contentID)
+		resolveTitle := uploader + "/" + contentID
 		token := ctx.MatchedGroups["token"]
 		if token != "" {
-			resolveTitle += fmt.Sprintf("/%s", token)
+			resolveTitle += "/" + token
 		}
 		infoURL = ResolveURL(baseURL + resolveTitle)
 	}
@@ -120,7 +120,7 @@ func GetTrackMediaList(ctx *models.DownloadContext) ([]*models.Media, error) {
 	}
 
 	if formatObj == nil {
-		return nil, errors.New("no suitable format found")
+		return nil, ErrNoSuitableFormat
 	}
 
 	trackManifest, err := GetTrackURL(ctx, formatObj.URL, clientID)

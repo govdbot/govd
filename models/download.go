@@ -2,7 +2,6 @@ package models
 
 import (
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -10,7 +9,6 @@ type DownloadConfig struct {
 	ChunkSize       int               // size of each chunk in bytes
 	Concurrency     int               // maximum number of concurrent downloads
 	Timeout         time.Duration     // timeout for individual HTTP requests
-	DownloadDir     string            // directory to save downloaded files
 	RetryAttempts   int               // number of retry attempts per chunk
 	RetryDelay      time.Duration     // delay between retries
 	Remux           bool              // whether to remux the downloaded file with ffmpeg
@@ -21,15 +19,10 @@ type DownloadConfig struct {
 }
 
 func DefaultDownloadConfig() *DownloadConfig {
-	downloadsDir := os.Getenv("DOWNLOADS_DIR")
-	if downloadsDir == "" {
-		downloadsDir = "downloads"
-	}
 	return &DownloadConfig{
 		ChunkSize:     10 * 1024 * 1024, // 10MB
 		Concurrency:   4,
 		Timeout:       30 * time.Second,
-		DownloadDir:   downloadsDir,
 		RetryAttempts: 3,
 		RetryDelay:    2 * time.Second,
 		Remux:         true,
@@ -61,9 +54,6 @@ func (cfg *DownloadConfig) Ensure() {
 	}
 	if cfg.Timeout <= 0 {
 		cfg.Timeout = defaultConfig.Timeout
-	}
-	if cfg.DownloadDir == "" {
-		cfg.DownloadDir = defaultConfig.DownloadDir
 	}
 	if cfg.RetryAttempts <= 0 {
 		cfg.RetryAttempts = defaultConfig.RetryAttempts

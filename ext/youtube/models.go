@@ -31,6 +31,7 @@ type InvResponse struct {
 	DashURL          string            `json:"dashUrl"`
 	AdaptiveFormats  []*AdaptiveFormat `json:"adaptiveFormats"`
 	FormatStreams    []*FormatStream   `json:"formatStreams"`
+	Error            string            `json:"error,omitempty"`
 }
 
 type VideoThumbnail struct {

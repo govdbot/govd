@@ -83,14 +83,14 @@ you can configure the bot using the `.env` file. here are the available options:
 | DB_PORT       | database port                       | 3306                                 |
 | DB_NAME       | database name                       | govd                                 |
 | DB_USER       | database user                       | govd                                 |
-| DB_PASSWORD   | database password                   | password                             |
+| DB_PASSWORD   | database password                   | none                                 |
 
 ## telegram
 
 | variable           | description                      | default                              |
 |--------------------|----------------------------------|--------------------------------------|
 | BOT_API_URL        | telegram bot api url             | https://api.telegram.org             |
-| BOT_TOKEN          | telegram bot token               | 12345678:abc-def1234ghikl-zyx57w2p0s |
+| BOT_TOKEN          | telegram bot token               | none                                 |
 | CONCURRENT_UPDATES | max concurrent updates handled   | 50                                   |
 
 ## downloads
@@ -101,13 +101,13 @@ you can configure the bot using the `.env` file. here are the available options:
 
 ## proxying
 
-| variable     | description                 | default            |
-|--------------|-----------------------------|--------------------|
-| HTTP_PROXY   | http proxy (optional)       | none _(disabled)_  |
-| HTTPS_PROXY  | https proxy (optional)      | none _(disabled)_  |
-| NO_PROXY     | no proxy domains (optional) | none _(disabled)_  |
+| variable     | description       | default            |
+|--------------|-------------------|--------------------|
+| HTTP_PROXY   | http proxy        | none _(disabled)_  |
+| HTTPS_PROXY  | https proxy       | none _(disabled)_  |
+| NO_PROXY     | no proxy domains  | none _(disabled)_  |
 
-## misc
+## other
 
 | variable       | description                               | default                             |
 |----------------|-------------------------------------------|-------------------------------------|
@@ -117,9 +117,11 @@ you can configure the bot using the `.env` file. here are the available options:
 | LOG_FILE       | whether to enable file logging            | false                               |
 | MAX_DURATION   | max duration (parsed string)              | 1h                                  |
 | MAX_FILE_SIZE  | max file size in mb                       | 1000                                |
+| MAX_FILE_SIZE  | max file size in mb                       | 1000                                |
+| WHITELIST      | list of allowed ids separated by commas   | none _(disabled)_                   |
 
 ## extractors
-you can configure specific extractors options with `ext-cfg.yaml` file ([learn more](CONFIGURATION.md)).
+you can configure specific extractors options with `config.yaml` file ([learn more](CONFIGURATION.md)).
 
 > [!IMPORTANT]  
 > to avoid limits on files, you should host your own telegram botapi and set `BOT_API_URL` variable according. public bot instance is currently running under a botapi fork, [tdlight-telegram-bot-api](https://github.com/tdlight-team/tdlight-telegram-bot-api), but you can use the official botapi client too.
@@ -127,7 +129,7 @@ you can configure specific extractors options with `ext-cfg.yaml` file ([learn m
 # proxying
 there are two types of proxying available:
 * **http proxy**: this is a standard http proxy that can be used to route requests through a proxy server. you can set the `HTTP_PROXY` and `HTTPS_PROXY` environment variables to use this feature. (SOCKS5 is supported too)
-* **edge proxy**: this is a custom proxy that is used to route requests through a specific url. currenrly, you can only set this proxy with `ext-cfg.yaml` file ([learn more](EDGEPROXY.md)).
+* **edge proxy**: this is a custom proxy that is used to route requests through a specific url. currenrly, you can only set this proxy with `config.yaml` file ([learn more](EDGEPROXY.md)).
 
 > [!TIP]
 > by settings `NO_PROXY` environment variable, you can specify domains that should not be proxied.

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"sync"
 
-	"govd/config"
-	"govd/models"
-	"govd/util"
+	"github.com/govdbot/govd/config"
+	"github.com/govdbot/govd/models"
+	"github.com/govdbot/govd/util"
 
 	"github.com/pkg/errors"
 )

@@ -1,4 +1,4 @@
-module govd
+module github.com/govdbot/govd
 
 go 1.23.0
 
@@ -40,6 +40,7 @@ require (
 	github.com/aki237/nscjar v0.0.0-20210417074043-bbb606196143
 	github.com/asticode/go-astiav v0.35.1
 	github.com/aws/aws-sdk-go v1.55.6 // indirect
+	github.com/dustin/go-humanize v1.0.1
 	github.com/grafov/m3u8 v0.12.1
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect

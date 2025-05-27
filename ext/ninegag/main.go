@@ -5,14 +5,13 @@ import (
 	"net/http"
 	"regexp"
 
-	"govd/enums"
-	"govd/logger"
-	"govd/models"
-	"govd/util"
-	"govd/util/networking"
+	"github.com/govdbot/govd/enums"
+	"github.com/govdbot/govd/logger"
+	"github.com/govdbot/govd/models"
+	"github.com/govdbot/govd/util"
+	"github.com/govdbot/govd/util/networking"
 
 	"github.com/bytedance/sonic"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -129,7 +128,7 @@ func GetPostData(postID string) (*Post, error) {
 	}
 
 	if response.Data == nil || response.Data.Post == nil {
-		return nil, errors.New("no post data found")
+		return nil, ErrNoMediaFound
 	}
 
 	return response.Data.Post, nil

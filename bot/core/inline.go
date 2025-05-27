@@ -10,10 +10,10 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"govd/database"
-	"govd/enums"
-	"govd/models"
-	"govd/util"
+	"github.com/govdbot/govd/database"
+	"github.com/govdbot/govd/enums"
+	"github.com/govdbot/govd/models"
+	"github.com/govdbot/govd/util"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
@@ -269,26 +269,42 @@ func GetInlineFormat(
 		errChan <- util.ErrInlineMediaGroup
 		return
 	}
-	for i := range mediaList {
-		defaultFormat := mediaList[i].GetDefaultFormat()
-		if defaultFormat == nil {
-			errChan <- fmt.Errorf("no default format found for media at index %d", i)
-			return
-		}
-		if len(defaultFormat.URL) == 0 {
-			errChan <- fmt.Errorf("media format at index %d has no URL", i)
-			return
-		}
-		// ensure we can merge video and audio formats
-		EnsureMergeFormats(mediaList[i], defaultFormat)
-		mediaList[i].Format = defaultFormat
+
+	err = ValidateMediaList(mediaList)
+	if err != nil {
+		errChan <- err
+		return
 	}
+
 	messageCaption := FormatCaption(mediaList[0], true)
+
 	medias, err := DownloadMedias(taskCtx, mediaList)
 	if err != nil {
 		errChan <- fmt.Errorf("failed to download medias: %w", err)
 		return
 	}
+
+	// plugins act as post-processing for the media.
+	// they are run after the media is downloaded
+	// and before it is sent to the user
+	// this allows for things like merging audio and video, etc.
+	for _, media := range medias {
+		format := media.Media.Format
+		zap.S().Debugf(
+			"running %d plugins for %s (%s)",
+			len(format.Plugins),
+			dlCtx.MatchedContentID,
+			dlCtx.Extractor.CodeName,
+		)
+		for _, plugin := range format.Plugins {
+			err = plugin(media, format.DownloadConfig)
+			if err != nil {
+				errChan <- fmt.Errorf("failed to run plugin: %w", err)
+				return
+			}
+		}
+	}
+
 	msgs, err := SendMedias(
 		bot, ctx, dlCtx,
 		medias, &models.SendMediaFormatsOptions{

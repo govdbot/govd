@@ -3,7 +3,7 @@ package database
 import (
 	"fmt"
 
-	"govd/models"
+	"github.com/govdbot/govd/models"
 
 	"gorm.io/gorm"
 )

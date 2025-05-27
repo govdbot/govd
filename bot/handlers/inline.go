@@ -2,13 +2,14 @@ package handlers
 
 import (
 	"context"
-	"govd/bot/core"
-	"govd/models"
-	"govd/util"
 	"strings"
 	"time"
 
-	extractors "govd/ext"
+	"github.com/govdbot/govd/bot/core"
+	"github.com/govdbot/govd/models"
+	"github.com/govdbot/govd/util"
+
+	extractors "github.com/govdbot/govd/ext"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"

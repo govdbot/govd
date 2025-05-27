@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"regexp"
 
-	"govd/enums"
-	"govd/logger"
-	"govd/models"
-	"govd/util"
-	"govd/util/networking"
+	"github.com/govdbot/govd/enums"
+	"github.com/govdbot/govd/logger"
+	"github.com/govdbot/govd/models"
+	"github.com/govdbot/govd/util"
+	"github.com/govdbot/govd/util/networking"
 
 	"github.com/bytedance/sonic"
 )
@@ -27,6 +27,7 @@ var ShortExtractor = &models.Extractor{
 	URLPattern: regexp.MustCompile(`https?://(www\.)?pin\.[^/]+/(?P<id>\w+)`),
 	Host:       []string{"pin"},
 	IsRedirect: true,
+	IsHidden:   true,
 
 	Run: func(ctx *models.DownloadContext) (*models.ExtractorResponse, error) {
 		client := networking.GetExtractorHTTPClient(ctx.Extractor)

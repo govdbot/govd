@@ -1,43 +1,20 @@
 package config
 
 import (
-	"fmt"
-	"maps"
-	"os"
-
-	"govd/models"
-
-	"gopkg.in/yaml.v3"
+	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 )
 
-var extractorConfigs map[string]*models.ExtractorConfig
-
-func LoadExtractorConfigs() error {
-	extractorConfigs = make(map[string]*models.ExtractorConfig)
-	configPath := "ext-cfg.yaml"
-
-	_, err := os.Stat(configPath)
-	if os.IsNotExist(err) {
-		return nil
-	}
-	data, err := os.ReadFile(configPath)
+func Load() error {
+	err := godotenv.Load()
 	if err != nil {
-		return fmt.Errorf("failed reading config file: %w", err)
+		zap.S().Warn("failed to load .env file. using system env")
 	}
-
-	var rawConfig map[string]*models.ExtractorConfig
-
-	if err := yaml.Unmarshal(data, &rawConfig); err != nil {
-		return fmt.Errorf("failed parsing config file: %w", err)
+	if err := LoadEnv(); err != nil {
+		return err
 	}
-	maps.Copy(extractorConfigs, rawConfig)
-
-	return nil
-}
-
-func GetExtractorConfig(extractor *models.Extractor) *models.ExtractorConfig {
-	if config, exists := extractorConfigs[extractor.CodeName]; exists {
-		return config
+	if err := LoadExtractorConfigs(); err != nil {
+		return err
 	}
 	return nil
 }

@@ -3,9 +3,10 @@ package plugins
 import (
 	"context"
 	"fmt"
-	"govd/models"
-	"govd/util"
-	"govd/util/libav"
+
+	"github.com/govdbot/govd/models"
+	"github.com/govdbot/govd/util"
+	"github.com/govdbot/govd/util/libav"
 
 	"github.com/pkg/errors"
 )

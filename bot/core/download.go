@@ -8,9 +8,10 @@ import (
 	"sort"
 	"sync"
 
-	"govd/enums"
-	"govd/models"
-	"govd/util"
+	"github.com/govdbot/govd/config"
+	"github.com/govdbot/govd/enums"
+	"github.com/govdbot/govd/models"
+	"github.com/govdbot/govd/util"
 
 	"github.com/pkg/errors"
 )
@@ -25,7 +26,7 @@ func DownloadMediaItem(
 		return nil, errors.New("media format is nil")
 	}
 
-	config := models.GetDownloadConfig(format.DownloadConfig)
+	downloadConfig := models.GetDownloadConfig(format.DownloadConfig)
 
 	fileName := format.GetFileName()
 	var filePath string
@@ -44,11 +45,11 @@ func DownloadMediaItem(
 	}()
 
 	if format.Type == enums.MediaTypePhoto {
-		file, err := util.DownloadFileInMemory(ctx, format.URL, config)
+		file, err := util.DownloadFileInMemory(ctx, format.URL, downloadConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to download image: %w", err)
 		}
-		path := filepath.Join(config.DownloadDir, fileName)
+		path := filepath.Join(config.Env.DownloadsDirectory, fileName)
 		if err := util.ImgToJPEG(file, path); err != nil {
 			return nil, fmt.Errorf("failed to convert image: %w", err)
 		}
@@ -64,13 +65,13 @@ func DownloadMediaItem(
 
 	// hndle non-photo (video/audio/other)
 	if len(format.Segments) == 0 {
-		path, err := util.DownloadFile(ctx, format.URL, fileName, config)
+		path, err := util.DownloadFile(ctx, format.URL, fileName, downloadConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to download file: %w", err)
 		}
 		filePath = path
 	} else {
-		path, err := util.DownloadFileWithSegments(ctx, format.Segments, fileName, config)
+		path, err := util.DownloadFileWithSegments(ctx, format.Segments, fileName, downloadConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to download segments: %w", err)
 		}
@@ -78,7 +79,7 @@ func DownloadMediaItem(
 	}
 
 	if format.Type == enums.MediaTypeVideo || format.Type == enums.MediaTypeAudio {
-		path, err := GetFileThumbnail(ctx, format, filePath, config)
+		path, err := GetFileThumbnail(ctx, format, filePath, downloadConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get thumbnail: %w", err)
 		}

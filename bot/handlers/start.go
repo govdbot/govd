@@ -2,7 +2,8 @@ package handlers
 
 import (
 	"fmt"
-	"os"
+
+	"github.com/govdbot/govd/config"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
@@ -10,7 +11,10 @@ import (
 
 var startMessage = "govd is an open-source telegram bot " +
 	"that allows you to download medias from " +
-	"various platforms."
+	"various platforms.\n\n" +
+	"learn how to use this bot by clicking the " +
+	"'usage' button below. you can find the list of " +
+	"supported platforms with the 'extractors' button."
 
 func getStartKeyboard(bot *gotgbot.Bot) gotgbot.InlineKeyboardMarkup {
 	return gotgbot.InlineKeyboardMarkup{
@@ -51,7 +55,7 @@ func getStartKeyboard(bot *gotgbot.Bot) gotgbot.InlineKeyboardMarkup {
 				},
 				{
 					Text: "github",
-					Url:  os.Getenv("REPO_URL"),
+					Url:  config.Env.RepoURL,
 				},
 			},
 		},

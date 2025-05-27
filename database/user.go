@@ -1,6 +1,6 @@
 package database
 
-import "govd/models"
+import "github.com/govdbot/govd/models"
 
 func GetUser(
 	userID int64,

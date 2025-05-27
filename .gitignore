@@ -10,6 +10,7 @@ bin/
 
 .env
 ext-cfg.yaml
+config.yaml
 
 .idea/
 

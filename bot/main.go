@@ -1,12 +1,11 @@
 package bot
 
 import (
-	"os"
 	"runtime/debug"
-	"strconv"
 	"time"
 
-	botHandlers "govd/bot/handlers"
+	botHandlers "github.com/govdbot/govd/bot/handlers"
+	"github.com/govdbot/govd/config"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
@@ -14,6 +13,7 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/callbackquery"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/choseninlineresult"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/inlinequery"
+	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/message"
 	"go.uber.org/zap"
 )
 
@@ -25,20 +25,11 @@ var allowedUpdates = []string{
 }
 
 func Start() {
-	token := os.Getenv("BOT_TOKEN")
-	if token == "" {
-		zap.S().Fatal("BOT_TOKEN is not provided")
-	}
-	b, err := gotgbot.NewBot(token, &gotgbot.BotOpts{
+	b, err := gotgbot.NewBot(config.Env.BotToken, &gotgbot.BotOpts{
 		BotClient: NewBotClient(),
 	})
 	if err != nil {
 		zap.S().Fatalf("failed to create bot: %v", err)
-	}
-	concurrentUpdates, err := strconv.Atoi(os.Getenv("CONCURRENT_UPDATES"))
-	if err != nil {
-		zap.S().Warn("failed to parse CONCURRENT_UPDATES env, using 50")
-		concurrentUpdates = 50
 	}
 	dispatcher := ext.NewDispatcher(&ext.DispatcherOpts{
 		Error: func(_ *gotgbot.Bot, _ *ext.Context, err error) ext.DispatcherAction {
@@ -52,7 +43,7 @@ func Start() {
 				debug.Stack(),
 			)
 		},
-		MaxRoutines: concurrentUpdates,
+		MaxRoutines: config.Env.ConcurrentUpdates,
 	})
 	updater := ext.NewUpdater(dispatcher, nil)
 	registerHandlers(dispatcher)
@@ -135,4 +126,18 @@ func registerHandlers(dispatcher *ext.Dispatcher) {
 		callbackquery.Equal("inline:loading"),
 		botHandlers.InlineLoadingHandler,
 	))
+
+	// whitelist handlers
+	dispatcher.AddHandlerToGroup(handlers.NewMessage(
+		message.All,
+		botHandlers.WhitelistHandler,
+	), -10)
+	dispatcher.AddHandlerToGroup(handlers.NewCallback(
+		callbackquery.All,
+		botHandlers.WhitelistHandler,
+	), -10)
+	dispatcher.AddHandlerToGroup(handlers.NewInlineQuery(
+		inlinequery.All,
+		botHandlers.WhitelistHandler,
+	), -10)
 }

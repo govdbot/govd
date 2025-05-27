@@ -6,10 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
-
-	"govd/enums"
-	"govd/models"
+	"github.com/govdbot/govd/enums"
+	"github.com/govdbot/govd/models"
 )
 
 const invEndpoint = "/api/v1/videos/"
@@ -135,7 +133,7 @@ func GetInvInstance(cfg *models.ExtractorConfig) (string, error) {
 		return invInstance, nil
 	}
 	if cfg.Instance == "" {
-		return "", errors.New("invidious instance url is not set")
+		return "", ErrInvidiousNotSet
 	}
 	parsedURL, err := url.Parse(cfg.Instance)
 	if err != nil {

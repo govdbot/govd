@@ -3,8 +3,9 @@ package threads
 import (
 	"bytes"
 	"fmt"
-	"govd/enums"
-	"govd/models"
+
+	"github.com/govdbot/govd/enums"
+	"github.com/govdbot/govd/models"
 
 	"github.com/PuerkitoBio/goquery"
 )

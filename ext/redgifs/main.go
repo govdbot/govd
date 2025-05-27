@@ -2,14 +2,15 @@ package redgifs
 
 import (
 	"fmt"
-	"govd/enums"
-	"govd/logger"
-	"govd/models"
-	"govd/util"
-	"govd/util/networking"
 	"maps"
 	"net/http"
 	"regexp"
+
+	"github.com/govdbot/govd/enums"
+	"github.com/govdbot/govd/logger"
+	"github.com/govdbot/govd/models"
+	"github.com/govdbot/govd/util"
+	"github.com/govdbot/govd/util/networking"
 
 	"github.com/bytedance/sonic"
 )
@@ -139,7 +140,7 @@ func GetVideo(ctx *models.DownloadContext) (*Response, error) {
 	logger.WriteFile("redgifs_api_response", resp)
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get video: %s", resp.Status)
+		return nil, fmt.Errorf("bad response: %s", resp.Status)
 	}
 
 	var response Response

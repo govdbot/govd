@@ -6,13 +6,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"govd/database"
-	"govd/enums"
-	"govd/models"
-	"govd/plugins"
-	"govd/util"
-	"govd/util/libav"
-	"govd/util/mp4box"
+	"github.com/govdbot/govd/database"
+	"github.com/govdbot/govd/enums"
+	"github.com/govdbot/govd/models"
+	"github.com/govdbot/govd/plugins"
+	"github.com/govdbot/govd/util"
+	"github.com/govdbot/govd/util/libav"
+	"github.com/govdbot/govd/util/mp4box"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
@@ -20,11 +20,46 @@ import (
 	"go.uber.org/zap"
 )
 
+func ValidateMediaList(
+	mediaList []*models.Media,
+) error {
+	for i := range mediaList {
+		defaultFormat := mediaList[i].GetDefaultFormat()
+		if defaultFormat == nil {
+			return fmt.Errorf("no default format found for media at index %d", i)
+		}
+		if len(defaultFormat.URL) == 0 {
+			return fmt.Errorf("media format at index %d has no URL", i)
+		}
+
+		zap.S().Debugf("default format selected: %s (media %d)", defaultFormat.FormatID, i)
+
+		// ensure we can merge video and audio formats
+		EnsureMergeFormats(mediaList[i], defaultFormat)
+
+		// ensure download config is set
+		if defaultFormat.DownloadConfig == nil {
+			defaultFormat.DownloadConfig = models.GetDownloadConfig(nil)
+		}
+
+		// check for file size and duration limits
+		if util.ExceedsMaxFileSize(defaultFormat.FileSize) {
+			return util.ErrFileTooLarge
+		}
+		if util.ExceedsMaxDuration(defaultFormat.Duration) {
+			return util.ErrDurationTooLong
+		}
+
+		mediaList[i].Format = defaultFormat
+	}
+	return nil
+}
+
 func GetFileThumbnail(
 	ctx context.Context,
 	format *models.MediaFormat,
 	filePath string,
-	config *models.DownloadConfig,
+	downloadConfig *models.DownloadConfig,
 ) (string, error) {
 	fileDir := filepath.Dir(filePath)
 	fileName := filepath.Base(filePath)
@@ -34,7 +69,7 @@ func GetFileThumbnail(
 
 	if len(format.Thumbnail) > 0 {
 		zap.S().Debug("downloading thumbnail from URL")
-		file, err := util.DownloadFileInMemory(ctx, format.Thumbnail, config)
+		file, err := util.DownloadFileInMemory(ctx, format.Thumbnail, downloadConfig)
 		if err != nil {
 			return "", fmt.Errorf("failed to download file in memory: %w", err)
 		}
@@ -271,6 +306,9 @@ func SendErrorMessage(
 	ctx *ext.Context,
 	errorMessage string,
 ) {
+	// avoid leaking sensitive URLs in error messages
+	errorMessage = util.RedactURLs(errorMessage)
+
 	switch {
 	case ctx.Update.Message != nil:
 		ctx.EffectiveMessage.Reply(

@@ -2,10 +2,11 @@ package reddit
 
 import (
 	"fmt"
-	"govd/models"
-	"govd/util"
-	"govd/util/parser"
 	"regexp"
+
+	"github.com/govdbot/govd/models"
+	"github.com/govdbot/govd/util"
+	"github.com/govdbot/govd/util/parser"
 )
 
 const (

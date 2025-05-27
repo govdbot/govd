@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"context"
-	"govd/bot/core"
-	"govd/database"
-	extractors "govd/ext"
 	"time"
+
+	"github.com/govdbot/govd/bot/core"
+	"github.com/govdbot/govd/database"
+	extractors "github.com/govdbot/govd/ext"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"

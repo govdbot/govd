@@ -1,14 +1,12 @@
-name: Build-Docker
+name: Build-Docker-Push
 
-on:
-  release:
-    types: [created]
+on: [push, release]
 
 env:
-  IMAGE: stefanodvx/govd:${{ github.ref_name }}
-  GHCR_IMAGE: ghcr.io/stefanodvx/govd:${{ github.ref_name }}
-  IMAGE_LATEST: stefanodvx/govd:latest
-  GHCR_IMAGE_LATEST: ghcr.io/stefanodvx/govd:latest
+  IMAGE: govdbot/govd:${{ github.ref_name }}
+  GHCR_IMAGE: ghcr.io/govdbot/govd:${{ github.ref_name }}
+  IMAGE_LATEST: govdbot/govd:latest
+  GHCR_IMAGE_LATEST: ghcr.io/govdbot/govd:latest
 
 jobs:
   build-images:

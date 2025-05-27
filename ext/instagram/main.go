@@ -2,16 +2,16 @@ package instagram
 
 import (
 	"fmt"
-	"govd/enums"
-	"govd/logger"
-	"govd/models"
-	"govd/util"
-	"govd/util/networking"
 	"io"
 	"net/http"
 	"regexp"
 
-	"github.com/pkg/errors"
+	"github.com/govdbot/govd/enums"
+	"github.com/govdbot/govd/logger"
+	"github.com/govdbot/govd/models"
+	"github.com/govdbot/govd/util"
+	"github.com/govdbot/govd/util/networking"
+
 	"go.uber.org/zap"
 )
 
@@ -63,7 +63,7 @@ var Extractor = &models.Extractor{
 			"failed to get media from 3rd party service: %v",
 			err,
 		)
-		return nil, errors.New("failed to extract media: all methods failed")
+		return nil, ErrAllMethodsFailed
 	},
 }
 
@@ -75,6 +75,7 @@ var StoriesExtractor = &models.Extractor{
 	URLPattern: regexp.MustCompile(`https:\/\/(www\.)?(?:dd)?instagram\.com\/stories\/[a-zA-Z0-9._]+\/(?P<id>\d+)`),
 	Host:       instagramHost,
 	IsRedirect: false,
+	IsHidden:   true,
 
 	Run: func(ctx *models.DownloadContext) (*models.ExtractorResponse, error) {
 		mediaList, err := GetIGramMediaList(ctx)
@@ -92,6 +93,7 @@ var ShareURLExtractor = &models.Extractor{
 	URLPattern: regexp.MustCompile(`https?:\/\/(www\.)?(?:dd)?instagram\.com\/share\/((reels?|video|s|p)\/)?(?P<id>[^\/\?]+)`),
 	Host:       instagramHost,
 	IsRedirect: true,
+	IsHidden:   true,
 
 	Run: func(ctx *models.DownloadContext) (*models.ExtractorResponse, error) {
 		client := networking.GetExtractorHTTPClient(ctx.Extractor)

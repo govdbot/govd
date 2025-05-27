@@ -8,7 +8,7 @@ youtube extractor is currently based on the invidious api.
 * provides a stable, simplified api for accessing video info and streams
 
 ## configuration
-you must specify the invidious instance in your `ext-cfg.yaml` file:
+you must specify the invidious instance in your `config.yaml` file:
 
 ```yaml
 youtube:

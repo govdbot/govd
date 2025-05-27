@@ -1,7 +1,7 @@
 # configuration
-the `ext-cfg.yaml` file allows you to set custom options for each extractor. this is useful for advanced configuration of the bot, mostly related to network settings.
+the `config.yaml` file allows you to set custom options for each extractor. this is useful for advanced configuration of the bot, mostly related to network settings.
 > [!NOTE]
-> this configuration will override the global configuration. this is useful in case you want to set a global proxy in the `.env` file and then override it for specific extractors in the `ext-cfg.yaml` file.
+> this configuration will override the global configuration. this is useful in case you want to set a global proxy in the `.env` file and then override it for specific extractors in the `config.yaml` file.
 
 # structure
 the file uses yaml format. each top-level key is the name of an extractor. under each extractor, you can define options supported by that extractor, for example:
@@ -10,6 +10,10 @@ instagram:
   edge_proxy_url: https://example.com
   impersonate: true
   disabled: true
+
+reddit:
+  http_proxy: https://example.com
+  no_proxy: example.com
 ```
 
 # available options

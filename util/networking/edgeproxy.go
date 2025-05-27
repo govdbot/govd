@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"time"
 
-	"govd/models"
+	"github.com/govdbot/govd/models"
 
 	"github.com/pkg/errors"
 )

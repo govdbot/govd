@@ -3,12 +3,13 @@ package networking
 import (
 	"bytes"
 	"fmt"
-	"govd/models"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/govdbot/govd/models"
 
 	"github.com/bytedance/sonic"
 	"go.uber.org/zap"

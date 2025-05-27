@@ -1,6 +1,6 @@
 package plugins
 
-import "govd/models"
+import "github.com/govdbot/govd/models"
 
 var List = []models.Plugin{
 	MergeAudio,

@@ -2,40 +2,60 @@ package handlers
 
 import (
 	"fmt"
-	"govd/database"
+	"strings"
+	"sync"
 	"time"
+
+	"github.com/govdbot/govd/database"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
+	"github.com/dustin/go-humanize"
 )
 
-type Stats struct {
-	TotalUsers      int64
-	TotalGroups     int64
-	TotalDailyUsers int64
-	TotalMedia      int64
-	UpdatedAt       time.Time
+type stats struct {
+	String    string
+	UpdatedAt time.Time
 }
 
-var lastSavedStats *Stats
+var currentStats *stats
+var updateInterval = 30 // minutes
+var isUpdating bool
+var updateMutex sync.Mutex
 
-var statsMessage = "users: %d\nusers today: %d\ngroups: %d\ndownloads: %d\n\nupdates every 10 minutes"
+var (
+	statsMessage = "users: <code>%s</code>\n" +
+		"daily users: <code>%s</code>\n" +
+		"groups: <code>%s</code>\n\n" +
+		"downloads: <code>%s</code>\n" +
+		"daily downloads: <code>%s</code>\n\n" +
+		"traffic: <code>%s</code>\n" +
+		"daily traffic: <code>%s</code>\n\n" +
+		"updates every %d minutes"
+	statsMessageLoading = "stats are being updated, come back in a moment!"
+)
 
 func StatsHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 	if ctx.EffectiveMessage.Chat.Type != gotgbot.ChatTypePrivate {
 		return nil
 	}
+
+	if isUpdating {
+		ctx.CallbackQuery.Answer(
+			bot,
+			&gotgbot.AnswerCallbackQueryOpts{
+				Text:      statsMessageLoading,
+				ShowAlert: true,
+			},
+		)
+		return nil
+	}
 	ctx.CallbackQuery.Answer(bot, nil)
+
 	stats := GetStats()
 	ctx.EffectiveMessage.EditText(
 		bot,
-		fmt.Sprintf(
-			statsMessage,
-			stats.TotalUsers,
-			stats.TotalDailyUsers,
-			stats.TotalGroups,
-			stats.TotalMedia,
-		),
+		stats,
 		&gotgbot.EditMessageTextOpts{
 			ReplyMarkup: gotgbot.InlineKeyboardMarkup{
 				InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
@@ -53,37 +73,86 @@ func StatsHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 }
 
 func UpdateStats() {
-	totalUsers, err := database.GetUsersCount()
+	updateMutex.Lock()
+	isUpdating = true
+	updateMutex.Unlock()
+
+	defer func() {
+		updateMutex.Lock()
+		isUpdating = false
+		updateMutex.Unlock()
+	}()
+
+	users, err := database.GetUsersCount()
 	if err != nil {
-		return
+		users = 0
 	}
-	totalGroups, err := database.GetGroupsCount()
+	dailyUsers, err := database.GetDailyUserCount()
 	if err != nil {
-		return
+		dailyUsers = 0
 	}
-	totalDailyUsers, err := database.GetDailyUserCount()
+	groups, err := database.GetGroupsCount()
 	if err != nil {
-		return
+		groups = 0
 	}
-	totalMedia, err := database.GetMediaCount()
+	downloads, err := database.GetMediaCount()
 	if err != nil {
-		return
+		downloads = 0
 	}
-	lastSavedStats = &Stats{
-		TotalUsers:      totalUsers,
-		TotalGroups:     totalGroups,
-		TotalDailyUsers: totalDailyUsers,
-		TotalMedia:      totalMedia,
-		UpdatedAt:       time.Now(),
+	dailyDownloads, err := database.GetDailyMediaCount()
+	if err != nil {
+		dailyDownloads = 0
+	}
+	traffic, err := database.GetTraffic()
+	if err != nil {
+		traffic = 0
+	}
+	dailyTraffic, err := database.GetDailyTraffic()
+	if err != nil {
+		dailyTraffic = 0
+	}
+
+	currentStats = &stats{
+		String: fmt.Sprintf(
+			statsMessage,
+			HumanizedInt(users),
+			HumanizedInt(dailyUsers),
+			HumanizedInt(groups),
+			HumanizedInt(downloads),
+			HumanizedInt(dailyDownloads),
+			humanize.IBytes(uint64(traffic)),
+			humanize.IBytes(uint64(dailyTraffic)),
+			updateInterval,
+		),
+		UpdatedAt: time.Now(),
 	}
 }
 
-func GetStats() *Stats {
-	if lastSavedStats == nil {
-		UpdateStats()
+func HumanizedInt(d int) string {
+	return strings.ReplaceAll(humanize.Comma(int64(d)), ",", ".")
+}
+
+func GetStats() string {
+	updateMutex.Lock()
+	updating := isUpdating
+	updateMutex.Unlock()
+
+	if updating {
+		return statsMessageLoading
 	}
-	if lastSavedStats.UpdatedAt.Add(10 * time.Minute).Before(time.Now()) {
-		UpdateStats()
+
+	if currentStats == nil {
+		go UpdateStats()
+		return statsMessageLoading
+	} else if currentStats.UpdatedAt.Add(time.Duration(updateInterval) * time.Minute).Before(time.Now()) {
+		oldStats := currentStats
+		go func() {
+			UpdateStats()
+			if currentStats == nil {
+				currentStats = oldStats
+			}
+		}()
+		return oldStats.String // return old stats while updating
 	}
-	return lastSavedStats
+	return currentStats.String
 }

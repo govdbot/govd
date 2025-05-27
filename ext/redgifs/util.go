@@ -2,10 +2,11 @@ package redgifs
 
 import (
 	"fmt"
-	"govd/models"
-	"govd/util"
 	"net/http"
 	"time"
+
+	"github.com/govdbot/govd/models"
+	"github.com/govdbot/govd/util"
 
 	"github.com/bytedance/sonic"
 )

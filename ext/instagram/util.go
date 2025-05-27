@@ -15,14 +15,13 @@ import (
 	"strings"
 	"time"
 
-	"govd/enums"
-	"govd/logger"
-	"govd/models"
-	"govd/util"
-	"govd/util/networking"
+	"github.com/govdbot/govd/enums"
+	"github.com/govdbot/govd/logger"
+	"github.com/govdbot/govd/models"
+	"github.com/govdbot/govd/util"
+	"github.com/govdbot/govd/util/networking"
 
 	"github.com/bytedance/sonic"
-	"github.com/pkg/errors"
 	"github.com/titanous/json5"
 )
 
@@ -145,7 +144,7 @@ func ParseEmbedGQL(
 ) (*Media, error) {
 	match := embedPattern.FindSubmatch(body)
 	if len(match) < 2 {
-		return nil, errors.New("failed to find JSON in response")
+		return nil, ErrGQLJSONNotFound
 	}
 	jsonData := match[1]
 
@@ -155,7 +154,7 @@ func ParseEmbedGQL(
 	}
 	igCtx := util.TraverseJSON(data, "contextJSON")
 	if igCtx == nil {
-		return nil, errors.New("contextJSON not found in data")
+		return nil, ErrGQLContextNotFound
 	}
 	var ctxJSON ContextJSON
 	switch v := igCtx.(type) {
@@ -164,13 +163,13 @@ func ParseEmbedGQL(
 			return nil, fmt.Errorf("failed to unmarshal contextJSON: %w", err)
 		}
 	default:
-		return nil, errors.New("contextJSON is not a string")
+		return nil, ErrGQLContextMismatch
 	}
 	if ctxJSON.GqlData == nil {
-		return nil, errors.New("gql_data is nil")
+		return nil, ErrGQLNilResponse
 	}
 	if ctxJSON.GqlData.ShortcodeMedia == nil {
-		return nil, errors.New("media is nil")
+		return nil, ErrGQLNilMedia
 	}
 	return ctxJSON.GqlData.ShortcodeMedia, nil
 }
@@ -293,13 +292,13 @@ func GetGQLData(
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 	if response.Data == nil {
-		return nil, errors.New("data is nil")
+		return nil, ErrGQLNilResponse
 	}
 	if response.Status != "ok" {
 		return nil, fmt.Errorf("status is not ok: %s", response.Status)
 	}
 	if response.Data.ShortcodeMedia == nil {
-		return nil, errors.New("media is nil")
+		return nil, ErrGQLNilMedia
 	}
 	return response.Data, nil
 }

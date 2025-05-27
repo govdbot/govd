@@ -8,10 +8,10 @@ import (
 	"regexp"
 	"strings"
 
-	"govd/logger"
-	"govd/models"
-	"govd/util"
-	"govd/util/networking"
+	"github.com/govdbot/govd/logger"
+	"github.com/govdbot/govd/models"
+	"github.com/govdbot/govd/util"
+	"github.com/govdbot/govd/util/networking"
 )
 
 var clientIDPattern = regexp.MustCompile(`"clientId"\s*:\s*"([0-9a-zA-Z]{32})"`)
@@ -63,5 +63,5 @@ func GetClientID(ctx *models.DownloadContext) (string, error) {
 		return clientID, nil
 	}
 
-	return "", fmt.Errorf("failed to find clientId")
+	return "", ErrClientIDNotFound
 }

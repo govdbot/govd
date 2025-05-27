@@ -2,7 +2,7 @@
 edge proxy is an optional feature that allows routing some extractor requests through a custom proxy endpoint, instead of a classic http/https proxy. this is useful if you want to centralize or control the traffic of certain platforms via your own proxy service, for example to bypass geo-restrictions, add caching, logging, or other customizations.
 
 ## configuration
-edge proxy is configured via the `ext-cfg.yaml` file.  
+edge proxy is configured via the `config.yaml` file.  
 you can set the proxy url for each extractor that supports it.  
 example:
 
@@ -38,4 +38,4 @@ the main difference between http proxy and edge proxy is that http proxy is a st
 ## notes
 * edge proxy is for advanced use and not required for most users.
 * this feature is experimental and may change in the future.
-* you can check full implementation of the edge proxy in the [`util/edgeproxy`](util/edgeproxy.go) package.
+* you can check full implementation of the edge proxy in the [`networking`](util/networking/edgeproxy.go) package.

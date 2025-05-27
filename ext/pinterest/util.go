@@ -5,9 +5,9 @@ import (
 	"net/url"
 	"strings"
 
-	"govd/enums"
-	"govd/models"
-	"govd/util/parser"
+	"github.com/govdbot/govd/enums"
+	"github.com/govdbot/govd/models"
+	"github.com/govdbot/govd/util/parser"
 
 	"github.com/bytedance/sonic"
 	"go.uber.org/zap"

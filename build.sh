@@ -3,7 +3,7 @@
 COMMIT_HASH=$(git rev-parse --short HEAD)
 BRANCH_NAME=$(git branch --show-current)
 
-PACKAGE_PATH="govd/bot/handlers"
+PACKAGE_PATH="github.com/govdbot/govd/bot/handlers"
 
 echo "Building with commit hash: ${COMMIT_HASH}"
 echo "Branch name: ${BRANCH_NAME}"

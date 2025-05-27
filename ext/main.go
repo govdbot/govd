@@ -1,17 +1,17 @@
 package ext
 
 import (
-	"govd/ext/instagram"
-	"govd/ext/ninegag"
-	"govd/ext/pinterest"
-	"govd/ext/reddit"
-	"govd/ext/redgifs"
-	"govd/ext/soundcloud"
-	"govd/ext/threads"
-	"govd/ext/tiktok"
-	"govd/ext/twitter"
-	"govd/ext/youtube"
-	"govd/models"
+	"github.com/govdbot/govd/ext/instagram"
+	"github.com/govdbot/govd/ext/ninegag"
+	"github.com/govdbot/govd/ext/pinterest"
+	"github.com/govdbot/govd/ext/reddit"
+	"github.com/govdbot/govd/ext/redgifs"
+	"github.com/govdbot/govd/ext/soundcloud"
+	"github.com/govdbot/govd/ext/threads"
+	"github.com/govdbot/govd/ext/tiktok"
+	"github.com/govdbot/govd/ext/twitter"
+	"github.com/govdbot/govd/ext/youtube"
+	"github.com/govdbot/govd/models"
 )
 
 var List = []*models.Extractor{

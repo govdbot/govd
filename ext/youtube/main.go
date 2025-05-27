@@ -5,14 +5,12 @@ import (
 	"net/http"
 	"regexp"
 
-	"govd/config"
-	"govd/enums"
-	"govd/logger"
-	"govd/models"
-	"govd/util"
-	"govd/util/networking"
-
-	"github.com/pkg/errors"
+	"github.com/govdbot/govd/config"
+	"github.com/govdbot/govd/enums"
+	"github.com/govdbot/govd/logger"
+	"github.com/govdbot/govd/models"
+	"github.com/govdbot/govd/util"
+	"github.com/govdbot/govd/util/networking"
 
 	"github.com/bytedance/sonic"
 	"go.uber.org/zap"
@@ -33,7 +31,7 @@ var Extractor = &models.Extractor{
 	Run: func(ctx *models.DownloadContext) (*models.ExtractorResponse, error) {
 		video, err := GetVideoFromInv(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get media: %w", err)
+			return nil, err
 		}
 		return &models.ExtractorResponse{
 			MediaList: []*models.Media{video},
@@ -47,7 +45,7 @@ func GetVideoFromInv(ctx *models.DownloadContext) (*models.Media, error) {
 
 	cfg := config.GetExtractorConfig(ctx.Extractor)
 	if cfg == nil {
-		return nil, errors.New("youtube extractor is not configured")
+		return nil, ErrNotConfigured
 	}
 	instance, err := GetInvInstance(cfg)
 	if err != nil {
@@ -84,19 +82,25 @@ func GetVideoFromInv(ctx *models.DownloadContext) (*models.Media, error) {
 	// debugging
 	logger.WriteFile("inv_youtube_response", resp)
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("invalid response status: %s", resp.Status)
-	}
-
 	var data *InvResponse
 	decoder := sonic.ConfigFastest.NewDecoder(resp.Body)
 	err = decoder.Decode(&data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
+
+	switch data.Error {
+	case "This video may be inappropriate for some users.":
+		return nil, ErrAgeRestricted
+	default:
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("bad response: %s", resp.Status)
+		}
+	}
+
 	formats := ParseInvFormats(data)
 	if len(formats) == 0 {
-		return nil, errors.New("no valid formats found")
+		return nil, ErrNoValidFormats
 	}
 	media.SetCaption(data.Title)
 	for _, format := range formats {

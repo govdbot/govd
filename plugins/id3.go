@@ -1,8 +1,9 @@
 package plugins
 
 import (
-	"govd/models"
 	"os"
+
+	"github.com/govdbot/govd/models"
 
 	"fmt"
 

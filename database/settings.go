@@ -1,7 +1,7 @@
 package database
 
 import (
-	"govd/models"
+	"github.com/govdbot/govd/models"
 )
 
 func GetGroupSettings(

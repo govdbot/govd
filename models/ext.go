@@ -1,8 +1,9 @@
 package models
 
 import (
-	"govd/enums"
 	"regexp"
+
+	"github.com/govdbot/govd/enums"
 )
 
 type Extractor struct {
@@ -14,6 +15,7 @@ type Extractor struct {
 	Host       []string
 	IsDRM      bool
 	IsRedirect bool
+	IsHidden   bool
 
 	Run func(*DownloadContext) (*ExtractorResponse, error)
 }
@@ -32,16 +34,4 @@ func (extractor *Extractor) NewMedia(
 		ContentURL:        contentURL,
 		ExtractorCodeName: extractor.CodeName,
 	}
-}
-
-type ExtractorConfig struct {
-	HTTPProxy    string `yaml:"http_proxy"`
-	HTTPSProxy   string `yaml:"https_proxy"`
-	NoProxy      string `yaml:"no_proxy"`
-	EdgeProxyURL string `yaml:"edge_proxy_url"`
-	Impersonate  bool   `yaml:"impersonate"`
-
-	IsDisabled bool `yaml:"disabled"`
-
-	Instance string `yaml:"instance"`
 }
