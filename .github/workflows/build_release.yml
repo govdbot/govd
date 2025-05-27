@@ -1,0 +1,113 @@
+name: Build-Docker-On-Release
+
+on:
+  release:
+    types: [created]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: govdbot/govd:${{ github.ref_name }}
+  GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ github.ref_name }}
+  IMAGE_LATEST: govdbot/govd:latest
+  GHCR_IMAGE_LATEST: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
+
+jobs:
+  build-images:
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+        include:
+          - arch: amd64
+            platform: linux/amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push ${{ matrix.arch }} image
+        uses: docker/build-push-action@v6
+        with:
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          context: .
+          platforms: ${{ matrix.platform }}
+          push: true
+          file: ./Dockerfile
+          tags: |
+            ${{ env.IMAGE }}-${{ matrix.arch }}
+            ${{ env.GHCR_IMAGE }}-${{ matrix.arch }}
+
+  push-manifest:
+    needs: [build-images]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create tagged manifest
+        uses: int128/docker-manifest-create-action@v2
+        with:
+          tags: ${{ env.IMAGE }}
+          sources: |
+            ${{ env.IMAGE }}-amd64
+            ${{ env.IMAGE }}-arm64
+
+      - name: Create tagged manifest for GitHub
+        uses: int128/docker-manifest-create-action@v2
+        with:
+          tags: ${{ env.GHCR_IMAGE }}
+          sources: |
+            ${{ env.GHCR_IMAGE }}-amd64
+            ${{ env.GHCR_IMAGE }}-arm64
+
+      # Check if it's pre release or latest
+      - name: Create latest manifest if not prerelease
+        if: ${{ github.event.release.prerelease != true }}
+        uses: int128/docker-manifest-create-action@v2
+        with:
+          tags: ${{ env.IMAGE_LATEST }}
+          sources: |
+            ${{ env.IMAGE }}-amd64
+            ${{ env.IMAGE }}-arm64
+
+      - name: Create latest manifest for GitHub if not prerelease
+        if: ${{ github.event.release.prerelease != true }}
+        uses: int128/docker-manifest-create-action@v2
+        with:
+          tags: ${{ env.GHCR_IMAGE_LATEST }}
+          sources: |
+            ${{ env.GHCR_IMAGE }}-amd64
+            ${{ env.GHCR_IMAGE }}-arm64

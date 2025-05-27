@@ -1,12 +1,17 @@
-name: Build-Docker-Push
+name: Build-Docker-On-Push
 
-on: [push, release]
+on:
+  push:
+    branches:
+      - "main"
+
+permissions:
+  contents: read
+  packages: write
 
 env:
   IMAGE: govdbot/govd:${{ github.ref_name }}
-  GHCR_IMAGE: ghcr.io/govdbot/govd:${{ github.ref_name }}
-  IMAGE_LATEST: govdbot/govd:latest
-  GHCR_IMAGE_LATEST: ghcr.io/govdbot/govd:latest
+  GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ github.ref_name }}
 
 jobs:
   build-images:
@@ -83,25 +88,6 @@ jobs:
         uses: int128/docker-manifest-create-action@v2
         with:
           tags: ${{ env.GHCR_IMAGE }}
-          sources: |
-            ${{ env.GHCR_IMAGE }}-amd64
-            ${{ env.GHCR_IMAGE }}-arm64
-
-      # Check if it's pre release or latest
-      - name: Create latest manifest if not prerelease
-        if: ${{ github.event.release.prerelease != true }}
-        uses: int128/docker-manifest-create-action@v2
-        with:
-          tags: ${{ env.IMAGE_LATEST }}
-          sources: |
-            ${{ env.IMAGE }}-amd64
-            ${{ env.IMAGE }}-arm64
-
-      - name: Create latest manifest for GitHub if not prerelease
-        if: ${{ github.event.release.prerelease != true }}
-        uses: int128/docker-manifest-create-action@v2
-        with:
-          tags: ${{ env.GHCR_IMAGE_LATEST }}
           sources: |
             ${{ env.GHCR_IMAGE }}-amd64
             ${{ env.GHCR_IMAGE }}-arm64
