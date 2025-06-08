@@ -30,6 +30,12 @@ type EnvConfig struct {
 
 	CaptionHeader      string
 	CaptionDescription string
+
+	// Default group settings
+	DefaultCaptions        bool
+	DefaultSilent          bool
+	DefaultNSFW            bool
+	DefaultMediaGroupLimit int
 }
 
 type ExtractorConfig struct {

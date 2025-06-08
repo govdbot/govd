@@ -1,6 +1,7 @@
 package database
 
 import (
+	"github.com/govdbot/govd/config"
 	"github.com/govdbot/govd/models"
 )
 
@@ -12,7 +13,13 @@ func GetGroupSettings(
 		Where(&models.GroupSettings{
 			ChatID: chatID,
 		}).
-		FirstOrCreate(&groupSettings).
+		FirstOrCreate(&groupSettings, &models.GroupSettings{
+			ChatID:          chatID,
+			Captions:        &config.Env.DefaultCaptions,
+			Silent:          &config.Env.DefaultSilent,
+			NSFW:            &config.Env.DefaultNSFW,
+			MediaGroupLimit: config.Env.DefaultMediaGroupLimit,
+		}).
 		Error
 	if err != nil {
 		return nil, err
