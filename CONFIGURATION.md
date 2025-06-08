@@ -3,27 +3,6 @@ the `config.yaml` file allows you to set custom options for each extractor. this
 > [!NOTE]
 > this configuration will override the global configuration. this is useful in case you want to set a global proxy in the `.env` file and then override it for specific extractors in the `config.yaml` file.
 
-# environment variables
-
-## default group settings
-these environment variables control the default settings for new groups when they first use the bot:
-
-* `DEFAULT_CAPTIONS`: whether captions are enabled by default for new groups (true/false, default: false)
-* `DEFAULT_SILENT`: whether silent mode is enabled by default for new groups (true/false, default: false)
-* `DEFAULT_ENABLE_NSFW`: whether NSFW content is enabled by default for new groups (true/false, default: false)
-* `DEFAULT_MEDIA_LIMIT`: default media group limit for new groups (1-20, default: 10)
-
-example:
-```bash
-DEFAULT_CAPTIONS=true
-DEFAULT_SILENT=false
-DEFAULT_ENABLE_NSFW=false
-DEFAULT_MEDIA_LIMIT=5
-```
-
-> [!NOTE]
-> these settings only affect new groups. existing groups will keep their current settings and can still override these defaults using bot commands like `/captions`, `/silent`, `/nsfw`, and `/limit`.
-
 # structure
 the file uses yaml format. each top-level key is the name of an extractor. under each extractor, you can define options supported by that extractor, for example:
 ```yaml

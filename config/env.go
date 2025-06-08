@@ -141,23 +141,19 @@ func LoadEnv() error {
 	if value := os.Getenv("CAPTION_DESCRIPTION"); value != "" {
 		Env.CaptionDescription = value
 	}
-	if value := os.Getenv("DEFAULT_CAPTIONS"); value != "" {
+	if value := os.Getenv("DEFAULT_ENABLE_CAPTIONS"); value != "" {
 		if defaultCaptions, err := strconv.ParseBool(value); err == nil {
 			Env.DefaultCaptions = defaultCaptions
 		} else {
-			zap.S().Fatal("DEFAULT_CAPTIONS env is not a valid boolean")
+			zap.S().Fatal("DEFAULT_ENABLE_CAPTIONS env is not a valid boolean")
 		}
-	} else {
-		zap.S().Warnf("DEFAULT_CAPTIONS is not set, using default %t", Env.DefaultCaptions)
 	}
-	if value := os.Getenv("DEFAULT_SILENT"); value != "" {
+	if value := os.Getenv("DEFAULT_ENABLE_SILENT"); value != "" {
 		if defaultSilent, err := strconv.ParseBool(value); err == nil {
 			Env.DefaultSilent = defaultSilent
 		} else {
-			zap.S().Fatal("DEFAULT_SILENT env is not a valid boolean")
+			zap.S().Fatal("DEFAULT_ENABLE_SILENT env is not a valid boolean")
 		}
-	} else {
-		zap.S().Warnf("DEFAULT_SILENT is not set, using default %t", Env.DefaultSilent)
 	}
 	if value := os.Getenv("DEFAULT_ENABLE_NSFW"); value != "" {
 		if defaultNSFW, err := strconv.ParseBool(value); err == nil {
@@ -165,8 +161,6 @@ func LoadEnv() error {
 		} else {
 			zap.S().Fatal("DEFAULT_ENABLE_NSFW env is not a valid boolean")
 		}
-	} else {
-		zap.S().Warnf("DEFAULT_ENABLE_NSFW is not set, using default %t", Env.DefaultNSFW)
 	}
 	if value := os.Getenv("DEFAULT_MEDIA_LIMIT"); value != "" {
 		if defaultMediaLimit, err := strconv.Atoi(value); err == nil {
@@ -178,8 +172,6 @@ func LoadEnv() error {
 		} else {
 			zap.S().Fatal("DEFAULT_MEDIA_LIMIT env is not a valid integer")
 		}
-	} else {
-		zap.S().Warnf("DEFAULT_MEDIA_LIMIT is not set, using default %d", Env.DefaultMediaGroupLimit)
 	}
 	return nil
 }

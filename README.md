@@ -108,6 +108,15 @@ you can configure the bot using the `.env` file. here are the available options:
 | HTTPS_PROXY  | https proxy       | none _(disabled)_  |
 | NO_PROXY     | no proxy domains  | none _(disabled)_  |
 
+## default settings
+configure default settings for groups. Group admins can override these settings by using commands.
+| variable                | description                                 | default                             |
+|-------------------------|---------------------------------------------|-------------------------------------|
+| DEFAULT_ENABLE_CAPTIONS | show original captions on messages          | false                               |
+| DEFAULT_ENABLE_SILENT   | omit error messages in groups (silent fail) | false                               |
+| DEFAULT_ENABLE_NSFW     | enable nsfw content in groups               | false                               |
+| DEFAULT_MEDIA_LIMIT     | max media files in a single message         | 10                                  |
+
 ## other
 
 | variable            | description                               | default                             |
