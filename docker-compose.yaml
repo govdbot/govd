@@ -10,6 +10,7 @@ services:
     volumes:
       - ./config.yaml:/app/config.yaml
       - ./cookies:/app/cookies
+      - ./downloads:/app/downloads
     depends_on:
       db:
         condition: service_healthy
