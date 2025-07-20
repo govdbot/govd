@@ -14,11 +14,16 @@ const invEndpoint = "/api/v1/videos/"
 
 var invInstance string
 
-func ParseInvFormats(data *InvResponse) []*models.MediaFormat {
-	formats := make([]*models.MediaFormat, 0, len(data.AdaptiveFormats))
-	duration := data.LengthSeconds
 
-	for _, format := range data.AdaptiveFormats {
+func ParseInvFormats(data *InvResponse) []*models.MediaFormat {
+	// Decided to use FormatStream instead of AdaptiveFormats since this latter might not be available in some videos.
+        //formats := make([]*models.MediaFormat, 0, len(data.AdaptiveFormats))
+	formats := make([]*models.MediaFormat, 0, len(data.FormatStreams))
+	duration := data.LengthSeconds
+	
+	// As explained above, using FormatStreams
+	//for _, format := range data.AdaptiveFormats {
+	for _, format := range data.FormatStreams {
 		if format.URL == "" {
 			continue
 		}
