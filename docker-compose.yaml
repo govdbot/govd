@@ -8,27 +8,26 @@ services:
     env_file:
       - .env
     volumes:
-      - ./config.yaml:/app/config.yaml
-      - ./cookies:/app/cookies
+      - ./private:/app/private
+      - ./logs:/app/logs
     depends_on:
       db:
         condition: service_healthy
 
   db:
-    image: mariadb:latest
-    container_name: mariadb
+    image: postgres:latest
+    container_name: postgres
     restart: unless-stopped
     environment:
-      MARIADB_DATABASE: govd
-      MARIADB_USER: govd
-      MARIADB_PASSWORD: password
-      MARIADB_ROOT_PASSWORD: example
+      POSTGRES_DB: govd
+      POSTGRES_USER: govd
+      POSTGRES_PASSWORD: password
     volumes:
-      - db:/var/lib/mysql
+      - db:/var/lib/postgresql/data
     networks:
       - govd-network
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ["CMD-SHELL", "pg_isready -U govd"]
       interval: 5s
       timeout: 5s
       retries: 30

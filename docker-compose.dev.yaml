@@ -1,0 +1,58 @@
+services:
+  govd-bot:
+    build: .
+    container_name: govd-bot
+    restart: unless-stopped
+    networks:
+      - govd-network
+    env_file:
+      - .env
+    volumes:
+      - ./private:/app/private
+      - ./logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:latest
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: govd
+      POSTGRES_USER: govd
+      POSTGRES_PASSWORD: password
+    volumes:
+      - db:/var/lib/postgresql/data
+    networks:
+      - govd-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U govd"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  pgweb:
+    image: sosedoff/pgweb:latest
+    container_name: pgweb
+    restart: unless-stopped
+    command: >
+      --bind=0.0.0.0
+      --url=postgres://govd:password@db:5432/govd?sslmode=disable
+      --log-level=error
+    ports:
+      - "8081:8081"
+    networks:
+      - govd-network
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db:
+
+networks:
+  govd-network:
+    driver: bridge
+

@@ -38,8 +38,9 @@ RUN mkdir -p \
     /bot/downloads \
     /bot/packages
 
-# Build and install libheif - only rebuilt if version changes
 WORKDIR /bot/packages
+
+# Build and install libheif - only rebuilt if version changes
 RUN --mount=type=cache,target=/bot/downloads/libheif \
     mkdir -p /bot/downloads/libheif && \
     cd /bot/downloads/libheif && \
@@ -76,8 +77,9 @@ RUN --mount=type=cache,target=/bot/downloads/ffmpeg \
     cp -rv ffmpeg/lib/pkgconfig/* /usr/local/lib/pkgconfig/ && \
     ldconfig /usr/local
 
-# Copy go.mod and go.sum first for better caching
 WORKDIR /bot
+
+# Copy go.mod and go.sum first for better caching
 COPY go.mod go.sum ./
 
 # Download Go dependencies - cached between builds
@@ -111,4 +113,5 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 RUN ldconfig /usr/local
 
 WORKDIR /app
+
 ENTRYPOINT ["./govd"]

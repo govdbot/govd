@@ -1,9 +1,0 @@
-instagram:
-  edge_proxy_url: https://example.com
-
-reddit:
-  https_proxy: https://example.com
-
-youtube:
-  instance: https://example.com
-  disabled: true
