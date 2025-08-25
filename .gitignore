@@ -1,13 +1,19 @@
+# binaries
 *.exe
-*.json
-*.txt
-*.py
-*.html
-old/
-bin/
-.env
-.idea/
-logs/
-downloads/
 govd
+
+# build artifacts
+.env
+
+# ides and editors
+.idea/
+
+# auto generated files
+*_gen.go
+
+# system files
 .DS_Store
+
+# project folders
+downloads/
+logs/

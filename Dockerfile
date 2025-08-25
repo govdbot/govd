@@ -1,18 +1,17 @@
-# Build stage
 FROM golang:bookworm AS builder
 
-# Set build arguments
+# build arguments
 ARG FFMPEG_VERSION=7.1
 ARG LIBHEIF_VERSION=1.19.7
 
-# Environment variables for build
+# environment variables for build
 ENV CGO_CFLAGS="-I/usr/local/include"
 ENV CGO_LDFLAGS="-L/usr/local/lib"
 ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
 ENV GOCACHE=/go-cache
 ENV GOMODCACHE=/gomod-cache
 
-# Install build dependencies first - these rarely change
+# install build dependencies first
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
@@ -29,7 +28,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         cmake \
         libde265-dev
 
-# Prepare directories
+# prepare directories
 RUN mkdir -p \
     /usr/local/bin \
     /usr/local/lib/pkgconfig \
@@ -40,7 +39,7 @@ RUN mkdir -p \
 
 WORKDIR /bot/packages
 
-# Build and install libheif - only rebuilt if version changes
+#bBuild and install libheif - only rebuild if version changes
 RUN --mount=type=cache,target=/bot/downloads/libheif \
     mkdir -p /bot/downloads/libheif && \
     cd /bot/downloads/libheif && \
@@ -56,7 +55,7 @@ RUN --mount=type=cache,target=/bot/downloads/libheif \
     make -j"$(nproc)" && \
     make install
 
-# Download and install ffmpeg - only rebuilt if version changes
+# download and install ffmpeg - only rebuild if version changes
 RUN --mount=type=cache,target=/bot/downloads/ffmpeg \
     mkdir -p /bot/downloads/ffmpeg && \
     cd /bot/downloads/ffmpeg && \
@@ -79,38 +78,49 @@ RUN --mount=type=cache,target=/bot/downloads/ffmpeg \
 
 WORKDIR /bot
 
-# Copy go.mod and go.sum first for better caching
+# copy go.mod and go.sum first for better caching
 COPY go.mod go.sum ./
 
-# Download Go dependencies - cached between builds
+# download go dependencies - cached between builds
 RUN --mount=type=cache,target=/gomod-cache \
-    go mod download
+    go mod download && \
+    go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 
-# Copy application code last (changes most frequently)
+# copy source files needed for sqlc
+COPY sqlc.yaml ./
+COPY internal/database/queries/ ./internal/database/queries/
+COPY internal/database/migrations/ ./internal/database/migrations/
+
+# generate sqlc code
+RUN sqlc generate
+
+# copy the rest of the source code
 COPY . .
 
-# Build the application with build cache
+# build the application with build cache
 RUN --mount=type=cache,target=/go-cache \
     --mount=type=cache,target=/gomod-cache \
     chmod +x build.sh && ./build.sh
 
-# Final stage - create a smaller runtime image
+# final stage - create a smaller runtime image
 FROM debian:bookworm-slim AS runtime
 
-# Copy only what's needed from the builder stage
-COPY --from=builder /usr/local/lib/ /usr/local/lib/
-COPY --from=builder /usr/local/bin/ /usr/local/bin/
-COPY --from=builder /bot/govd /app/govd
-
-# Install only runtime dependencies with apt cache
+# install only runtime dependencies with apt cache
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
     apt-get install -y --no-install-recommends libde265-0 ca-certificates openssl && \
     rm -rf /var/lib/apt/lists/*
 
-# Configure dynamic linker to include /usr/local/lib
+# copy libraries and binaries from builder stage
+COPY --from=builder /usr/local/lib/ /usr/local/lib/
+COPY --from=builder /usr/local/bin/ /usr/local/bin/
+
+# configure dynamic linker to include /usr/local/lib
 RUN ldconfig /usr/local
+
+# copy the built binary from builder stage
+COPY --from=builder /bot/govd /app/govd
 
 WORKDIR /app
 
