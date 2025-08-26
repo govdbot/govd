@@ -1,7 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS chat (
-    id BIGSERIAL PRIMARY KEY,
     chat_id BIGINT NOT NULL UNIQUE,
     type chat_type NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,

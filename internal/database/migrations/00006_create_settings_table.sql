@@ -1,7 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS settings (
-    id BIGSERIAL PRIMARY KEY,
     chat_id BIGINT NOT NULL UNIQUE REFERENCES chat(chat_id) ON DELETE CASCADE,
     nsfw BOOLEAN DEFAULT FALSE NOT NULL,
     media_album_limit INT DEFAULT 10 NOT NULL,

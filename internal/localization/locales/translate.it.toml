@@ -1,0 +1,15 @@
+[AddButton]
+hash = "sha1-11d91df6dbbe818cf48a5be9d16788654340d935"
+other = "aggiungi ad un gruppo"
+
+[AddedToGroup]
+hash = "sha1-b101140565ce40a0b9ee026d1719feb8e8361c93"
+other = "grazie per avermi aggiunto! utilizza i bottoni sottostanti per modificare le impostazioni"
+
+[Error]
+hash = "sha1-614df8086d667e71dce55d45e98a555ce8d44ae0"
+other = "si è verificato un errore, riprova più tardi"
+
+[Start]
+hash = "sha1-40428a095863d4dc32706540458f80f76b1b1eef"
+other = "benvenuto {{.Name}} in govd, un bot telegram open-source per scaricare contenuti da varie piattaforme social"

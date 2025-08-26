@@ -1,36 +1,33 @@
 package database
 
 import (
+	"database/sql"
 	"embed"
 
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/pressly/goose/v3"
-	"go.uber.org/zap"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 //go:embed migrations/*.sql
-var embedMigrations embed.FS
+var MigrationsFS embed.FS
 
-type gooseLogger struct {
-	log *zap.SugaredLogger
-}
-
-func (l gooseLogger) Fatalf(format string, v ...interface{}) {
-	l.log.Fatalf(format, v...)
-}
-
-func (l gooseLogger) Printf(format string, v ...interface{}) {
-	l.log.Infof(format, v...)
-}
-
-func runMigrations(dsn string) {
-	goose.SetBaseFS(embedMigrations)
+func openDB() (*sql.DB, error) {
+	dsn := getDSN()
+	goose.SetBaseFS(MigrationsFS)
 	goose.SetLogger(gooseLogger{log: logger.L})
 	goose.SetDialect("postgres")
 
 	db, err := goose.OpenDBWithDriver("pgx", dsn)
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
+}
+
+func runMigrations() {
+	db, err := openDB()
 	if err != nil {
 		logger.L.Fatalf("failed to open database: %v", err)
 	}

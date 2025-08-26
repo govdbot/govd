@@ -28,10 +28,9 @@ services:
       - govd-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U govd"]
-      interval: 5s
+      interval: 3s
       timeout: 5s
       retries: 30
-      start_period: 10s
 
 volumes:
   db:

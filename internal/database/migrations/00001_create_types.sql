@@ -28,4 +28,5 @@ CREATE TYPE chat_type AS ENUM (
 -- +goose StatementBegin
 DROP TYPE IF EXISTS media_type;
 DROP TYPE IF EXISTS media_codec;
+DROP TYPE IF EXISTS chat_type;
 -- +goose StatementEnd

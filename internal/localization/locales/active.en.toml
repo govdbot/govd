@@ -1,0 +1,4 @@
+AddButton = "add to a group"
+AddedToGroup = "thank you for adding me! use the buttons below to change settings"
+Error = "an error occurred, please try again later"
+Start = "welcome {{.Name}} to govd, an open-source telegram bot for downloading content from various social platforms"

@@ -2,7 +2,7 @@ FROM golang:bookworm AS builder
 
 # build arguments
 ARG FFMPEG_VERSION=7.1
-ARG LIBHEIF_VERSION=1.19.7
+ARG LIBHEIF_VERSION=1.20.2
 
 # environment variables for build
 ENV CGO_CFLAGS="-I/usr/local/include"
@@ -39,7 +39,7 @@ RUN mkdir -p \
 
 WORKDIR /bot/packages
 
-#bBuild and install libheif - only rebuild if version changes
+# build and install libheif - only rebuild if version changes
 RUN --mount=type=cache,target=/bot/downloads/libheif \
     mkdir -p /bot/downloads/libheif && \
     cd /bot/downloads/libheif && \

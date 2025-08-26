@@ -1,8 +1,10 @@
 package main
 
 import (
+	"github.com/govdbot/govd/internal/bot"
 	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/database"
+	"github.com/govdbot/govd/internal/localization"
 	"github.com/govdbot/govd/internal/logger"
 )
 
@@ -11,14 +13,16 @@ func main() {
 	defer logger.L.Sync()
 
 	config.Load()
-
 	logger.SetLevel(config.Env.LogLevel)
 
 	if len(config.Env.Whitelist) > 0 {
 		logger.L.Infof("whitelist is enabled: %v", config.Env.Whitelist)
 	}
 
+	localization.Init()
 	database.Init()
+
+	go bot.Start()
 
 	select {}
 }
