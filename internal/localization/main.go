@@ -19,10 +19,6 @@ func Init() {
 	mustLoad("locales/active.it.toml")
 }
 
-func New(language ...string) *i18n.Localizer {
-	return i18n.NewLocalizer(bundle, language...)
-}
-
 func mustLoad(file string) {
 	_, err := bundle.LoadMessageFileFS(LocaleFS, file)
 	if err != nil {

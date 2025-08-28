@@ -10,8 +10,8 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
-func AddGroupHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
-	if !isBotAdded(bot, ctx) {
+func AddedToGroupHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
+	if !isAddedUpdate(bot, ctx) {
 		return nil
 	}
 	addedBy := ctx.MyChatMember.From
@@ -30,15 +30,15 @@ func AddGroupHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 	localizer := localization.New(res.Language)
 	chat.SendMessage(
 		bot,
-		localizer.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: localization.AddButtonMessage.ID,
+		localizer.T(&i18n.LocalizeConfig{
+			MessageID: localization.AddedToGroupMessage.ID,
 		}),
 		nil,
 	)
 	return nil
 }
 
-func isBotAdded(bot *gotgbot.Bot, ctx *ext.Context) bool {
+func isAddedUpdate(bot *gotgbot.Bot, ctx *ext.Context) bool {
 	update := ctx.MyChatMember
 	if update == nil {
 		return false

@@ -10,7 +10,9 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers"
+	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/callbackquery"
 	botHandlers "github.com/govdbot/govd/internal/bot/handlers"
+	botSettings "github.com/govdbot/govd/internal/bot/handlers/settings"
 )
 
 var allowedUpdates = []string{
@@ -65,12 +67,47 @@ func Start() {
 }
 
 func registerHandlers(dispatcher *ext.Dispatcher) {
+	// start
 	dispatcher.AddHandler(handlers.NewCommand(
 		"start",
 		botHandlers.StartHandler,
 	))
+	dispatcher.AddHandler(handlers.NewCallback(
+		callbackquery.Equal("start"),
+		botHandlers.StartHandler,
+	))
+
+	// added to group
 	dispatcher.AddHandler(handlers.NewMyChatMember(
 		nil,
-		botHandlers.AddGroupHandler,
+		botHandlers.AddedToGroupHandler,
+	))
+
+	// settings
+	dispatcher.AddHandler(handlers.NewCommand(
+		"settings",
+		botSettings.SettingsHandler,
+	))
+	dispatcher.AddHandler(handlers.NewCallback(
+		callbackquery.Equal("settings"),
+		botSettings.SettingsHandler,
+	))
+	dispatcher.AddHandler(handlers.NewCallback(
+		callbackquery.Prefix("settings.options"),
+		botSettings.SettingsOptionsHandler,
+	))
+	dispatcher.AddHandler(handlers.NewCallback(
+		callbackquery.Prefix("settings.toggle"),
+		botSettings.SettingsToggleHandler,
+	))
+	dispatcher.AddHandler(handlers.NewCallback(
+		callbackquery.Prefix("settings.select"),
+		botSettings.SettingsSelectHandler,
+	))
+
+	// other
+	dispatcher.AddHandler(handlers.NewCallback(
+		callbackquery.Equal("close"),
+		botHandlers.CloseHandler,
 	))
 }

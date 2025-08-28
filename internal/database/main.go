@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var q *Queries
+var queries *Queries
 
 func Init() {
 	runMigrations()
@@ -17,7 +17,7 @@ func Init() {
 	pool := getConnectionPool()
 
 	// convert pool to sqlc queries
-	q = New(pool)
+	queries = New(pool)
 }
 
 func getConnectionPool() *pgxpool.Pool {
@@ -40,5 +40,5 @@ func getDSN() string {
 }
 
 func Q() *Queries {
-	return q
+	return queries
 }

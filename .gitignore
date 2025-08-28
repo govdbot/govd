@@ -17,3 +17,6 @@ govd
 # project folders
 downloads/
 logs/
+
+# i18n translations
+translate.*.toml

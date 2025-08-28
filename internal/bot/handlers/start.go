@@ -16,7 +16,7 @@ import (
 
 func StartHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 	if ctx.EffectiveChat.Type != gotgbot.ChatTypePrivate {
-		return handleGroupStart(bot, ctx)
+		return HandleGroupStart(bot, ctx)
 	}
 	user := ctx.EffectiveUser
 	res, err := database.Q().GetOrCreateChat(
@@ -30,29 +30,46 @@ func StartHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 	if err != nil {
 		return err
 	}
+
 	localizer := localization.New(res.Language)
+
 	keyboard := getStartKeyboard(bot, localizer)
-	ctx.EffectiveMessage.Reply(
-		bot,
-		localizer.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: localization.StartMessage.ID,
-			TemplateData: map[string]string{
-				"Name": util.MentionUser(user),
-			},
-		}),
-		&gotgbot.SendMessageOpts{
-			ReplyMarkup: keyboard,
+
+	text := localizer.T(&i18n.LocalizeConfig{
+		MessageID: localization.StartMessage.ID,
+		TemplateData: map[string]string{
+			"Name": util.MentionUser(user),
 		},
-	)
+	})
+
+	if ctx.Message != nil {
+		ctx.EffectiveMessage.Reply(
+			bot, text,
+			&gotgbot.SendMessageOpts{
+				ReplyMarkup: keyboard,
+			},
+		)
+	} else if ctx.CallbackQuery != nil {
+		ctx.CallbackQuery.Answer(bot, nil)
+		ctx.EffectiveMessage.EditText(
+			bot, text,
+			&gotgbot.EditMessageTextOpts{
+				ReplyMarkup: keyboard,
+			},
+		)
+	}
 	return nil
 }
 
 func getStartKeyboard(
 	bot *gotgbot.Bot,
-	localizer *i18n.Localizer,
+	localizer *localization.Localizer,
 ) gotgbot.InlineKeyboardMarkup {
-	addButton := localizer.MustLocalize(&i18n.LocalizeConfig{
-		MessageID: localization.AddButtonMessage.ID,
+	addButton := localizer.T(&i18n.LocalizeConfig{
+		MessageID: localization.AddButton.ID,
+	})
+	settingsButton := localizer.T(&i18n.LocalizeConfig{
+		MessageID: localization.SettingsButton.ID,
 	})
 	return gotgbot.InlineKeyboardMarkup{
 		InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
@@ -67,6 +84,12 @@ func getStartKeyboard(
 			},
 			{
 				{
+					Text:         settingsButton,
+					CallbackData: "settings",
+				},
+			},
+			{
+				{
 					Text: "github",
 					Url:  config.Env.RepoURL,
 				},
@@ -75,7 +98,7 @@ func getStartKeyboard(
 	}
 }
 
-func handleGroupStart(bot *gotgbot.Bot, ctx *ext.Context) error {
+func HandleGroupStart(bot *gotgbot.Bot, ctx *ext.Context) error {
 	ctx.EffectiveMessage.Reply(
 		bot,
 		"✅",
