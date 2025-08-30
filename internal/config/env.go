@@ -5,7 +5,6 @@ import (
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
-	"github.com/govdbot/govd/internal/models"
 	"go.uber.org/zap"
 )
 
@@ -39,8 +38,8 @@ func loadEnv() {
 	parseEnvIntRange("DEFAULT_MEDIA_ALBUM_LIMIT", &Env.DefaultMediaAlbumLimit, 1, 20, false)
 }
 
-func GetDefaultConfig() *models.EnvConfig {
-	return &models.EnvConfig{
+func GetDefaultConfig() *EnvConfig {
+	return &EnvConfig{
 		DBHost: "localhost",
 		DBPort: 5432,
 		DBName: "govd",
