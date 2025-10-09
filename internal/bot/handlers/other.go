@@ -7,6 +7,7 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/localization"
+	"github.com/govdbot/govd/internal/util"
 )
 
 func CloseHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
@@ -22,7 +23,7 @@ func CloseHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 		return err
 	}
 	localizer := localization.New(res.Language)
-	isAdmin := CheckAdminPermission(bot, ctx, localizer)
+	isAdmin := util.CheckAdminPermission(bot, ctx, localizer)
 	if !isAdmin {
 		return nil
 	}

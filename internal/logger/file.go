@@ -49,7 +49,7 @@ func extractRawData(content any) ([]byte, error) {
 	case fmt.Stringer:
 		return []byte(v.String()), nil
 	default:
-		return marshalToJSON(content)
+		return nil, fmt.Errorf("unsupported content type: %T", content)
 	}
 }
 
@@ -69,14 +69,6 @@ func extractFromHTTPResponse(resp *http.Response) ([]byte, error) {
 	}
 	resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	return bodyBytes, nil
-}
-
-func marshalToJSON(content any) ([]byte, error) {
-	jsonData, err := sonic.ConfigFastest.Marshal(content)
-	if err == nil {
-		return jsonData, nil
-	}
-	return fmt.Appendf(nil, "%v", content), nil
 }
 
 func isJSONData(data []byte) bool {

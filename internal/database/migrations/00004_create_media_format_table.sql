@@ -2,11 +2,15 @@
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS media_format (
     id BIGSERIAL PRIMARY KEY,
-    item_id BIGINT NOT NULL REFERENCES media_item(id) ON DELETE CASCADE,
     format_id VARCHAR(255) NOT NULL,
+    item_id BIGINT NOT NULL REFERENCES media_item(id) ON DELETE CASCADE,
     file_id VARCHAR(255) NOT NULL,
+    type media_type NOT NULL,
     audio_codec media_codec,
     video_codec media_codec,
+    duration INT,
+    title VARCHAR(255),
+    artist VARCHAR(255),
     width INT,
     height INT,
     bitrate INT,

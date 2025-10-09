@@ -28,5 +28,4 @@ settings_un AS (
     FROM upsert_settings us
 )
 SELECT c.chat_id, c.type, s.nsfw, s.media_album_limit, s.silent, s.captions, s.language
-FROM chat_un c
-JOIN settings_un s ON s.chat_id = c.chat_id;
+FROM chat_un c JOIN settings_un s ON s.chat_id = c.chat_id;

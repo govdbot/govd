@@ -11,6 +11,8 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/callbackquery"
+	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/inlinequery"
+	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/message"
 	botHandlers "github.com/govdbot/govd/internal/bot/handlers"
 	botSettings "github.com/govdbot/govd/internal/bot/handlers/settings"
 )
@@ -110,4 +112,20 @@ func registerHandlers(dispatcher *ext.Dispatcher) {
 		callbackquery.Equal("close"),
 		botHandlers.CloseHandler,
 	))
+
+	// whitelist
+	if len(config.Env.Whitelist) > 0 {
+		dispatcher.AddHandlerToGroup(handlers.NewMessage(
+			message.All,
+			botHandlers.WhitelistHandler,
+		), -10)
+		dispatcher.AddHandlerToGroup(handlers.NewCallback(
+			callbackquery.All,
+			botHandlers.WhitelistHandler,
+		), -10)
+		dispatcher.AddHandlerToGroup(handlers.NewInlineQuery(
+			inlinequery.All,
+			botHandlers.WhitelistHandler,
+		), -10)
+	}
 }

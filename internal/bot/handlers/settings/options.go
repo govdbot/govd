@@ -6,9 +6,9 @@ import (
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
-	"github.com/govdbot/govd/internal/bot/handlers"
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/localization"
+	"github.com/govdbot/govd/internal/util"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
@@ -53,7 +53,7 @@ func ListOptionsByID(b *gotgbot.Bot, ctx *ext.Context, settingID string) error {
 	}
 
 	localizer := localization.New(res.Language)
-	if isGroup && !handlers.CheckAdminPermission(b, ctx, localizer) {
+	if isGroup && !util.CheckAdminPermission(b, ctx, localizer) {
 		return nil
 	}
 

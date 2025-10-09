@@ -13,7 +13,10 @@ import (
 	_ "image/png" // register PNG decoder
 
 	"github.com/govdbot/govd/internal/logger"
+	"github.com/govdbot/govd/internal/models"
+
 	_ "github.com/strukturag/libheif/go/heif" // register HEIF decoder
+
 	"golang.org/x/image/draw"
 	_ "golang.org/x/image/webp" // register WebP decoder
 )
@@ -94,7 +97,7 @@ func DecodeImage(
 	return img, nil
 }
 
-func DetectImageFormat(file io.ReadSeeker) (string, error) {
+func DetectImageFormat(file io.ReadSeeker) (models.ImageFormat, error) {
 	header := make([]byte, 12)
 
 	_, err := file.Read(header)
@@ -108,16 +111,16 @@ func DetectImageFormat(file io.ReadSeeker) (string, error) {
 		return "", fmt.Errorf("file header too short: %d bytes", len(header))
 	}
 	if bytes.HasPrefix(header, jpegHeader) {
-		return "jpeg", nil
+		return models.ImageFormatJPEG, nil
 	}
 	if bytes.HasPrefix(header, pngHeader) {
-		return "png", nil
+		return models.ImageFormatPNG, nil
 	}
 	if bytes.HasPrefix(header, gifHeader) {
-		return "gif", nil
+		return models.ImageFormatGIF, nil
 	}
 	if isHEIF(header) {
-		return "heif", nil
+		return models.ImageFormatHEIF, nil
 	}
 	if bytes.HasPrefix(header, riffHeader) {
 		if bytes.Equal(header[8:12], webpHeader) {
@@ -130,10 +133,10 @@ func DetectImageFormat(file io.ReadSeeker) (string, error) {
 }
 
 func isHEIF(header []byte) bool {
-	isHeifHeader := header[0] == 0x00 && header[1] == 0x00 &&
+	isHeif := header[0] == 0x00 && header[1] == 0x00 &&
 		header[2] == 0x00 && (header[3] == 0x18 || header[3] == 0x1C) &&
 		bytes.Equal(header[4:8], []byte("ftyp"))
-	if !isHeifHeader {
+	if !isHeif {
 		return false
 	}
 	heifBrands := []string{"heic", "heix", "mif1", "msf1"}

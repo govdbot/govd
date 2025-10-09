@@ -9,6 +9,7 @@ require (
 	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.33
 	github.com/abema/go-mp4 v1.4.1
 	github.com/bytedance/sonic v1.14.0
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/joho/godotenv v1.5.1
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
@@ -18,13 +19,13 @@ require (
 	github.com/sunfish-shogi/bufseekio v0.1.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/image v0.30.0
+	golang.org/x/net v0.40.0
 	golang.org/x/text v0.28.0
 )
 
 require (
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect

@@ -1,0 +1,201 @@
+package chunked
+
+import (
+	"context"
+	"fmt"
+	"io"
+	"net/http"
+	"sync"
+
+	"github.com/govdbot/govd/internal/networking"
+)
+
+type ChunkedDownloader struct {
+	client    *networking.HTTPClient
+	url       string
+	totalSize int64
+	chunkSize int64
+	numChunks int
+
+	wg sync.WaitGroup
+}
+
+func NewChunkedDownloader(
+	ctx context.Context,
+	client *networking.HTTPClient,
+	url string,
+	chunkSize int64,
+) (*ChunkedDownloader, error) {
+	if client == nil {
+		return nil, fmt.Errorf("http client cannot be nil")
+	}
+
+	resp, err := client.FetchWithContext(
+		ctx, http.MethodHead, url, nil,
+	)
+
+	// prefer HEAD, but some servers block/close HEAD requests (EOF). If HEAD fails
+	// fallback to a small GET with Range to infer content length and range support.
+	if err == nil {
+		defer resp.Body.Close()
+		totalSize := resp.ContentLength
+		if totalSize > 0 && resp.Header.Get("Accept-Ranges") == "bytes" {
+			numChunks := int((totalSize + chunkSize - 1) / chunkSize)
+			return &ChunkedDownloader{
+				client:    client,
+				url:       url,
+				totalSize: totalSize,
+				chunkSize: chunkSize,
+				numChunks: numChunks,
+			}, nil
+		}
+	}
+
+	// fallback: try a ranged GET for the first byte to get Content-Range or Content-Length
+	headers := map[string]string{"Range": "bytes=0-0"}
+	resp, err = client.FetchWithContext(ctx, http.MethodGet, url, &networking.RequestParams{Headers: headers})
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine content length (head fallback): %w", err)
+	}
+	defer resp.Body.Close()
+
+	// prefer Content-Range: "bytes 0-0/12345"
+	if cr := resp.Header.Get("Content-Range"); cr != "" {
+		var total int64
+		_, err := fmt.Sscanf(cr, "bytes %*d-%*d/%d", &total)
+		if err == nil && total > 0 {
+			if resp.StatusCode != http.StatusPartialContent {
+				return nil, fmt.Errorf("expected 206 for ranged GET, got %d", resp.StatusCode)
+			}
+			numChunks := int((total + chunkSize - 1) / chunkSize)
+			return &ChunkedDownloader{
+				client:    client,
+				url:       url,
+				totalSize: total,
+				chunkSize: chunkSize,
+				numChunks: numChunks,
+			}, nil
+		}
+	}
+
+	// fallback to Content-Length header on GET response. only accept this if
+	// the response is a full GET (200). For a ranged GET the Content-Length
+	// will be the size of the fragment (e.g. 1) and is not the total size.
+	if resp.StatusCode == http.StatusOK && resp.ContentLength > 0 {
+		if resp.Header.Get("Accept-Ranges") != "bytes" {
+			return nil, fmt.Errorf("server does not support range requests")
+		}
+		totalSize := resp.ContentLength
+		numChunks := int((totalSize + chunkSize - 1) / chunkSize)
+		return &ChunkedDownloader{
+			client:    client,
+			url:       url,
+			totalSize: totalSize,
+			chunkSize: chunkSize,
+			numChunks: numChunks,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("content length not available or server does not support ranged requests")
+}
+
+func (cd *ChunkedDownloader) downloadChunk(ctx context.Context, index int, chunks chan<- *Chunk) {
+	start := int64(index) * cd.chunkSize
+	end := min(start+cd.chunkSize-1, cd.totalSize-1)
+
+	headers := map[string]string{
+		"Range": fmt.Sprintf("bytes=%d-%d", start, end),
+	}
+
+	resp, err := cd.client.FetchWithContext(
+		ctx,
+		http.MethodGet,
+		cd.url, &networking.RequestParams{
+			Headers: headers,
+		})
+	if err != nil {
+		chunks <- &Chunk{Index: index, Error: fmt.Errorf("failed to download chunk %d: %w", index, err)}
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusPartialContent {
+		chunks <- &Chunk{Index: index, Error: fmt.Errorf("expected status 206, got %d for chunk %d", resp.StatusCode, index)}
+		return
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		chunks <- &Chunk{Index: index, Error: fmt.Errorf("failed to read chunk %d: %w", index, err)}
+		return
+	}
+
+	chunks <- &Chunk{Index: index, Data: data}
+}
+
+func (cd *ChunkedDownloader) Download(
+	ctx context.Context,
+	writer io.Writer,
+	maxConcurrency int,
+) error {
+	maxConcurrency = max(maxConcurrency, 1)
+
+	chunks := make(chan *Chunk, cd.numChunks)
+	semaphore := make(chan struct{}, maxConcurrency)
+
+	cd.wg.Add(cd.numChunks)
+	for i := 0; i < cd.numChunks; i++ {
+		go func(index int) {
+			defer cd.wg.Done()
+			semaphore <- struct{}{}        // acquire
+			defer func() { <-semaphore }() // release
+			cd.downloadChunk(ctx, index, chunks)
+		}(i)
+	}
+
+	// close chunks channel when all downloads complete
+	go func() {
+		cd.wg.Wait()
+		close(chunks)
+	}()
+
+	return cd.writeChunks(writer, chunks)
+}
+
+func (cd *ChunkedDownloader) writeChunks(writer io.Writer, chunks <-chan *Chunk) error {
+	nextIndex := 0
+	chunkBuffer := make(map[int]*Chunk)
+	chunksReceived := 0
+
+	for chunk := range chunks {
+		chunksReceived++
+
+		if chunk.Error != nil {
+			return fmt.Errorf("chunk %d failed: %w", chunk.Index, chunk.Error)
+		}
+
+		chunkBuffer[chunk.Index] = chunk
+
+		for {
+			if chunk, exists := chunkBuffer[nextIndex]; exists {
+				if _, err := writer.Write(chunk.Data); err != nil {
+					return fmt.Errorf("failed to write chunk %d: %w", nextIndex, err)
+				}
+				delete(chunkBuffer, nextIndex)
+				nextIndex++
+			} else {
+				break
+			}
+		}
+	}
+
+	if chunksReceived != cd.numChunks {
+		return fmt.Errorf("expected %d chunks, got %d", cd.numChunks, chunksReceived)
+	}
+
+	if nextIndex != cd.numChunks {
+		return fmt.Errorf("expected %d chunks, wrote %d", cd.numChunks, nextIndex)
+	}
+
+	return nil
+}
