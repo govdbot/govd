@@ -1,11 +1,9 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/govdbot/govd/internal/config"
-	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/localization"
 	"github.com/govdbot/govd/internal/util"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -19,19 +17,12 @@ func StartHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 		return HandleGroupStart(bot, ctx)
 	}
 	user := ctx.EffectiveUser
-	res, err := database.Q().GetOrCreateChat(
-		context.Background(),
-		database.GetOrCreateChatParams{
-			ChatID:   user.Id,
-			Type:     database.ChatTypePrivate,
-			Language: localization.GetLocaleFromCode(user.LanguageCode),
-		},
-	)
+
+	settings, err := util.SettingsFromContext(ctx)
 	if err != nil {
 		return err
 	}
-
-	localizer := localization.New(res.Language)
+	localizer := localization.New(settings.Language)
 
 	keyboard := getStartKeyboard(bot, localizer)
 

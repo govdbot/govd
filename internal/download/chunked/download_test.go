@@ -2,7 +2,6 @@ package chunked
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -10,9 +9,6 @@ import (
 	"github.com/govdbot/govd/internal/networking"
 )
 
-// TestDownload100MB performs a real download from Hetzner test file to ensure the
-// chunked downloader writes data correctly and the final size matches.
-//
 // Note: This is an integration test that performs network IO and can take time.
 // It is skipped by default unless the TEST_INTEGRATION env var is set.
 func TestDownload100MB(t *testing.T) {
@@ -34,7 +30,7 @@ func TestDownload100MB(t *testing.T) {
 	}
 
 	// create temp file
-	f, err := ioutil.TempFile("", "chunked-test-*.bin")
+	f, err := os.CreateTemp("", "chunked-test-*.bin")
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
@@ -47,7 +43,6 @@ func TestDownload100MB(t *testing.T) {
 		t.Fatalf("download failed: %v", err)
 	}
 
-	// verify size roughly 100MB (allow small differences)
 	st, err := f.Stat()
 	if err != nil {
 		t.Fatalf("stat failed: %v", err)

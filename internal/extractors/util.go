@@ -1,10 +1,11 @@
 package extractors
 
 import (
-	"sync"
+	"context"
 
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
+	"github.com/govdbot/govd/internal/networking"
 	"github.com/govdbot/govd/internal/util"
 )
 
@@ -12,12 +13,9 @@ const (
 	maxRedirects = 5
 )
 
-var (
-	extractorsByHost  map[string][]*models.Extractor
-	extractorsMapOnce sync.Once
-)
+var extractorsByHost = getExtractorsMap()
 
-func FromURL(url string) *models.ExtractorContext {
+func FromURL(ctx context.Context, url string) *models.ExtractorContext {
 	var redirectCount int
 
 	currentURL := url
@@ -54,18 +52,24 @@ func FromURL(url string) *models.ExtractorContext {
 		// 	return nil
 		// }
 
-		ctx := &models.ExtractorContext{
+		extractorCtx := &models.ExtractorContext{
 			ContentID:   groups["id"],
 			ContentURL:  groups["match"],
 			MatchGroups: groups,
 			Extractor:   extractor,
+			Context:     ctx,
+			HTTPClient: networking.NewHTTPClient(
+				&networking.NewHTTPClientOptions{
+					Cookies: nil,
+				},
+			),
 		}
 		if !extractor.Redirect {
-			return ctx
+			return extractorCtx
 		}
 
 		// extractor requires fetching the URL for redirection
-		response, err := extractor.GetFunc(ctx)
+		response, err := extractor.GetFunc(extractorCtx)
 		if err != nil {
 			logger.L.Errorf("%s: %v", extractor.ID, err)
 			return nil
@@ -86,22 +90,19 @@ func FromURL(url string) *models.ExtractorContext {
 	return nil
 }
 
-func initExtractorsMap() {
-	extractorsMapOnce.Do(func() {
-		extractorsByHost = make(map[string][]*models.Extractor)
-		for _, extractor := range Extractors {
-			if len(extractor.Host) == 0 {
-				continue
-			}
-			for _, domain := range extractor.Host {
-				extractorsByHost[domain] = append(extractorsByHost[domain], extractor)
-			}
+func getExtractorsMap() map[string][]*models.Extractor {
+	extractorsByHost := make(map[string][]*models.Extractor)
+	for _, extractor := range Extractors {
+		if len(extractor.Host) == 0 {
+			continue
 		}
-	})
+		for _, domain := range extractor.Host {
+			extractorsByHost[domain] = append(extractorsByHost[domain], extractor)
+		}
+	}
+	return extractorsByHost
 }
 
 func GetExtractorsByHost(host string) []*models.Extractor {
-	initExtractorsMap()
-
 	return extractorsByHost[host]
 }

@@ -1,12 +1,10 @@
 package handlers
 
 import (
-	"context"
-
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
-	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/localization"
+	"github.com/govdbot/govd/internal/util"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
@@ -14,20 +12,12 @@ func AddedToGroupHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 	if !isAddedUpdate(bot, ctx) {
 		return nil
 	}
-	addedBy := ctx.MyChatMember.From
 	chat := ctx.MyChatMember.Chat
-	res, err := database.Q().GetOrCreateChat(
-		context.Background(),
-		database.GetOrCreateChatParams{
-			ChatID:   chat.Id,
-			Type:     database.ChatTypeGroup,
-			Language: localization.GetLocaleFromCode(addedBy.LanguageCode),
-		},
-	)
+	settings, err := util.SettingsFromContext(ctx)
 	if err != nil {
 		return err
 	}
-	localizer := localization.New(res.Language)
+	localizer := localization.New(settings.Language)
 	chat.SendMessage(
 		bot,
 		localizer.T(&i18n.LocalizeConfig{

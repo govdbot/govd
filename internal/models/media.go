@@ -2,9 +2,12 @@ package models
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/google/uuid"
 	"github.com/govdbot/govd/internal/database"
 )
@@ -27,10 +30,6 @@ func (m *Media) NewItem() *MediaItem {
 	return item
 }
 
-func (m *Media) AddItems(items ...*MediaItem) {
-	m.Items = append(m.Items, items...)
-}
-
 func (m *Media) SetCaption(caption string) {
 	if m.Caption != "" {
 		return
@@ -47,20 +46,29 @@ type MediaItem struct {
 }
 
 type MediaFormat struct {
-	FormatID   string
-	FileID     string
-	Type       database.MediaType
-	AudioCodec database.MediaCodec
-	VideoCodec database.MediaCodec
-	Duration   int32
-	Title      string
-	Artist     string
-	Width      int32
-	Height     int32
-	Bitrate    int32
+	FormatID         string
+	FileID           string
+	Type             database.MediaType
+	AudioCodec       database.MediaCodec
+	VideoCodec       database.MediaCodec
+	FileSize         int64
+	Duration         int32
+	Title            string
+	Artist           string
+	Width            int32
+	Height           int32
+	Bitrate          int32
+	URL              []string
+	ThumbnailURL     []string
+	DownloadSettings *DownloadSettings
+}
 
-	URL          []string
-	ThumbnailURL []string
+type DownloadedFormat struct {
+	Format            *MediaFormat
+	Index             int
+	FilePath          string
+	ThumbnailFilePath string
+	Error             error
 }
 
 func NewMediaFromDB(
@@ -222,4 +230,119 @@ func (mi *MediaItem) FilterFormats(
 		}
 	}
 	return filtered
+}
+
+func (format *MediaFormat) GetInputMedia(
+	filePath string,
+	thumbnailFilePath string,
+	messageCaption string,
+	spoiler bool,
+) (gotgbot.InputMedia, error) {
+	if format.FileID != "" {
+		return format.GetInputMediaWithFileID(messageCaption, spoiler)
+	}
+
+	_, inputMediaType := format.GetInfo()
+
+	fileObj, err := os.Open(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file: %w", err)
+	}
+
+	fileInputMedia := gotgbot.InputFileByReader(
+		filepath.Base(filePath),
+		fileObj,
+	)
+
+	var thumbnailFileInputMedia gotgbot.InputFile
+	if thumbnailFilePath != "" {
+		thumbnailFileObj, err := os.Open(thumbnailFilePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open file: %w", err)
+		}
+		thumbnailFileInputMedia = gotgbot.InputFileByReader(
+			filepath.Base(thumbnailFilePath),
+			thumbnailFileObj,
+		)
+	}
+
+	switch inputMediaType {
+	case FileTypeVideo:
+		return &gotgbot.InputMediaVideo{
+			Media:             fileInputMedia,
+			Thumbnail:         thumbnailFileInputMedia,
+			Width:             int64(format.Width),
+			Height:            int64(format.Height),
+			Duration:          int64(format.Duration),
+			Caption:           messageCaption,
+			SupportsStreaming: true,
+			ParseMode:         gotgbot.ParseModeHTML,
+			HasSpoiler:        spoiler,
+		}, nil
+	case FileTypeAudio:
+		return &gotgbot.InputMediaAudio{
+			Media:     fileInputMedia,
+			Thumbnail: thumbnailFileInputMedia,
+			Duration:  int64(format.Duration),
+			Performer: format.Artist,
+			Title:     format.Title,
+			Caption:   messageCaption,
+			ParseMode: gotgbot.ParseModeHTML,
+		}, nil
+	case FileTypePhoto:
+		return &gotgbot.InputMediaPhoto{
+			Media:      fileInputMedia,
+			Caption:    messageCaption,
+			ParseMode:  gotgbot.ParseModeHTML,
+			HasSpoiler: spoiler,
+		}, nil
+	case FileTypeDocument:
+		return &gotgbot.InputMediaDocument{
+			Media:     fileInputMedia,
+			Thumbnail: thumbnailFileInputMedia,
+			Caption:   messageCaption,
+			ParseMode: gotgbot.ParseModeHTML,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unknown input type: %s", inputMediaType)
+	}
+}
+
+func (format *MediaFormat) GetInputMediaWithFileID(
+	messageCaption string,
+	spoiler bool,
+) (gotgbot.InputMedia, error) {
+	_, inputMediaType := format.GetInfo()
+
+	fileInputMedia := gotgbot.InputFileByID(format.FileID)
+	switch inputMediaType {
+	case FileTypeVideo:
+		return &gotgbot.InputMediaVideo{
+			Media:      fileInputMedia,
+			Caption:    messageCaption,
+			ParseMode:  gotgbot.ParseModeHTML,
+			HasSpoiler: spoiler,
+		}, nil
+	case FileTypeAudio:
+		return &gotgbot.InputMediaAudio{
+			Media:     fileInputMedia,
+			Caption:   messageCaption,
+			ParseMode: gotgbot.ParseModeHTML,
+		}, nil
+	case FileTypePhoto:
+		return &gotgbot.InputMediaPhoto{
+			Media:      fileInputMedia,
+			Caption:    messageCaption,
+			ParseMode:  gotgbot.ParseModeHTML,
+			HasSpoiler: spoiler,
+		}, nil
+	case FileTypeDocument:
+		return &gotgbot.InputMediaDocument{
+			Media:     fileInputMedia,
+			Caption:   messageCaption,
+			ParseMode: gotgbot.ParseModeHTML,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unknown input type: %s", inputMediaType)
+	}
 }

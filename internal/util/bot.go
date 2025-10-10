@@ -1,14 +1,62 @@
 package util
 
 import (
+	"context"
 	"strconv"
 	"strings"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
+	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/localization"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
+
+func SettingsFromContext(ctx *ext.Context) (*database.GetOrCreateChatRow, error) {
+	chat := ctx.EffectiveMessage.Chat
+	isGroup := chat.Type != gotgbot.ChatTypePrivate
+	user := ctx.EffectiveUser
+
+	var chatType database.ChatType
+	if isGroup {
+		chatType = database.ChatTypeGroup
+	} else {
+		chatType = database.ChatTypePrivate
+	}
+
+	settings, err := database.Q().GetOrCreateChat(
+		context.Background(),
+		database.GetOrCreateChatParams{
+			ChatID:   chat.Id,
+			Type:     chatType,
+			Language: localization.GetLocaleFromCode(user.LanguageCode),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &settings, nil
+}
+
+func SendTypingAction(b *gotgbot.Bot, chatID int64) {
+	b.SendChatAction(chatID, "typing", nil)
+}
+
+func SendMediaAction(b *gotgbot.Bot, chatID int64, mediaType database.MediaType) {
+	var action string
+	switch mediaType {
+	case database.MediaTypeVideo:
+		action = "upload_video"
+	case database.MediaTypeAudio:
+		action = "upload_audio"
+	case database.MediaTypePhoto:
+		action = "upload_photo"
+	default:
+		action = "upload_document"
+	}
+	b.SendChatAction(chatID, action, nil)
+}
 
 func Unquote(text string) string {
 	// we wont use html.EscapeString

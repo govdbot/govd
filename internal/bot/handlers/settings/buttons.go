@@ -2,11 +2,11 @@ package settings
 
 import (
 	"encoding/json"
+	"slices"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/localization"
-	"github.com/govdbot/govd/internal/util"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
@@ -21,12 +21,12 @@ func BuildSettingsButtons(
 			CallbackData: "settings.options." + setting.ID,
 		})
 	}
-	return util.ChunkedSlice(buttons, 2)
+	return slices.Collect(slices.Chunk(buttons, 2))
 }
 
 func BuildSettingsOptionsButtons(
 	setting *BotSettings,
-	res database.GetOrCreateChatRow,
+	chatSettings *database.GetOrCreateChatRow,
 	localizer *localization.Localizer,
 ) [][]gotgbot.InlineKeyboardButton {
 	var buttons [][]gotgbot.InlineKeyboardButton
@@ -34,7 +34,7 @@ func BuildSettingsOptionsButtons(
 	switch setting.Type {
 	case SettingsTypeToggle:
 		var buttonText string
-		value := setting.GetCurrentValueFunc(res)
+		value := setting.GetCurrentValueFunc(chatSettings)
 		enabled, ok := value.(bool)
 		if !ok {
 			enabled = false
@@ -57,7 +57,7 @@ func BuildSettingsOptionsButtons(
 	case SettingsTypeSelect:
 		if setting.OptionsFunc != nil {
 			options := setting.OptionsFunc(localizer)
-			currentValue := setting.GetCurrentValueFunc(res)
+			currentValue := setting.GetCurrentValueFunc(chatSettings)
 
 			var optionButtons []gotgbot.InlineKeyboardButton
 
@@ -83,7 +83,7 @@ func BuildSettingsOptionsButtons(
 			if chunkSize <= 0 {
 				chunkSize = 1
 			}
-			buttons = append(buttons, util.ChunkedSlice(optionButtons, chunkSize)...)
+			buttons = append(buttons, slices.Collect(slices.Chunk(optionButtons, chunkSize))...)
 		}
 	}
 

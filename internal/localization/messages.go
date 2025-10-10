@@ -95,4 +95,52 @@ var (
 		ID:    "DisabledButton",
 		Other: "disabled",
 	}
+	ErrorUnavailable = &i18n.Message{
+		ID:    "ErrorUnavailable",
+		Other: "this content is unavailable",
+	}
+	ErrorTimeout = &i18n.Message{
+		ID:    "ErrorTimeout",
+		Other: "timeout error when downloading. try again later.",
+	}
+	ErrorUnsupportedImageFormat = &i18n.Message{
+		ID:    "ErrorUnsupportedImageFormat",
+		Other: "unsupported image format",
+	}
+	ErrorUnsupportedExtractorType = &i18n.Message{
+		ID:    "ErrorUnsupportedExtractorType",
+		Other: "unsupported extractor type",
+	}
+	ErrorMediaAlbumLimitExceeded = &i18n.Message{
+		ID:    "ErrorMediaAlbumLimitExceeded",
+		Other: "media album limit exceeds the maximum allowed for this group. change /settings to increase the limit.",
+	}
+	ErrorNSFWNotAllowed = &i18n.Message{
+		ID:    "ErrorNSFWNotAllowed",
+		Other: "this content is marked as nsfw and can't be downloaded in this group. change /settings to allow nsfw content or use the bot privately.",
+	}
+	ErrorInlineMediaAlbum = &i18n.Message{
+		ID:    "ErrorInlineMediaAlbum",
+		Other: "you can't download media albums in inline mode. use the bot in a group or private chat.",
+	}
+	ErrorAuthenticationNeeded = &i18n.Message{
+		ID:    "ErrorAuthenticationNeeded",
+		Other: "this instance is not authenticated with this service.",
+	}
+	ErrorFileTooLarge = &i18n.Message{
+		ID:    "ErrorFileTooLarge",
+		Other: "this file is too large and exceeds the maximum allowed size for this instance.",
+	}
+	ErrorTelegramFileTooLarge = &i18n.Message{
+		ID:    "ErrorTelegramFileTooLarge",
+		Other: "this file is too large for telegram and exceeds the maximum allowed size.",
+	}
+	ErrorDurationTooLong = &i18n.Message{
+		ID:    "ErrorDurationTooLong",
+		Other: "this video is too long and exceeds the maximum allowed duration for this instance.",
+	}
+	ErrorPaidContent = &i18n.Message{
+		ID:    "ErrorPaidContent",
+		Other: "this content is paid and requires a subscription to access.",
+	}
 )

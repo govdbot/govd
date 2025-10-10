@@ -6,17 +6,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/govdbot/govd/internal/config"
 	"golang.org/x/net/publicsuffix"
 )
-
-func ChunkedSlice[T any](slice []T, size int) [][]T {
-	chunks := make([][]T, 0, (len(slice)+size-1)/size)
-	for i := 0; i < len(slice); i += size {
-		end := min(i+size, len(slice))
-		chunks = append(chunks, slice[i:end])
-	}
-	return chunks
-}
 
 func GetNamedGroups(re *regexp.Regexp, str string) map[string]string {
 	match := re.FindStringSubmatch(str)
@@ -46,4 +38,12 @@ func ExtractBaseHost(rawURL string) (string, error) {
 		return "", errors.New("invalid domain structure")
 	}
 	return parts[0], nil
+}
+
+func ExceedsMaxFileSize(fileSize int64) bool {
+	return fileSize > config.Env.MaxFileSize
+}
+
+func ExceedsMaxDuration(duration int32) bool {
+	return duration > int32(config.Env.MaxDuration.Seconds())
 }

@@ -31,7 +31,7 @@ type BotSettings struct {
 	Scope SettingsScope
 
 	OptionsFunc         func(*localization.Localizer) []*BotSettingsOptions
-	GetCurrentValueFunc func(database.GetOrCreateChatRow) any
+	GetCurrentValueFunc func(*database.GetOrCreateChatRow) any
 
 	ToggleFunc   func(context.Context, int64) error
 	SetValueFunc func(context.Context, int64, any) error

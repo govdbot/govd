@@ -47,7 +47,7 @@ var botSettings = []BotSettings{
 				ChatID:   chatID,
 			})
 		},
-		GetCurrentValueFunc: func(res database.GetOrCreateChatRow) any {
+		GetCurrentValueFunc: func(res *database.GetOrCreateChatRow) any {
 			return res.Language
 		},
 		OptionsChunk: 3,
@@ -63,7 +63,7 @@ var botSettings = []BotSettings{
 		ToggleFunc: func(ctx context.Context, chatID int64) error {
 			return database.Q().ToggleChatCaptions(ctx, chatID)
 		},
-		GetCurrentValueFunc: func(res database.GetOrCreateChatRow) any {
+		GetCurrentValueFunc: func(res *database.GetOrCreateChatRow) any {
 			return res.Captions
 		},
 	},
@@ -101,7 +101,7 @@ var botSettings = []BotSettings{
 				ChatID:          chatID,
 			})
 		},
-		GetCurrentValueFunc: func(res database.GetOrCreateChatRow) any {
+		GetCurrentValueFunc: func(res *database.GetOrCreateChatRow) any {
 			return res.MediaAlbumLimit
 		},
 		OptionsChunk: 5,
@@ -117,7 +117,7 @@ var botSettings = []BotSettings{
 		ToggleFunc: func(ctx context.Context, chatID int64) error {
 			return database.Q().ToggleChatSilentMode(ctx, chatID)
 		},
-		GetCurrentValueFunc: func(res database.GetOrCreateChatRow) any {
+		GetCurrentValueFunc: func(res *database.GetOrCreateChatRow) any {
 			return res.Silent
 		},
 	},
@@ -132,7 +132,7 @@ var botSettings = []BotSettings{
 		ToggleFunc: func(ctx context.Context, chatID int64) error {
 			return database.Q().ToggleChatNsfw(ctx, chatID)
 		},
-		GetCurrentValueFunc: func(res database.GetOrCreateChatRow) any {
+		GetCurrentValueFunc: func(res *database.GetOrCreateChatRow) any {
 			return res.Nsfw
 		},
 	},
@@ -141,21 +141,13 @@ var botSettings = []BotSettings{
 func SettingsHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 	chat := ctx.EffectiveChat
 	isGroup := chat.Type != gotgbot.ChatTypePrivate
-	user := ctx.EffectiveUser
 
-	res, err := database.Q().GetOrCreateChat(
-		context.Background(),
-		database.GetOrCreateChatParams{
-			ChatID:   chat.Id,
-			Type:     database.ChatTypeGroup,
-			Language: localization.GetLocaleFromCode(user.LanguageCode),
-		},
-	)
+	settings, err := util.SettingsFromContext(ctx)
 	if err != nil {
 		return err
 	}
 
-	localizer := localization.New(res.Language)
+	localizer := localization.New(settings.Language)
 	if isGroup && !util.CheckAdminPermission(b, ctx, localizer) {
 		return nil
 	}

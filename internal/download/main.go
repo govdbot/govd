@@ -1,11 +1,10 @@
 package download
 
 import (
+	"bytes"
 	"context"
 	"os"
-	"path/filepath"
 
-	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/download/chunked"
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
@@ -19,15 +18,14 @@ func DownloadFile(
 	fileName string,
 	settings *models.DownloadSettings,
 ) (string, error) {
+	settings = ensureDownloadSettings(settings)
 	ensureDownloadDir()
+
 	if client == nil {
 		client = networking.NewHTTPClient(nil)
 	}
-	if settings == nil {
-		settings = defaultSettings()
-	}
 
-	filePath := filepath.Join(config.Env.DownloadsDirectory, fileName)
+	filePath := ToPath(fileName)
 
 	var lastErr error
 	for _, url := range urlList {
@@ -53,9 +51,45 @@ func DownloadFile(
 			continue
 		}
 
-		logger.L.Infof("successfully downloaded file to: %s", filePath)
 		return filePath, nil
 	}
 
 	return "", lastErr
+}
+
+func DownloadFileInMemory(
+	ctx context.Context,
+	client *networking.HTTPClient,
+	urlList []string,
+	settings *models.DownloadSettings,
+) (*bytes.Reader, error) {
+	settings = ensureDownloadSettings(settings)
+
+	if client == nil {
+		client = networking.NewHTTPClient(nil)
+	}
+
+	var lastErr error
+	for _, url := range urlList {
+		logger.L.Debugf("attempting download from: %s", url)
+
+		cd, err := chunked.NewChunkedDownloader(
+			ctx, client, url, settings.ChunkSize)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+
+		buffer := &bytes.Buffer{}
+		err = cd.Download(ctx, buffer, settings.NumConnections)
+
+		if err != nil {
+			lastErr = err
+			continue
+		}
+
+		return bytes.NewReader(buffer.Bytes()), nil
+	}
+
+	return nil, lastErr
 }

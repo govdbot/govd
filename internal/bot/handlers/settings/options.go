@@ -1,12 +1,10 @@
 package settings
 
 import (
-	"context"
 	"strings"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
-	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/localization"
 	"github.com/govdbot/govd/internal/util"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -31,28 +29,13 @@ func ListOptionsByID(b *gotgbot.Bot, ctx *ext.Context, settingID string) error {
 
 	chat := ctx.EffectiveChat
 	isGroup := chat.Type != gotgbot.ChatTypePrivate
-	user := ctx.EffectiveUser
 
-	var chatType database.ChatType
-	if isGroup {
-		chatType = database.ChatTypeGroup
-	} else {
-		chatType = database.ChatTypePrivate
-	}
-
-	res, err := database.Q().GetOrCreateChat(
-		context.Background(),
-		database.GetOrCreateChatParams{
-			ChatID:   chat.Id,
-			Type:     chatType,
-			Language: localization.GetLocaleFromCode(user.LanguageCode),
-		},
-	)
+	settings, err := util.SettingsFromContext(ctx)
 	if err != nil {
 		return err
 	}
 
-	localizer := localization.New(res.Language)
+	localizer := localization.New(settings.Language)
 	if isGroup && !util.CheckAdminPermission(b, ctx, localizer) {
 		return nil
 	}
@@ -62,7 +45,7 @@ func ListOptionsByID(b *gotgbot.Bot, ctx *ext.Context, settingID string) error {
 		MessageID: setting.DescriptionKey,
 	})
 
-	buttons := BuildSettingsOptionsButtons(setting, res, localizer)
+	buttons := BuildSettingsOptionsButtons(setting, settings, localizer)
 	buttons = append(buttons, []gotgbot.InlineKeyboardButton{
 		{
 			Text: localizer.T(&i18n.LocalizeConfig{

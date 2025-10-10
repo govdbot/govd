@@ -1,10 +1,12 @@
 package models
 
 import (
+	"context"
 	"net/http"
 	"regexp"
 
 	"github.com/govdbot/govd/internal/config"
+	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/networking"
 )
 
@@ -26,14 +28,21 @@ type ExtractorContext struct {
 	ContentID   string
 	MatchGroups map[string]string
 	Extractor   *Extractor
+	Context     context.Context
+	Settings    *database.GetOrCreateChatRow
 
 	HTTPClient *networking.HTTPClient
 	Config     *config.ExtractorConfig
-	Cookies    []*http.Cookie
+}
+
+func (e *ExtractorContext) SetSettings(settings *database.GetOrCreateChatRow) {
+	e.Settings = settings
 }
 
 func (e *ExtractorContext) NewMedia() *Media {
 	return &Media{
+		ContentID:   e.ContentID,
+		ContentURL:  e.ContentURL,
 		ExtractorID: e.Extractor.ID,
 	}
 }
@@ -43,8 +52,8 @@ type ExtractorResponse struct {
 	Media *Media
 }
 
-// peforms an HTTP request with the given method, url and params,
-// using the extractor's HTTP client and cookies
+// peforms an HTTP request with the given method,
+// url and params, using the extractor's HTTP client
 func (ctx *ExtractorContext) Fetch(
 	method string,
 	url string,
@@ -53,7 +62,6 @@ func (ctx *ExtractorContext) Fetch(
 	if params == nil {
 		params = &networking.RequestParams{}
 	}
-	params.Cookies = ctx.Cookies
 	return ctx.HTTPClient.Fetch(
 		method,
 		url,

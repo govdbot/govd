@@ -2,6 +2,7 @@ package download
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/logger"
@@ -13,6 +14,20 @@ func defaultSettings() *models.DownloadSettings {
 		NumConnections: 4,
 		ChunkSize:      5 * 1024 * 1024, // 5 MB
 	}
+}
+
+func ensureDownloadSettings(settings *models.DownloadSettings) *models.DownloadSettings {
+	defaultSettings := defaultSettings()
+	if settings == nil {
+		return defaultSettings
+	}
+	if settings.NumConnections <= 0 {
+		settings.NumConnections = defaultSettings.NumConnections
+	}
+	if settings.ChunkSize <= 0 {
+		settings.ChunkSize = defaultSettings.ChunkSize
+	}
+	return settings
 }
 
 func ensureDownloadDir() {
@@ -29,4 +44,9 @@ func ensureDownloadDir() {
 			logger.L.Fatalf("failed to stat download directory: %v", err)
 		}
 	}
+}
+
+// constructs the full file path for a given file name
+func ToPath(fileName string) string {
+	return filepath.Join(config.Env.DownloadsDirectory, fileName)
 }

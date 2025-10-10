@@ -45,9 +45,14 @@ func GetMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	media := ctx.NewMedia()
 	media.SetCaption(data.Desc)
 
-	isSlide := len(data.ImagePostInfo.Images) > 0
 	videoInfo := data.VideoInfo
+	if videoInfo == nil {
+		return nil, errors.New("no video info found")
+	}
+
 	duration := int32(videoInfo.Meta.Duration / 1000)
+
+	isSlide := data.ImagePostInfo != nil && len(data.ImagePostInfo.Images) > 0
 
 	if !isSlide {
 		videoInfo := data.VideoInfo
@@ -64,7 +69,6 @@ func GetMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 			AudioCodec: database.MediaCodecAac,
 			VideoCodec: database.MediaCodecAvc,
 		})
-		media.AddItems(item)
 
 		return media, nil
 	}
@@ -76,7 +80,6 @@ func GetMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 			Type:     database.MediaTypePhoto,
 			URL:      image.DisplayImage.URLList,
 		})
-		media.AddItems(item)
 	}
 
 	return media, nil

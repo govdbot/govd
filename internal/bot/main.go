@@ -69,6 +69,12 @@ func Start() {
 }
 
 func registerHandlers(dispatcher *ext.Dispatcher) {
+	// url
+	dispatcher.AddHandler(handlers.NewMessage(
+		botHandlers.URLFilter,
+		botHandlers.URLHandler,
+	))
+
 	// start
 	dispatcher.AddHandler(handlers.NewCommand(
 		"start",
