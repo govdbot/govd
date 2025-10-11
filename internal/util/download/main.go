@@ -3,12 +3,14 @@ package download
 import (
 	"bytes"
 	"context"
+	"io"
+	"net/http"
 	"os"
 
-	"github.com/govdbot/govd/internal/download/chunked"
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/networking"
+	"github.com/govdbot/govd/internal/util/download/chunked"
 )
 
 func DownloadFile(
@@ -32,7 +34,9 @@ func DownloadFile(
 		logger.L.Debugf("attempting download from: %s", url)
 
 		cd, err := chunked.NewChunkedDownloader(
-			ctx, client, url, settings.ChunkSize)
+			ctx, client, url,
+			settings.ChunkSize,
+		)
 		if err != nil {
 			lastErr = err
 			continue
@@ -61,10 +65,7 @@ func DownloadFileInMemory(
 	ctx context.Context,
 	client *networking.HTTPClient,
 	urlList []string,
-	settings *models.DownloadSettings,
 ) (*bytes.Reader, error) {
-	settings = ensureDownloadSettings(settings)
-
 	if client == nil {
 		client = networking.NewHTTPClient(nil)
 	}
@@ -72,23 +73,27 @@ func DownloadFileInMemory(
 	var lastErr error
 	for _, url := range urlList {
 		logger.L.Debugf("attempting download from: %s", url)
-
-		cd, err := chunked.NewChunkedDownloader(
-			ctx, client, url, settings.ChunkSize)
+		resp, err := client.FetchWithContext(ctx, http.MethodGet, url, nil)
 		if err != nil {
 			lastErr = err
 			continue
 		}
 
-		buffer := &bytes.Buffer{}
-		err = cd.Download(ctx, buffer, settings.NumConnections)
-
-		if err != nil {
+		if resp.StatusCode != 200 {
+			resp.Body.Close()
 			lastErr = err
 			continue
 		}
 
-		return bytes.NewReader(buffer.Bytes()), nil
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			resp.Body.Close()
+			lastErr = err
+			continue
+		}
+
+		resp.Body.Close()
+		return bytes.NewReader(data), nil
 	}
 
 	return nil, lastErr

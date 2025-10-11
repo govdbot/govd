@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 
@@ -17,6 +18,40 @@ import (
 const (
 	apiEndpoint = "https://www.tiktok.com/player/api/v1/items"
 )
+
+var VMExtractor = &models.Extractor{
+	ID:          "tiktok",
+	DisplayName: "TikTok VM",
+
+	URLPattern: regexp.MustCompile(`https:\/\/((?:vm|vt|www)\.)?(vx)?tiktok\.com\/(?:t\/)?(?P<id>[a-zA-Z0-9-]+)`),
+	Host:       []string{"tiktok", "vxtiktok"},
+	Redirect:   true,
+
+	GetFunc: func(ctx *models.ExtractorContext) (*models.ExtractorResponse, error) {
+		redirectURL, err := ctx.FetchLocation(ctx.ContentURL, nil)
+		if err != nil {
+			return nil, err
+		}
+		parsedURL, err := url.Parse(redirectURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse redirect url: %w", err)
+		}
+		if parsedURL.Path == "/login" {
+			logger.L.Debug("tiktok is geo restricted in your region, attemping bypass...")
+			realURL := parsedURL.Query().Get("redirect_url")
+			if realURL == "" {
+				return nil, util.ErrGeoRestrictedContent
+			}
+			logger.L.Debugf("found url: %s", realURL)
+			return &models.ExtractorResponse{
+				URL: realURL,
+			}, nil
+		}
+		return &models.ExtractorResponse{
+			URL: redirectURL,
+		}, nil
+	},
+}
 
 var Extractor = &models.Extractor{
 	ID:          "tiktok",

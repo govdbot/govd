@@ -11,16 +11,18 @@ func (err *Error) Error() string {
 }
 
 var (
-	ErrUnavailable              = &Error{ID: localization.ErrorUnavailable.ID}
-	ErrTimeout                  = &Error{ID: localization.ErrorTimeout.ID}
-	ErrUnsupportedImageFormat   = &Error{ID: localization.ErrorUnsupportedImageFormat.ID}
-	ErrUnsupportedExtractorType = &Error{ID: localization.ErrorUnsupportedExtractorType.ID}
-	ErrMediaAlbumLimitExceeded  = &Error{ID: localization.ErrorMediaAlbumLimitExceeded.ID}
-	ErrNSFWNotAllowed           = &Error{ID: localization.ErrorNSFWNotAllowed.ID}
-	ErrInlineMediaAlbum         = &Error{ID: localization.ErrorInlineMediaAlbum.ID}
-	ErrAuthenticationNeeded     = &Error{ID: localization.ErrorAuthenticationNeeded.ID}
-	ErrFileTooLarge             = &Error{ID: localization.ErrorFileTooLarge.ID}
-	ErrTelegramFileTooLarge     = &Error{ID: localization.ErrorTelegramFileTooLarge.ID}
-	ErrDurationTooLong          = &Error{ID: localization.ErrorDurationTooLong.ID}
-	ErrPaidContent              = &Error{ID: localization.ErrorPaidContent.ID}
+	ErrUnavailable                   = &Error{ID: localization.ErrorUnavailable.ID}
+	ErrTimeout                       = &Error{ID: localization.ErrorTimeout.ID}
+	ErrUnsupportedImageFormat        = &Error{ID: localization.ErrorUnsupportedImageFormat.ID}
+	ErrUnsupportedExtractorType      = &Error{ID: localization.ErrorUnsupportedExtractorType.ID}
+	ErrMediaAlbumLimitExceeded       = &Error{ID: localization.ErrorMediaAlbumLimitExceeded.ID}
+	ErrMediaAlbumGlobalLimitExceeded = &Error{ID: localization.ErrorMediaAlbumGlobalLimitExceeded.ID}
+	ErrGeoRestrictedContent          = &Error{ID: localization.ErrorGeoRestrictedContent.ID}
+	ErrNSFWNotAllowed                = &Error{ID: localization.ErrorNSFWNotAllowed.ID}
+	ErrInlineMediaAlbum              = &Error{ID: localization.ErrorInlineMediaAlbum.ID}
+	ErrAuthenticationNeeded          = &Error{ID: localization.ErrorAuthenticationNeeded.ID}
+	ErrFileTooLarge                  = &Error{ID: localization.ErrorFileTooLarge.ID}
+	ErrTelegramFileTooLarge          = &Error{ID: localization.ErrorTelegramFileTooLarge.ID}
+	ErrDurationTooLong               = &Error{ID: localization.ErrorDurationTooLong.ID}
+	ErrPaidContent                   = &Error{ID: localization.ErrorPaidContent.ID}
 )

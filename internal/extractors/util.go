@@ -25,7 +25,8 @@ func FromURL(ctx context.Context, url string) *models.ExtractorContext {
 		if err != nil {
 			return nil
 		}
-		extractors := GetExtractorsByHost(host)
+
+		extractors := getExtractorsByHost(host)
 		if len(extractors) == 0 {
 			return nil
 		}
@@ -69,6 +70,8 @@ func FromURL(ctx context.Context, url string) *models.ExtractorContext {
 		}
 
 		// extractor requires fetching the URL for redirection
+		logger.L.Debugf("following redirect for extractor: %s", extractor.ID)
+
 		response, err := extractor.GetFunc(extractorCtx)
 		if err != nil {
 			logger.L.Errorf("%s: %v", extractor.ID, err)
@@ -103,6 +106,6 @@ func getExtractorsMap() map[string][]*models.Extractor {
 	return extractorsByHost
 }
 
-func GetExtractorsByHost(host string) []*models.Extractor {
+func getExtractorsByHost(host string) []*models.Extractor {
 	return extractorsByHost[host]
 }

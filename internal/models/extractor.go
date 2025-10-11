@@ -62,9 +62,28 @@ func (ctx *ExtractorContext) Fetch(
 	if params == nil {
 		params = &networking.RequestParams{}
 	}
-	return ctx.HTTPClient.Fetch(
+	return ctx.HTTPClient.FetchWithContext(
+		ctx.Context,
 		method,
 		url,
 		params,
 	)
+}
+
+func (ctx *ExtractorContext) FetchLocation(
+	url string,
+	params *networking.RequestParams,
+) (string, error) {
+	resp, err := ctx.Fetch(
+		http.MethodPost,
+		url,
+		params,
+	)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	redirectURL := resp.Request.URL.String()
+	return redirectURL, nil
 }

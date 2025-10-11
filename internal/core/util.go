@@ -6,9 +6,9 @@ import (
 
 	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/database"
-	"github.com/govdbot/govd/internal/download"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/util"
+	"github.com/govdbot/govd/internal/util/download"
 	"github.com/govdbot/govd/internal/util/libav"
 )
 
@@ -28,7 +28,6 @@ func getThumbnail(
 			ctx.Context,
 			ctx.HTTPClient,
 			format.ThumbnailURL,
-			format.DownloadSettings,
 		)
 		if err != nil {
 			return "", err

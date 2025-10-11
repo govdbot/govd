@@ -115,6 +115,14 @@ var (
 		ID:    "ErrorMediaAlbumLimitExceeded",
 		Other: "media album limit exceeds the maximum allowed for this group. change /settings to increase the limit.",
 	}
+	ErrorMediaAlbumGlobalLimitExceeded = &i18n.Message{
+		ID:    "ErrorMediaAlbumGlobalLimitExceeded",
+		Other: "media album limit exceeds the maximum allowed for this instance.",
+	}
+	ErrorGeoRestrictedContent = &i18n.Message{
+		ID:    "ErrorGeoRestrictedContent",
+		Other: "this content has geo-restrictions and cannot be accessed from the server's location",
+	}
 	ErrorNSFWNotAllowed = &i18n.Message{
 		ID:    "ErrorNSFWNotAllowed",
 		Other: "this content is marked as nsfw and can't be downloaded in this group. change /settings to allow nsfw content or use the bot privately.",

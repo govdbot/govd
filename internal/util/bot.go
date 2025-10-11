@@ -39,6 +39,23 @@ func SettingsFromContext(ctx *ext.Context) (*database.GetOrCreateChatRow, error)
 	return &settings, nil
 }
 
+func HashHashtagEntity(msg *gotgbot.Message, entity string) bool {
+	entity = "#" + entity
+	for _, ent := range msg.Entities {
+		if ent.Type != "hashtag" {
+			continue
+		}
+		parsedEntity := gotgbot.ParseEntity(
+			msg.Text,
+			ent,
+		)
+		if parsedEntity.Text == entity {
+			return true
+		}
+	}
+	return false
+}
+
 func SendTypingAction(b *gotgbot.Bot, chatID int64) {
 	b.SendChatAction(chatID, "typing", nil)
 }

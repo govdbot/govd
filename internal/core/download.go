@@ -5,10 +5,10 @@ import (
 	"sync"
 
 	"github.com/govdbot/govd/internal/database"
-	"github.com/govdbot/govd/internal/download"
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/util"
+	"github.com/govdbot/govd/internal/util/download"
 )
 
 func downloadMediaFormats(
@@ -55,7 +55,7 @@ func downloadItem(
 		return
 	}
 
-	err := ValidateFormat(format)
+	err := validateFormat(format)
 	if err != nil {
 		formats <- &models.DownloadedFormat{
 			Index: index,
@@ -96,7 +96,6 @@ func downloadFormat(
 			ctx.Context,
 			ctx.HTTPClient,
 			format.URL,
-			format.DownloadSettings,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to download image: %w", err)
