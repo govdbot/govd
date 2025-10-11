@@ -9,16 +9,15 @@ import (
 	"os"
 	"slices"
 
+	"github.com/govdbot/govd/internal/logger"
+	"github.com/govdbot/govd/internal/models"
+	"golang.org/x/image/draw"
+
 	_ "image/gif" // register GIF decoder
 	_ "image/png" // register PNG decoder
 
-	"github.com/govdbot/govd/internal/logger"
-	"github.com/govdbot/govd/internal/models"
-
 	_ "github.com/strukturag/libheif/go/heif" // register HEIF decoder
-
-	"golang.org/x/image/draw"
-	_ "golang.org/x/image/webp" // register WebP decoder
+	_ "golang.org/x/image/webp"               // register WebP decoder
 )
 
 var (
@@ -124,7 +123,7 @@ func DetectImageFormat(file io.ReadSeeker) (models.ImageFormat, error) {
 	}
 	if bytes.HasPrefix(header, riffHeader) {
 		if bytes.Equal(header[8:12], webpHeader) {
-			return "webp", nil
+			return models.ImageFormatWEBP, nil
 		}
 		return "", ErrUnsupportedImageFormat
 	}

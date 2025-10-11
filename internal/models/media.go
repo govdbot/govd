@@ -51,7 +51,7 @@ type MediaFormat struct {
 	Type             database.MediaType
 	AudioCodec       database.MediaCodec
 	VideoCodec       database.MediaCodec
-	FileSize         int64
+	FileSize         int32
 	Duration         int32
 	Title            string
 	Artist           string
@@ -69,13 +69,6 @@ type DownloadedFormat struct {
 	FilePath          string
 	ThumbnailFilePath string
 	Error             error
-}
-
-func NewMediaFromDB(
-	media *database.Media,
-) *Media {
-	// TODO
-	return nil
 }
 
 // returns the file extension and the InputMedia type.

@@ -40,7 +40,7 @@ func ExtractBaseHost(rawURL string) (string, error) {
 	return parts[0], nil
 }
 
-func ExceedsMaxFileSize(fileSize int64) bool {
+func ExceedsMaxFileSize(fileSize int32) bool {
 	return fileSize > config.Env.MaxFileSize
 }
 

@@ -14,9 +14,10 @@ CREATE TABLE IF NOT EXISTS media_format (
     width INT,
     height INT,
     bitrate INT,
+    file_size INT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    UNIQUE (item_id, format_id)
+    UNIQUE (item_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_format_item_id

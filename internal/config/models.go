@@ -24,7 +24,7 @@ type EnvConfig struct {
 	NoProxy    string
 
 	MaxDuration  time.Duration
-	MaxFileSize  int64
+	MaxFileSize  int32
 	RepoURL      string
 	ProfilerPort int
 	LogLevel     zapcore.Level

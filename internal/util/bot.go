@@ -170,3 +170,41 @@ func MentionUser(user *gotgbot.User) string {
 	deepLink := "tg://user?id=" + strconv.FormatInt(user.Id, 10)
 	return "<a href='" + deepLink + "'>" + Unquote(user.FirstName) + "</a>"
 }
+
+func GetMessageFileID(msg *gotgbot.Message) string {
+	switch {
+	case msg.Video != nil:
+		return msg.Video.FileId
+	case msg.Animation != nil:
+		return msg.Animation.FileId
+	case msg.Photo != nil:
+		return msg.Photo[len(msg.Photo)-1].FileId
+	case msg.Document != nil:
+		return msg.Document.FileId
+	case msg.Audio != nil:
+		return msg.Audio.FileId
+	case msg.Voice != nil:
+		return msg.Voice.FileId
+	default:
+		return ""
+	}
+}
+
+func GetMessageFileSize(msg *gotgbot.Message) int64 {
+	switch {
+	case msg.Video != nil:
+		return msg.Video.FileSize
+	case msg.Animation != nil:
+		return msg.Animation.FileSize
+	case msg.Photo != nil:
+		return msg.Photo[len(msg.Photo)-1].FileSize
+	case msg.Document != nil:
+		return msg.Document.FileSize
+	case msg.Audio != nil:
+		return msg.Audio.FileSize
+	case msg.Voice != nil:
+		return msg.Voice.FileSize
+	default:
+		return 0
+	}
+}

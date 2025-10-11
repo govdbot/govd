@@ -12,6 +12,23 @@ import (
 	"github.com/govdbot/govd/internal/util/libav"
 )
 
+func parseFormatFromDB(row *database.GetMediaFormatRow) *models.MediaFormat {
+	return &models.MediaFormat{
+		FormatID:   row.FormatID,
+		FileID:     row.FileID,
+		Type:       row.Type,
+		AudioCodec: row.AudioCodec.MediaCodec,
+		VideoCodec: row.VideoCodec.MediaCodec,
+		FileSize:   row.FileSize.Int32,
+		Duration:   row.Duration.Int32,
+		Title:      row.Title.String,
+		Artist:     row.Artist.String,
+		Width:      row.Width.Int32,
+		Height:     row.Height.Int32,
+		Bitrate:    row.Bitrate.Int32,
+	}
+}
+
 func getThumbnail(
 	ctx *models.ExtractorContext,
 	format *models.MediaFormat,

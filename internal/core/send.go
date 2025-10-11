@@ -102,15 +102,16 @@ func SendFormats(
 		return nil, errors.New("no messages sent")
 	}
 
-	// if !options.IsStored {
-	// 	err := StoreMedias(
-	// 		dlCtx,
-	// 		sentMessages,
-	// 		medias,
-	// 	)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("failed to cache formats: %w", err)
-	// 	}
-	// }
+	if !options.IsStored {
+		err := StoreMedia(
+			extractorCtx.Context,
+			extractorCtx.Extractor,
+			media, sentMessages,
+			formats,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to cache formats: %w", err)
+		}
+	}
 	return sentMessages, nil
 }

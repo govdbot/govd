@@ -46,6 +46,9 @@ func HandleDownloadTask(
 
 	// clean up every file after task completes
 	defer func() {
+		if taskResult.IsStored {
+			return
+		}
 		for _, fmt := range taskResult.Formats {
 			os.Remove(fmt.FilePath)
 			os.Remove(fmt.ThumbnailFilePath)
@@ -63,6 +66,7 @@ func HandleDownloadTask(
 		&models.SendFormatsOptions{
 			Caption:   caption,
 			IsSpoiler: isSpoiler,
+			IsStored:  taskResult.IsStored,
 		},
 	)
 	if err != nil {
@@ -75,6 +79,41 @@ func HandleDownloadTask(
 // this function is wrapped by singleflight
 // to prevent duplicate downloads
 func executeDownload(extractorCtx *models.ExtractorContext) (*models.TaskResult, error) {
+	storedMedia, err := database.Q().GetMediaByContentID(
+		extractorCtx.Context,
+		database.GetMediaByContentIDParams{
+			ExtractorID: extractorCtx.Extractor.ID,
+			ContentID:   extractorCtx.ContentID,
+		},
+	)
+	if err == nil {
+		logger.L.Debugf(
+			"found stored media: %s/%s",
+			extractorCtx.Extractor.ID,
+			extractorCtx.ContentID,
+		)
+		media, err := ParseStoredMedia(
+			extractorCtx.Context,
+			extractorCtx.Extractor,
+			&storedMedia,
+		)
+		if err != nil {
+			return nil, err
+		}
+		formats := make([]*models.DownloadedFormat, 0, len(media.Items))
+		for i, item := range media.Items {
+			formats = append(formats, &models.DownloadedFormat{
+				Format: item.Formats[0],
+				Index:  i,
+			})
+		}
+		return &models.TaskResult{
+			Media:    media,
+			Formats:  formats,
+			IsStored: true,
+		}, nil
+	}
+
 	resp, err := extractorCtx.Extractor.GetFunc(extractorCtx)
 	if err != nil {
 		return nil, err

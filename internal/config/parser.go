@@ -57,12 +57,12 @@ func parseEnvIntRange(env string, dest *int, min, max int, required bool) {
 	}
 }
 
-func parseEnvInt64(env string, dest *int64, required bool) {
+func parseEnvInt32(env string, dest *int32, required bool) {
 	if value := os.Getenv(env); value != "" {
-		if parsed, err := strconv.ParseInt(value, 10, 64); err == nil {
-			*dest = parsed
+		if parsed, err := strconv.ParseInt(value, 10, 32); err == nil {
+			*dest = int32(parsed)
 		} else {
-			logger.L.Fatalf("%s env is not a valid int64", env)
+			logger.L.Fatalf("%s env is not a valid int32", env)
 		}
 	} else if required {
 		logger.L.Fatalf("%s env is not set", env)

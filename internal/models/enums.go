@@ -35,4 +35,5 @@ const (
 	ImageFormatPNG  ImageFormat = "png"
 	ImageFormatGIF  ImageFormat = "gif"
 	ImageFormatHEIF ImageFormat = "heif"
+	ImageFormatWEBP ImageFormat = "webp"
 )
