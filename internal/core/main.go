@@ -7,9 +7,13 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/govdbot/govd/internal/database"
+	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/util"
+	"golang.org/x/sync/singleflight"
 )
+
+var sf singleflight.Group
 
 func HandleDownloadTask(
 	bot *gotgbot.Bot,
@@ -20,40 +24,42 @@ func HandleDownloadTask(
 	isSpoiler := util.HasHashtagEntity(message, "spoiler") ||
 		util.HasHashtagEntity(message, "nsfw")
 
-	resp, err := extractorCtx.Extractor.GetFunc(extractorCtx)
+	// use singleflight to deduplicate
+	// parallel downloads of the same content
+	key := extractorCtx.Extractor.ID + ":" + extractorCtx.ContentID
+	result, err, shared := sf.Do(key, func() (interface{}, error) {
+		return executeDownload(extractorCtx)
+	})
 	if err != nil {
 		return err
 	}
-	if resp.Media == nil || len(resp.Media.Items) == 0 {
-		return fmt.Errorf("no media found")
+	if shared {
+		logger.L.Debugf("shared download result for key: %s", key)
 	}
 
-	err = checkAlbumLimit(len(resp.Media.Items), extractorCtx.Settings)
+	taskResult := result.(*models.TaskResult)
+
+	err = checkAlbumLimit(len(taskResult.Media.Items), extractorCtx.Settings)
 	if err != nil {
 		return err
 	}
 
-	formats, err := downloadMediaFormats(extractorCtx, resp.Media)
-	if err != nil {
-		return err
-	}
-
-	// clean up every file after
+	// clean up every file after task completes
 	defer func() {
-		for _, fmt := range formats {
+		for _, fmt := range taskResult.Formats {
 			os.Remove(fmt.FilePath)
 			os.Remove(fmt.ThumbnailFilePath)
 		}
 	}()
 
 	caption := formatCaption(
-		resp.Media,
+		taskResult.Media,
 		extractorCtx.Settings.Captions,
 	)
 
 	_, err = SendFormats(
 		bot, ctx, extractorCtx,
-		resp.Media, formats,
+		taskResult.Media, taskResult.Formats,
 		&models.SendFormatsOptions{
 			Caption:   caption,
 			IsSpoiler: isSpoiler,
@@ -63,6 +69,29 @@ func HandleDownloadTask(
 		return err
 	}
 	return nil
+}
+
+// performs the actual download operation
+// this function is wrapped by singleflight
+// to prevent duplicate downloads
+func executeDownload(extractorCtx *models.ExtractorContext) (*models.TaskResult, error) {
+	resp, err := extractorCtx.Extractor.GetFunc(extractorCtx)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Media == nil || len(resp.Media.Items) == 0 {
+		return nil, fmt.Errorf("no media found")
+	}
+
+	formats, err := downloadMediaFormats(extractorCtx, resp.Media)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.TaskResult{
+		Media:   resp.Media,
+		Formats: formats,
+	}, nil
 }
 
 func checkAlbumLimit(n int, settings *database.GetOrCreateChatRow) error {

@@ -21,6 +21,7 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/image v0.30.0
 	golang.org/x/net v0.40.0
+	golang.org/x/sync v0.17.0
 	golang.org/x/text v0.28.0
 )
 
@@ -40,6 +41,5 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.20.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
-	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.35.0 // indirect
 )
