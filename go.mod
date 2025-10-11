@@ -8,6 +8,7 @@ require (
 	github.com/BurntSushi/toml v1.5.0
 	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.33
 	github.com/abema/go-mp4 v1.4.1
+	github.com/aki237/nscjar v0.0.0-20210417074043-bbb606196143
 	github.com/bytedance/sonic v1.14.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.5
@@ -23,6 +24,7 @@ require (
 	golang.org/x/net v0.40.0
 	golang.org/x/sync v0.17.0
 	golang.org/x/text v0.28.0
+	gopkg.in/yaml.v2 v2.2.8
 )
 
 require (

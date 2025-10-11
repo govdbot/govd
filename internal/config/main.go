@@ -11,4 +11,5 @@ func Load() {
 		logger.L.Warn("failed to load .env file. using system env")
 	}
 	loadEnv()
+	loadExtractorConfigs()
 }

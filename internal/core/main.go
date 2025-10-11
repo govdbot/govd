@@ -6,6 +6,7 @@ import (
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
+	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
@@ -26,7 +27,7 @@ func HandleDownloadTask(
 
 	// use singleflight to deduplicate
 	// parallel downloads of the same content
-	key := extractorCtx.Extractor.ID + ":" + extractorCtx.ContentID
+	key := extractorCtx.Extractor.ID + "/" + extractorCtx.ContentID
 	result, err, shared := sf.Do(key, func() (interface{}, error) {
 		return executeDownload(extractorCtx)
 	})
@@ -79,41 +80,17 @@ func HandleDownloadTask(
 // this function is wrapped by singleflight
 // to prevent duplicate downloads
 func executeDownload(extractorCtx *models.ExtractorContext) (*models.TaskResult, error) {
-	storedMedia, err := database.Q().GetMediaByContentID(
-		extractorCtx.Context,
-		database.GetMediaByContentIDParams{
-			ExtractorID: extractorCtx.Extractor.ID,
-			ContentID:   extractorCtx.ContentID,
-		},
-	)
-	if err == nil {
-		logger.L.Debugf(
-			"found stored media: %s/%s",
-			extractorCtx.Extractor.ID,
-			extractorCtx.ContentID,
-		)
-		media, err := ParseStoredMedia(
-			extractorCtx.Context,
-			extractorCtx.Extractor,
-			&storedMedia,
-		)
-		if err != nil {
-			return nil, err
+	if config.Env.Caching {
+		task, err := taskFromDatabase(extractorCtx)
+		if err == nil {
+			logger.L.Debugf(
+				"media found in database: %s/%s",
+				extractorCtx.Extractor.ID,
+				extractorCtx.ContentID,
+			)
+			return task, nil
 		}
-		formats := make([]*models.DownloadedFormat, 0, len(media.Items))
-		for i, item := range media.Items {
-			formats = append(formats, &models.DownloadedFormat{
-				Format: item.Formats[0],
-				Index:  i,
-			})
-		}
-		return &models.TaskResult{
-			Media:    media,
-			Formats:  formats,
-			IsStored: true,
-		}, nil
 	}
-
 	resp, err := extractorCtx.Extractor.GetFunc(extractorCtx)
 	if err != nil {
 		return nil, err
@@ -130,6 +107,38 @@ func executeDownload(extractorCtx *models.ExtractorContext) (*models.TaskResult,
 	return &models.TaskResult{
 		Media:   resp.Media,
 		Formats: formats,
+	}, nil
+}
+
+func taskFromDatabase(ctx *models.ExtractorContext) (*models.TaskResult, error) {
+	mediaRow, err := database.Q().GetMediaByContentID(
+		ctx.Context,
+		database.GetMediaByContentIDParams{
+			ExtractorID: ctx.Extractor.ID,
+			ContentID:   ctx.ContentID,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	media, err := ParseStoredMedia(ctx.Context, ctx.Extractor, &mediaRow)
+	if err != nil {
+		return nil, err
+	}
+
+	formats := make([]*models.DownloadedFormat, 0, len(media.Items))
+	for i, item := range media.Items {
+		formats = append(formats, &models.DownloadedFormat{
+			Format: item.Formats[0],
+			Index:  i,
+		})
+	}
+
+	return &models.TaskResult{
+		Media:    media,
+		Formats:  formats,
+		IsStored: true,
 	}, nil
 }
 

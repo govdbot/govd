@@ -30,9 +30,8 @@ type ExtractorContext struct {
 	Extractor   *Extractor
 	Context     context.Context
 	Settings    *database.GetOrCreateChatRow
-
-	HTTPClient *networking.HTTPClient
-	Config     *config.ExtractorConfig
+	HTTPClient  *networking.HTTPClient
+	Config      *config.ExtractorConfig
 }
 
 func (e *ExtractorContext) SetSettings(settings *database.GetOrCreateChatRow) {

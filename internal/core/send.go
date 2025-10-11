@@ -8,6 +8,7 @@ import (
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
+	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/util"
@@ -102,7 +103,7 @@ func SendFormats(
 		return nil, errors.New("no messages sent")
 	}
 
-	if !options.IsStored {
+	if !options.IsStored && config.Env.Caching {
 		err := StoreMedia(
 			extractorCtx.Context,
 			extractorCtx.Extractor,

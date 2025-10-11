@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
-	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
@@ -20,9 +19,6 @@ func StoreMedia(
 	messages []gotgbot.Message,
 	formats []*models.DownloadedFormat,
 ) error {
-	if !config.Env.Caching {
-		return nil
-	}
 	if len(media.Items) == 0 {
 		return errors.New("no item to store")
 	}
@@ -45,6 +41,7 @@ func StoreMedia(
 
 	mediaID, err := qtx.CreateMedia(ctx, database.CreateMediaParams{
 		ExtractorID: extractor.ID,
+		ContentUrl:  media.ContentURL,
 		ContentID:   media.ContentID,
 		Caption: pgtype.Text{
 			String: media.Caption,
@@ -157,6 +154,7 @@ func ParseStoredMedia(
 
 	media := &models.Media{
 		ContentID:   mediaRow.ContentID,
+		ContentURL:  mediaRow.ContentUrl,
 		Caption:     mediaRow.Caption.String,
 		NSFW:        mediaRow.Nsfw,
 		ExtractorID: extractor.ID,

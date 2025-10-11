@@ -3,15 +3,14 @@ package extractors
 import (
 	"context"
 
+	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/networking"
 	"github.com/govdbot/govd/internal/util"
 )
 
-const (
-	maxRedirects = 5
-)
+const maxRedirects = 5
 
 var extractorsByHost = getExtractorsMap()
 
@@ -48,10 +47,10 @@ func FromURL(ctx context.Context, url string) *models.ExtractorContext {
 			return nil
 		}
 
-		// cfg := config.GetExtractorConfig(extractor)
-		// if cfg != nil && cfg.IsDisabled {
-		// 	return nil
-		// }
+		cfg := config.GetExtractorConfig(extractor.ID)
+		if cfg != nil && cfg.IsDisabled {
+			return nil
+		}
 
 		extractorCtx := &models.ExtractorContext{
 			ContentID:   groups["id"],
@@ -59,9 +58,10 @@ func FromURL(ctx context.Context, url string) *models.ExtractorContext {
 			MatchGroups: groups,
 			Extractor:   extractor,
 			Context:     ctx,
+			Config:      cfg,
 			HTTPClient: networking.NewHTTPClient(
 				&networking.NewHTTPClientOptions{
-					Cookies: nil,
+					Cookies: util.GetExtractorCookies(extractor.ID),
 				},
 			),
 		}
