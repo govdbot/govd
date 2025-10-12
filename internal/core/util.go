@@ -41,11 +41,7 @@ func getThumbnail(
 	thumbnailFilePath := filepath.Join(fileDir, fileBaseName+".jpeg")
 
 	if len(format.ThumbnailURL) > 0 {
-		file, err := download.DownloadFileInMemory(
-			ctx.Context,
-			ctx.HTTPClient,
-			format.ThumbnailURL,
-		)
+		file, err := download.DownloadFileInMemory(ctx, format.ThumbnailURL)
 		if err != nil {
 			return "", err
 		}

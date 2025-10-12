@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/networking"
 )
 
@@ -99,7 +100,11 @@ func NewChunkedDownloader(
 	return nil, fmt.Errorf("content length not available or server does not support ranged requests")
 }
 
-func (cd *ChunkedDownloader) downloadChunk(ctx context.Context, index int, chunks chan<- *Chunk) {
+func (cd *ChunkedDownloader) downloadChunk(
+	ctx *models.ExtractorContext,
+	index int,
+	chunks chan<- *Chunk,
+) {
 	start := int64(index) * cd.chunkSize
 	end := min(start+cd.chunkSize-1, cd.totalSize-1)
 
@@ -108,7 +113,7 @@ func (cd *ChunkedDownloader) downloadChunk(ctx context.Context, index int, chunk
 	}
 
 	resp, err := cd.client.FetchWithContext(
-		ctx,
+		ctx.Context,
 		http.MethodGet,
 		cd.url, &networking.RequestParams{
 			Headers: headers,
@@ -134,7 +139,7 @@ func (cd *ChunkedDownloader) downloadChunk(ctx context.Context, index int, chunk
 }
 
 func (cd *ChunkedDownloader) Download(
-	ctx context.Context,
+	ctx *models.ExtractorContext,
 	writer io.Writer,
 	maxConcurrency int,
 ) error {

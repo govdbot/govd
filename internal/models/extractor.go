@@ -24,14 +24,15 @@ type Extractor struct {
 }
 
 type ExtractorContext struct {
-	ContentURL  string
-	ContentID   string
-	MatchGroups map[string]string
-	Extractor   *Extractor
-	Context     context.Context
-	Settings    *database.GetOrCreateChatRow
-	HTTPClient  *networking.HTTPClient
-	Config      *config.ExtractorConfig
+	ContentURL   string
+	ContentID    string
+	MatchGroups  map[string]string
+	Extractor    *Extractor
+	Context      context.Context
+	Settings     *database.GetOrCreateChatRow
+	HTTPClient   *networking.HTTPClient
+	Config       *config.ExtractorConfig
+	FilesTracker *FilesTracker
 }
 
 func (e *ExtractorContext) SetSettings(settings *database.GetOrCreateChatRow) {

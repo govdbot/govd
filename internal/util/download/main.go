@@ -2,40 +2,43 @@ package download
 
 import (
 	"bytes"
-	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
-	"github.com/govdbot/govd/internal/networking"
 	"github.com/govdbot/govd/internal/util/download/chunked"
+	"github.com/govdbot/govd/internal/util/libav"
 )
 
 func DownloadFile(
-	ctx context.Context,
-	client *networking.HTTPClient,
+	ctx *models.ExtractorContext,
 	urlList []string,
 	fileName string,
 	settings *models.DownloadSettings,
 ) (string, error) {
+	if ctx == nil {
+		return "", fmt.Errorf("nil extractor context")
+	}
 	settings = ensureDownloadSettings(settings)
 	ensureDownloadDir()
 
-	if client == nil {
-		client = networking.NewHTTPClient(nil)
-	}
-	client = client.AsDownloadClient()
-
+	client := ctx.HTTPClient.AsDownloadClient()
 	filePath := ToPath(fileName)
+
+	// track file for cleanup
+	ctx.FilesTracker.Add(&filePath)
 
 	var lastErr error
 	for _, url := range urlList {
 		logger.L.Debugf("attempting download from: %s", url)
 
 		cd, err := chunked.NewChunkedDownloader(
-			ctx, client, url,
+			ctx.Context, client, url,
 			settings.ChunkSize,
 		)
 		if err != nil {
@@ -51,31 +54,47 @@ func DownloadFile(
 		file.Close()
 
 		if err != nil {
-			os.Remove(filePath)
 			lastErr = err
 			continue
 		}
 
-		return filePath, nil
+		outputPath := ToPath(strings.TrimSuffix(
+			filePath,
+			filepath.Ext(filePath),
+		) + "_remuxed" + filepath.Ext(filePath))
+
+		// track remuxed file for cleanup
+		ctx.FilesTracker.Add(&outputPath)
+
+		err = libav.RemuxVideo(filePath, outputPath)
+		if err != nil {
+			logger.L.Warnf("remuxing failed, using original file: %v", err)
+			return filePath, nil
+		}
+		return outputPath, nil
 	}
 
 	return "", lastErr
 }
 
 func DownloadFileInMemory(
-	ctx context.Context,
-	client *networking.HTTPClient,
+	ctx *models.ExtractorContext,
 	urlList []string,
 ) (*bytes.Reader, error) {
-	if client == nil {
-		client = networking.NewHTTPClient(nil)
+	if ctx == nil {
+		return nil, fmt.Errorf("nil extractor context")
 	}
-	client = client.AsDownloadClient()
+
+	client := ctx.HTTPClient.AsDownloadClient()
 
 	var lastErr error
 	for _, url := range urlList {
 		logger.L.Debugf("attempting download from: %s", url)
-		resp, err := client.FetchWithContext(ctx, http.MethodGet, url, nil)
+		resp, err := client.FetchWithContext(
+			ctx.Context,
+			http.MethodGet,
+			url, nil,
+		)
 		if err != nil {
 			lastErr = err
 			continue

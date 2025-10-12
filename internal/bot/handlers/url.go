@@ -51,8 +51,7 @@ func URLHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 
 	err = core.HandleDownloadTask(bot, ctx, extractorCtx)
 	if err != nil {
-		logger.L.Errorf("failed to handle download task: %v", err)
-		return err
+		core.HandleError(bot, ctx, extractorCtx, err)
 	}
 
 	return nil

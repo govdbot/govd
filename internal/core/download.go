@@ -90,43 +90,41 @@ func downloadFormat(
 	var filePath string
 	var thumbnailFilePath string
 
+	// track files for cleanup
+	ctx.FilesTracker.Add(&filePath)
+	ctx.FilesTracker.Add(&thumbnailFilePath)
+
 	// for images, download in memory and convert to jpeg
 	if format.Type == database.MediaTypePhoto {
-		file, err := download.DownloadFileInMemory(
-			ctx.Context,
-			ctx.HTTPClient,
-			format.URL,
-		)
+		file, err := download.DownloadFileInMemory(ctx, format.URL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to download image: %w", err)
 		}
 
 		filePath = download.ToPath(fileName)
+
 		if err := util.ImgToJPEG(file, filePath, 0); err != nil {
 			return nil, fmt.Errorf("failed to convert image: %w", err)
 		}
 
 		return &models.DownloadedFormat{
-			Format:            format,
-			Index:             index,
-			FilePath:          filePath,
-			ThumbnailFilePath: thumbnailFilePath,
+			Format:   format,
+			Index:    index,
+			FilePath: filePath,
 		}, nil
 	}
 
 	// for video and audio, download to file
 	filePath, err := download.DownloadFile(
-		ctx.Context,
-		ctx.HTTPClient,
-		format.URL,
-		fileName,
-		format.DownloadSettings,
+		ctx, format.URL,
+		fileName, format.DownloadSettings,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download file: %w", err)
 	}
 
 	thumbnailFilePath, err = getThumbnail(ctx, format, filePath)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to get thumbnail: %w", err)
 	}

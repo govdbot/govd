@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
@@ -21,6 +20,8 @@ func HandleDownloadTask(
 	ctx *ext.Context,
 	extractorCtx *models.ExtractorContext,
 ) error {
+	defer extractorCtx.FilesTracker.Cleanup()
+
 	message := ctx.EffectiveMessage
 	isSpoiler := util.HasHashtagEntity(message, "spoiler") ||
 		util.HasHashtagEntity(message, "nsfw")
@@ -39,22 +40,6 @@ func HandleDownloadTask(
 	}
 
 	taskResult := result.(*models.TaskResult)
-
-	err = checkAlbumLimit(len(taskResult.Media.Items), extractorCtx.Settings)
-	if err != nil {
-		return err
-	}
-
-	// clean up every file after task completes
-	defer func() {
-		if taskResult.IsStored {
-			return
-		}
-		for _, fmt := range taskResult.Formats {
-			os.Remove(fmt.FilePath)
-			os.Remove(fmt.ThumbnailFilePath)
-		}
-	}()
 
 	caption := formatCaption(
 		taskResult.Media,
@@ -83,6 +68,10 @@ func executeDownload(extractorCtx *models.ExtractorContext) (*models.TaskResult,
 	if config.Env.Caching {
 		task, err := taskFromDatabase(extractorCtx)
 		if err == nil {
+			err = checkAlbumLimit(len(task.Media.Items), extractorCtx.Settings)
+			if err != nil {
+				return nil, err
+			}
 			logger.L.Debugf(
 				"media found in database: %s/%s",
 				extractorCtx.Extractor.ID,
@@ -97,6 +86,11 @@ func executeDownload(extractorCtx *models.ExtractorContext) (*models.TaskResult,
 	}
 	if resp.Media == nil || len(resp.Media.Items) == 0 {
 		return nil, fmt.Errorf("no media found")
+	}
+
+	err = checkAlbumLimit(len(resp.Media.Items), extractorCtx.Settings)
+	if err != nil {
+		return nil, err
 	}
 
 	formats, err := downloadMediaFormats(extractorCtx, resp.Media)

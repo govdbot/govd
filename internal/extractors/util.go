@@ -53,12 +53,13 @@ func FromURL(ctx context.Context, url string) *models.ExtractorContext {
 		}
 
 		extractorCtx := &models.ExtractorContext{
-			ContentID:   groups["id"],
-			ContentURL:  groups["match"],
-			MatchGroups: groups,
-			Extractor:   extractor,
-			Context:     ctx,
-			Config:      cfg,
+			ContentID:    groups["id"],
+			ContentURL:   groups["match"],
+			MatchGroups:  groups,
+			Extractor:    extractor,
+			Context:      ctx,
+			Config:       cfg,
+			FilesTracker: models.NewFilesTracker(),
 			HTTPClient: networking.NewHTTPClient(
 				&networking.NewHTTPClientOptions{
 					Cookies:   util.GetExtractorCookies(extractor.ID),
@@ -69,9 +70,7 @@ func FromURL(ctx context.Context, url string) *models.ExtractorContext {
 		}
 		if !extractor.Redirect {
 			return extractorCtx
-		}
-
-		// extractor requires fetching the URL for redirection
+		} // extractor requires fetching the URL for redirection
 		logger.L.Debugf("following redirect for extractor: %s", extractor.ID)
 
 		response, err := extractor.GetFunc(extractorCtx)
