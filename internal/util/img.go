@@ -97,7 +97,7 @@ func DecodeImage(
 }
 
 func DetectImageFormat(file io.ReadSeeker) (models.ImageFormat, error) {
-	header := make([]byte, 12)
+	header := make([]byte, 128)
 
 	_, err := file.Read(header)
 	if err != nil {
@@ -125,9 +125,11 @@ func DetectImageFormat(file io.ReadSeeker) (models.ImageFormat, error) {
 		if bytes.Equal(header[8:12], webpHeader) {
 			return models.ImageFormatWEBP, nil
 		}
+		logger.L.Debugf("unknown image header: %x", header)
 		return "", ErrUnsupportedImageFormat
 	}
 
+	logger.L.Debugf("unknown image header: %x", header)
 	return "", ErrUnsupportedImageFormat
 }
 

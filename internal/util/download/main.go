@@ -26,6 +26,7 @@ func DownloadFile(
 	if client == nil {
 		client = networking.NewHTTPClient(nil)
 	}
+	client = client.AsDownloadClient()
 
 	filePath := ToPath(fileName)
 
@@ -69,6 +70,7 @@ func DownloadFileInMemory(
 	if client == nil {
 		client = networking.NewHTTPClient(nil)
 	}
+	client = client.AsDownloadClient()
 
 	var lastErr error
 	for _, url := range urlList {

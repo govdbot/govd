@@ -48,7 +48,7 @@ func FromURL(ctx context.Context, url string) *models.ExtractorContext {
 		}
 
 		cfg := config.GetExtractorConfig(extractor.ID)
-		if cfg != nil && cfg.IsDisabled {
+		if cfg.IsDisabled {
 			return nil
 		}
 
@@ -61,7 +61,9 @@ func FromURL(ctx context.Context, url string) *models.ExtractorContext {
 			Config:      cfg,
 			HTTPClient: networking.NewHTTPClient(
 				&networking.NewHTTPClientOptions{
-					Cookies: util.GetExtractorCookies(extractor.ID),
+					Cookies:   util.GetExtractorCookies(extractor.ID),
+					EdgeProxy: cfg.EdgeProxy,
+					Proxy:     cfg.Proxy,
 				},
 			),
 		}

@@ -3,6 +3,7 @@ package networking
 import (
 	"net"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -23,4 +24,10 @@ func NewTransport() *http.Transport {
 		ResponseHeaderTimeout: 10 * time.Second,
 		DisableCompression:    false,
 	}
+}
+
+func NewTransportWithProxy(proxyURL *url.URL) *http.Transport {
+	transport := NewTransport()
+	transport.Proxy = http.ProxyURL(proxyURL)
+	return transport
 }

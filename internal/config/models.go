@@ -41,11 +41,9 @@ type EnvConfig struct {
 }
 
 type ExtractorConfig struct {
-	HTTPProxy    string `yaml:"http_proxy"`
-	HTTPSProxy   string `yaml:"https_proxy"`
-	NoProxy      string `yaml:"no_proxy"`
-	EdgeProxyURL string `yaml:"edge_proxy_url"`
-	Impersonate  bool   `yaml:"impersonate"`
+	Proxy       string `yaml:"proxy"`
+	EdgeProxy   string `yaml:"edge_proxy"`
+	Impersonate bool   `yaml:"impersonate"`
 
 	IsDisabled bool `yaml:"disabled"`
 

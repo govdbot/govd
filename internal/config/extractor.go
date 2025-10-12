@@ -36,5 +36,5 @@ func GetExtractorConfig(extractorID string) *ExtractorConfig {
 	if config, exists := extractorConfigs[extractorID]; exists {
 		return config
 	}
-	return nil
+	return &ExtractorConfig{}
 }

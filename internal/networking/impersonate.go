@@ -46,7 +46,7 @@ func ChromeClientHelloSpec() *tls.ClientHelloInfo {
 	}
 }
 
-func NewChromeClient() *HTTPClient {
+func NewChromeClient() *http.Client {
 	tlsConfig := &tls.Config{
 		MinVersion: tls.VersionTLS12,
 		MaxVersion: tls.VersionTLS13,
@@ -76,10 +76,8 @@ func NewChromeClient() *HTTPClient {
 	transport := NewTransport()
 	transport.TLSClientConfig = tlsConfig
 
-	return &HTTPClient{
-		Client: &http.Client{
-			Transport: transport,
-			Timeout:   30 * time.Second,
-		},
+	return &http.Client{
+		Transport: transport,
+		Timeout:   30 * time.Second,
 	}
 }

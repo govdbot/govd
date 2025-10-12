@@ -36,6 +36,7 @@ var VMExtractor = &models.Extractor{
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse redirect url: %w", err)
 		}
+
 		if parsedURL.Path == "/login" {
 			logger.L.Debug("tiktok is geo restricted in your region, attemping bypass...")
 			realURL := parsedURL.Query().Get("redirect_url")
