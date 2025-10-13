@@ -1,6 +1,12 @@
 package util
 
-import "github.com/govdbot/govd/internal/localization"
+import (
+	"encoding/hex"
+	"hash/fnv"
+	"strings"
+
+	"github.com/govdbot/govd/internal/localization"
+)
 
 type Error struct {
 	ID string
@@ -26,3 +32,18 @@ var (
 	ErrDurationTooLong               = &Error{ID: localization.ErrorDurationTooLong.ID}
 	ErrPaidContent                   = &Error{ID: localization.ErrorPaidContent.ID}
 )
+
+func HashedError(message string) string {
+	const length = 8
+
+	h := fnv.New64a()
+	h.Write([]byte(message))
+
+	sum := h.Sum(nil)
+	hexStr := hex.EncodeToString(sum)
+
+	if length > len(hexStr) {
+		return strings.ToUpper(hexStr)
+	}
+	return strings.ToUpper(hexStr[:length])
+}

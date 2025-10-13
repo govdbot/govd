@@ -30,6 +30,7 @@ type EnvConfig struct {
 	LogLevel     zapcore.Level
 	Whitelist    []int64
 	Caching      bool
+	Admins       []int64
 
 	CaptionsHeader      string
 	CaptionsDescription string

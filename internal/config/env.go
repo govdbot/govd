@@ -29,6 +29,7 @@ func loadEnv() {
 	parseEnvInt("PROFILER_PORT", &Env.ProfilerPort, false)
 	parseEnvLevel("LOG_LEVEL", &Env.LogLevel, false)
 	parseEnvInt64Slice("WHITELIST", &Env.Whitelist, false)
+	parseEnvInt64Slice("ADMINS", &Env.Admins, false)
 	parseEnvBool("CACHING", &Env.Caching, false)
 	parseEnvString("CAPTIONS_HEADER", &Env.CaptionsHeader, false)
 	parseEnvString("CAPTIONS_DESCRIPTION", &Env.CaptionsDescription, false)

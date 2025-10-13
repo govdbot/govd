@@ -118,6 +118,10 @@ func registerHandlers(dispatcher *ext.Dispatcher) {
 		callbackquery.Equal("close"),
 		botHandlers.CloseHandler,
 	))
+	dispatcher.AddHandler(handlers.NewCommand(
+		"derr",
+		botHandlers.DecodeErrorHandler,
+	))
 
 	// whitelist
 	if len(config.Env.Whitelist) > 0 {

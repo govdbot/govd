@@ -1,8 +1,11 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE IF NOT EXISTS errors (
-    id VARCHAR(16) PRIMARY KEY,
-    message TEXT NOT NULL
+CREATE TABLE errors (
+    id CHAR(8) PRIMARY KEY CHECK (LENGTH(id) = 8),
+    message TEXT NOT NULL,
+    occurrences INT NOT NULL DEFAULT 1,
+    first_seen TIMESTAMP NOT NULL DEFAULT NOW(),
+    last_seen TIMESTAMP NOT NULL DEFAULT NOW()
 );
 -- +goose StatementEnd
 

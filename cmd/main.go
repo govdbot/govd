@@ -23,6 +23,9 @@ func main() {
 	if len(config.Env.Whitelist) > 0 {
 		logger.L.Infof("whitelist is enabled: %v", config.Env.Whitelist)
 	}
+	if len(config.Env.Admins) > 0 {
+		logger.L.Infof("admins: %v", config.Env.Admins)
+	}
 
 	localization.Init()
 	database.Init()
