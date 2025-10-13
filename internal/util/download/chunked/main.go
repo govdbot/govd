@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/govdbot/govd/internal/models"
@@ -31,9 +33,7 @@ func NewChunkedDownloader(
 		return nil, fmt.Errorf("http client cannot be nil")
 	}
 
-	resp, err := client.FetchWithContext(
-		ctx, http.MethodHead, url, nil,
-	)
+	resp, err := client.FetchWithContext(ctx, http.MethodHead, url, nil)
 
 	// prefer HEAD, but some servers block/close HEAD requests (EOF). If HEAD fails
 	// fallback to a small GET with Range to infer content length and range support.
@@ -44,7 +44,7 @@ func NewChunkedDownloader(
 			numChunks := int((totalSize + chunkSize - 1) / chunkSize)
 			return &ChunkedDownloader{
 				client:    client,
-				url:       url,
+				url:       resp.Request.URL.String(),
 				totalSize: totalSize,
 				chunkSize: chunkSize,
 				numChunks: numChunks,
@@ -53,8 +53,12 @@ func NewChunkedDownloader(
 	}
 
 	// fallback: try a ranged GET for the first byte to get Content-Range or Content-Length
-	headers := map[string]string{"Range": "bytes=0-0"}
-	resp, err = client.FetchWithContext(ctx, http.MethodGet, url, &networking.RequestParams{Headers: headers})
+	resp, err = client.FetchWithContext(
+		ctx, http.MethodGet,
+		url, &networking.RequestParams{
+			Headers: map[string]string{"Range": "bytes=0-0"},
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to determine content length (head fallback): %w", err)
 	}
@@ -62,16 +66,15 @@ func NewChunkedDownloader(
 
 	// prefer Content-Range: "bytes 0-0/12345"
 	if cr := resp.Header.Get("Content-Range"); cr != "" {
-		var total int64
-		_, err := fmt.Sscanf(cr, "bytes %*d-%*d/%d", &total)
-		if err == nil && total > 0 {
+		total, parseErr := parseContentRange(cr)
+		if parseErr == nil && total > 0 {
 			if resp.StatusCode != http.StatusPartialContent {
 				return nil, fmt.Errorf("expected 206 for ranged GET, got %d", resp.StatusCode)
 			}
 			numChunks := int((total + chunkSize - 1) / chunkSize)
 			return &ChunkedDownloader{
 				client:    client,
-				url:       url,
+				url:       resp.Request.URL.String(),
 				totalSize: total,
 				chunkSize: chunkSize,
 				numChunks: numChunks,
@@ -90,7 +93,7 @@ func NewChunkedDownloader(
 		numChunks := int((totalSize + chunkSize - 1) / chunkSize)
 		return &ChunkedDownloader{
 			client:    client,
-			url:       url,
+			url:       resp.Request.URL.String(),
 			totalSize: totalSize,
 			chunkSize: chunkSize,
 			numChunks: numChunks,
@@ -203,4 +206,24 @@ func (cd *ChunkedDownloader) writeChunks(writer io.Writer, chunks <-chan *Chunk)
 	}
 
 	return nil
+}
+
+func parseContentRange(contentRange string) (int64, error) {
+	// expected format: "bytes START-END/TOTAL" or "bytes */TOTAL"
+	if !strings.HasPrefix(contentRange, "bytes ") {
+		return 0, fmt.Errorf("invalid content-range format: %s", contentRange)
+	}
+
+	parts := strings.Split(contentRange, "/")
+	if len(parts) != 2 {
+		return 0, fmt.Errorf("invalid content-range format, missing '/': %s", contentRange)
+	}
+
+	totalStr := strings.TrimSpace(parts[1])
+	total, err := strconv.ParseInt(totalStr, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse total size from content-range '%s': %w", contentRange, err)
+	}
+
+	return total, nil
 }

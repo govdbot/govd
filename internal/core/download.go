@@ -46,7 +46,13 @@ func downloadItem(
 	item *models.MediaItem,
 	index int,
 ) {
-	format := item.GetDefaultFormat()
+	var format *models.MediaFormat
+	if len(item.Formats) > 1 {
+		format = item.GetDefaultFormat()
+	} else {
+		format = item.Formats[0]
+	}
+
 	if format == nil {
 		formats <- &models.DownloadedFormat{
 			Index: index,
@@ -54,6 +60,8 @@ func downloadItem(
 		}
 		return
 	}
+
+	logger.L.Debugf("selected format: %s", format.ToString())
 
 	// validate format before download
 	// to avoid downloading large files

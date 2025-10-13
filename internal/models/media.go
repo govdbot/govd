@@ -109,6 +109,31 @@ func (f *MediaFormat) GetInfo() (FileExtension, FileType) {
 	}
 }
 
+func (f *MediaFormat) ToString() string {
+	parts := make([]string, 0)
+
+	parts = append(parts, string(f.Type))
+	if f.Width != 0 && f.Height != 0 {
+		parts = append(parts, fmt.Sprintf("%dx%d", f.Width, f.Height))
+	}
+	if duration := f.formatDuration(); duration != "" {
+		parts = append(parts, duration)
+	}
+	if f.VideoCodec != "" {
+		parts = append(parts, string(f.VideoCodec))
+	}
+	if f.AudioCodec != "" {
+		parts = append(parts, string(f.AudioCodec))
+	}
+	if bitrate := f.formatBitrate(); bitrate != "" {
+		parts = append(parts, bitrate)
+	}
+	if fileSize := f.formatFileSize(); fileSize != "" {
+		parts = append(parts, fileSize)
+	}
+	return strings.Join(parts, ", ")
+}
+
 func (f *MediaFormat) GetFileName() string {
 	ext, _ := f.GetInfo()
 	if f.Type == database.MediaTypeAudio && f.Title != "" && f.Artist != "" {
@@ -348,4 +373,64 @@ func (f *MediaFormat) MissingMetadata() bool {
 		return f.Width == 0 || f.Height == 0 || f.Duration == 0
 	}
 	return false
+}
+
+func (f *MediaFormat) formatDuration() string {
+	seconds := f.Duration
+
+	if seconds == 0 {
+		return ""
+	}
+	hours := seconds / 3600
+	minutes := (seconds % 3600) / 60
+	secs := seconds % 60
+
+	if hours > 0 {
+		return fmt.Sprintf("%d:%02d:%02d", hours, minutes, secs)
+	} else if minutes > 0 {
+		return fmt.Sprintf("%d:%02d", minutes, secs)
+	} else {
+		return fmt.Sprintf("%ds", secs)
+	}
+}
+
+func (f *MediaFormat) formatBitrate() string {
+	bps := f.Bitrate
+
+	if bps == 0 {
+		return ""
+	}
+	kbps := float64(bps) / 1000
+	if kbps >= 1000 {
+		mbps := kbps / 1000
+		return fmt.Sprintf("%.1fMbps", mbps)
+	}
+	return fmt.Sprintf("%.0fkbps", kbps)
+}
+
+func (f *MediaFormat) formatFileSize() string {
+	bytes := f.FileSize
+
+	if bytes == 0 {
+		return ""
+	}
+
+	const (
+		KB = 1024
+		MB = KB * 1024
+		GB = MB * 1024
+	)
+
+	size := float64(bytes)
+
+	switch {
+	case size >= GB:
+		return fmt.Sprintf("%.2fGB", size/GB)
+	case size >= MB:
+		return fmt.Sprintf("%.1fMB", size/MB)
+	case size >= KB:
+		return fmt.Sprintf("%.0fKB", size/KB)
+	default:
+		return fmt.Sprintf("%dB", bytes)
+	}
 }
