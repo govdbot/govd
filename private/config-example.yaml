@@ -3,4 +3,5 @@ youtube:
   disabled: true
 
 instagram:
-  https_proxy: http://localhost:8080
+  proxy: http://localhost:8080
+  download_proxy: http://localhost:8081

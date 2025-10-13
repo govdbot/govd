@@ -20,7 +20,7 @@ func HandleDownloadTask(
 	ctx *ext.Context,
 	extractorCtx *models.ExtractorContext,
 ) error {
-	defer extractorCtx.FilesTracker.Cleanup()
+	// defer extractorCtx.FilesTracker.Cleanup()
 
 	message := ctx.EffectiveMessage
 	isSpoiler := util.HasHashtagEntity(message, "spoiler") ||

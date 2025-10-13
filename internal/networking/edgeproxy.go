@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
-	"time"
 )
 
 type EdgeProxyClient struct {
@@ -17,7 +16,7 @@ func NewEdgeProxyClient(proxyURL string) HTTPClientInterface {
 	return &EdgeProxyClient{
 		Client: HTTPClient{
 			Client: &http.Client{
-				Timeout: 60 * time.Second,
+				Timeout: defaultTimeout,
 			},
 		},
 		ProxyURL: proxyURL,
@@ -43,7 +42,6 @@ func (c *EdgeProxyClient) Do(req *http.Request) (*http.Response, error) {
 			headers[key] = values[0]
 		}
 	}
-
 	resp, err := c.Client.Fetch(
 		req.Method,
 		proxyURLWithParam,

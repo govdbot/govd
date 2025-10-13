@@ -6,7 +6,7 @@ import (
 )
 
 func RemuxVideo(inputPath string, outputPath string) error {
-	logger.L.Debugf("remuxing video %s to %s", inputPath, outputPath)
+	logger.L.Debugf("remuxing video: %s", inputPath)
 
 	return ffmpeg.Input(inputPath).
 		Output(outputPath, ffmpeg.KwArgs{

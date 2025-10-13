@@ -62,9 +62,10 @@ func FromURL(ctx context.Context, url string) *models.ExtractorContext {
 			FilesTracker: models.NewFilesTracker(),
 			HTTPClient: networking.NewHTTPClient(
 				&networking.NewHTTPClientOptions{
-					Cookies:   util.GetExtractorCookies(extractor.ID),
-					EdgeProxy: cfg.EdgeProxy,
-					Proxy:     cfg.Proxy,
+					Cookies:       util.GetExtractorCookies(extractor.ID),
+					EdgeProxy:     cfg.EdgeProxy,
+					DownloadProxy: cfg.DownloadProxy,
+					Proxy:         cfg.Proxy,
 				},
 			),
 		}

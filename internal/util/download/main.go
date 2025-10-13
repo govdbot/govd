@@ -58,10 +58,10 @@ func DownloadFile(
 			continue
 		}
 
-		outputPath := ToPath(strings.TrimSuffix(
+		outputPath := strings.TrimSuffix(
 			filePath,
 			filepath.Ext(filePath),
-		) + "_remuxed" + filepath.Ext(filePath))
+		) + "_remuxed" + filepath.Ext(filePath)
 
 		// track remuxed file for cleanup
 		ctx.FilesTracker.Add(&outputPath)
@@ -71,7 +71,8 @@ func DownloadFile(
 			logger.L.Warnf("remuxing failed, using original file: %v", err)
 			return filePath, nil
 		}
-		return outputPath, nil
+		os.Rename(outputPath, filePath)
+		return filePath, nil
 	}
 
 	return "", lastErr

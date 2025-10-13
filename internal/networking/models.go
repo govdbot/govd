@@ -10,19 +10,21 @@ type HTTPClientInterface interface {
 }
 
 type HTTPClient struct {
-	Client    HTTPClientInterface
-	Headers   map[string]string
-	Cookies   []*http.Cookie
-	Proxy     string
-	EdgeProxy string
+	Client        HTTPClientInterface
+	Headers       map[string]string
+	Cookies       []*http.Cookie
+	Proxy         string
+	EdgeProxy     string
+	DownloadProxy string
 }
 
 type NewHTTPClientOptions struct {
-	Headers     map[string]string
-	Cookies     []*http.Cookie
-	Proxy       string
-	EdgeProxy   string
-	Impersonate bool
+	Headers       map[string]string
+	Cookies       []*http.Cookie
+	Proxy         string
+	EdgeProxy     string
+	DownloadProxy string
+	Impersonate   bool
 }
 
 type RequestParams struct {

@@ -8,46 +8,41 @@ import (
 	"github.com/govdbot/govd/internal/logger"
 )
 
+var defaultTimeout = 30 * time.Second
+
 func NewHTTPClient(options *NewHTTPClientOptions) *HTTPClient {
 	if options == nil {
 		options = &NewHTTPClientOptions{}
 	}
-	transport := NewTransport()
+	client := DefaultHTTPClient(options)
 
 	if options.Proxy != "" {
 		proxyURL, err := url.Parse(options.Proxy)
 		if err != nil {
 			logger.L.Warnf("invalid proxy URL: %v", err)
 		} else {
-			transport = NewTransportWithProxy(proxyURL)
-			return &HTTPClient{
-				Client: &http.Client{
-					Transport: transport,
-					Timeout:   30 * time.Second,
-				},
-				Headers: options.Headers,
-				Cookies: options.Cookies,
-				Proxy:   options.Proxy,
+			client.Client = &http.Client{
+				Transport: NewTransportWithProxy(proxyURL),
+				Timeout:   defaultTimeout,
 			}
+			client.Proxy = options.Proxy
 		}
 	} else if options.EdgeProxy != "" {
-		return &HTTPClient{
-			Client:    NewEdgeProxyClient(options.EdgeProxy),
-			Headers:   options.Headers,
-			Cookies:   options.Cookies,
-			EdgeProxy: options.EdgeProxy,
-		}
+		client.Client = NewEdgeProxyClient(options.EdgeProxy)
+		client.EdgeProxy = options.EdgeProxy
 	} else if options.Impersonate {
-		return &HTTPClient{
-			Client:  NewChromeClient(),
-			Headers: options.Headers,
-			Cookies: options.Cookies,
-		}
+		client.Client = NewChromeClient()
 	}
+
+	client.DownloadProxy = options.DownloadProxy
+	return client
+}
+
+func DefaultHTTPClient(options *NewHTTPClientOptions) *HTTPClient {
 	return &HTTPClient{
 		Client: &http.Client{
-			Transport: transport,
-			Timeout:   30 * time.Second,
+			Transport: NewTransport(),
+			Timeout:   defaultTimeout,
 		},
 		Headers: options.Headers,
 		Cookies: options.Cookies,
@@ -55,16 +50,20 @@ func NewHTTPClient(options *NewHTTPClientOptions) *HTTPClient {
 }
 
 func (c *HTTPClient) AsDownloadClient() *HTTPClient {
-	if c.EdgeProxy != "" {
-		// EdgeProxy clients are not suitable for downloads
-		return &HTTPClient{
-			Client: &http.Client{
-				Transport: NewTransport(),
-				Timeout:   60 * time.Second,
-			},
-			Headers: c.Headers,
-			Cookies: c.Cookies,
+	client := DefaultHTTPClient(&NewHTTPClientOptions{
+		Headers: c.Headers,
+		Cookies: c.Cookies,
+	})
+	if c.DownloadProxy != "" {
+		proxyURL, err := url.Parse(c.DownloadProxy)
+		if err != nil {
+			logger.L.Warnf("invalid download proxy URL: %v", err)
+			return c
+		}
+		client.Client = &http.Client{
+			Transport: NewTransportWithProxy(proxyURL),
+			Timeout:   defaultTimeout,
 		}
 	}
-	return c
+	return client
 }

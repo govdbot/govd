@@ -119,6 +119,7 @@ func downloadFormat(
 		ctx, format.URL,
 		fileName, format.DownloadSettings,
 	)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to download file: %w", err)
 	}

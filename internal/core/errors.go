@@ -6,6 +6,7 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/govdbot/govd/internal/localization"
+	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/util"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -17,6 +18,8 @@ func HandleError(
 	extractorCtx *models.ExtractorContext,
 	err error,
 ) {
+	logger.L.Errorf("unexpected error: %v", err)
+
 	currentErr := err
 	for currentErr != nil {
 		var botError *util.Error
