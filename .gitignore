@@ -4,6 +4,7 @@ govd
 
 # build artifacts
 .env
+tmp/
 
 # ides and editors
 .idea/

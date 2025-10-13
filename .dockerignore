@@ -1,1 +1,31 @@
+# generated files
 *_gen.go
+
+# git
+.git
+.gitignore
+
+# build artifacts
+tmp/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+govd
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# docker
+Dockerfile
+docker-compose*.yaml
+.dockerignore
+
+# documentation
+*.md

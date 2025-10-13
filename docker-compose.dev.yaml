@@ -1,16 +1,22 @@
 services:
   govd-bot:
-    build: .
-    container_name: govd-bot
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: govd-bot-dev
     restart: unless-stopped
     networks:
       - govd-network
     env_file:
       - .env
     volumes:
-      - ./private:/app/private
-      - ./logs:/app/logs
-      - ./downloads:/app/downloads
+      # mount source code for hot reload
+      - .:/app
+      # exclude tmp directory (air build artifacts)
+      - /app/tmp
+      # cache go modules
+      - go-build-cache:/go-cache
+      - go-mod-cache:/gomod-cache
     depends_on:
       db:
         condition: service_healthy
@@ -51,6 +57,8 @@ services:
 
 volumes:
   db:
+  go-build-cache:
+  go-mod-cache:
 
 networks:
   govd-network:
