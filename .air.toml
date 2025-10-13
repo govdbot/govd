@@ -5,10 +5,9 @@ tmp_dir = "tmp"
 [build]
   bin = "./tmp/main"
   cmd = "go build -o ./tmp/main ./cmd/main.go"
-  delay = 1000
   exclude_dir = ["tmp", "testdata", "logs", "downloads", "private"]
   exclude_regex = ["_test.go"]
-  include_ext = ["go", "toml", "yaml", "yml", "env"]
+  include_ext = ["go", "toml", "yaml", "yml"]
   stop_on_error = false
 
 [log]
