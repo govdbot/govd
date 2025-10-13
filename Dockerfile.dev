@@ -1,6 +1,5 @@
-FROM golang:bookworm
+FROM golang:alpine
 
-# build arguments
 ARG FFMPEG_VERSION=7.1
 ARG LIBHEIF_VERSION=1.20.2
 
@@ -12,21 +11,24 @@ ENV GOCACHE=/go-cache
 ENV GOMODCACHE=/gomod-cache
 
 # install build dependencies first
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends \
-        bash \
+RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
+    --mount=type=cache,target=/var/lib/apk,sharing=locked \
+    apk update && \
+    apk add --no-cache \
         git \
-        pkg-config \
-        build-essential \
+        pkgconf \
+        build-base \
         tar \
         wget \
-        xz-utils \
+        xz \
         gcc \
         cmake \
-        libde265-dev
+        libjpeg-turbo-dev \
+        libpng-dev \
+        libde265-dev \
+        x265-dev \
+        aom-dev \
+        dav1d-dev
 
 # prepare directories
 RUN mkdir -p \
@@ -39,7 +41,7 @@ RUN mkdir -p \
 
 WORKDIR /bot/packages
 
-# build and install libheif - only rebuild if version changes
+# download and build libheif from source
 RUN --mount=type=cache,target=/bot/downloads/libheif \
     mkdir -p /bot/downloads/libheif && \
     cd /bot/downloads/libheif && \
@@ -55,7 +57,7 @@ RUN --mount=type=cache,target=/bot/downloads/libheif \
     make -j"$(nproc)" && \
     make install
 
-# download and install ffmpeg - only rebuild if version changes
+# download and install ffmpeg binaries
 RUN --mount=type=cache,target=/bot/downloads/ffmpeg \
     mkdir -p /bot/downloads/ffmpeg && \
     cd /bot/downloads/ffmpeg && \
@@ -95,7 +97,6 @@ COPY internal/database/migrations/ ./internal/database/migrations/
 # generate sqlc code
 RUN sqlc generate
 
-# set working directory to /app for consistency with docker-compose volume mount
 WORKDIR /app
 
 # run air for hot reload

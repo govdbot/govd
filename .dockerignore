@@ -2,7 +2,6 @@
 *_gen.go
 
 # git
-.git
 .gitignore
 
 # build artifacts

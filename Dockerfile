@@ -1,4 +1,4 @@
-FROM golang:bookworm AS builder
+FROM golang:alpine AS builder
 
 # build arguments
 ARG FFMPEG_VERSION=7.1
@@ -12,22 +12,25 @@ ENV GOCACHE=/go-cache
 ENV GOMODCACHE=/gomod-cache
 
 # install build dependencies first
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends \
-        bash \
+RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
+    --mount=type=cache,target=/var/lib/apk,sharing=locked \
+    apk update && \
+    apk add --no-cache \
         git \
-        pkg-config \
-        build-essential \
+        pkgconf \
+        build-base \
         tar \
         wget \
-        xz-utils \
+        xz \
         gcc \
         cmake \
-        libde265-dev
-
+        libjpeg-turbo-dev \
+        libpng-dev \
+        libde265-dev \
+        x265-dev \
+        aom-dev \
+        dav1d-dev
+        
 # prepare directories
 RUN mkdir -p \
     /usr/local/bin \
@@ -39,7 +42,7 @@ RUN mkdir -p \
 
 WORKDIR /bot/packages
 
-# build and install libheif - only rebuild if version changes
+# download and build libheif from source
 RUN --mount=type=cache,target=/bot/downloads/libheif \
     mkdir -p /bot/downloads/libheif && \
     cd /bot/downloads/libheif && \
@@ -55,7 +58,7 @@ RUN --mount=type=cache,target=/bot/downloads/libheif \
     make -j"$(nproc)" && \
     make install
 
-# download and install ffmpeg - only rebuild if version changes
+# download and install ffmpeg binaries
 RUN --mount=type=cache,target=/bot/downloads/ffmpeg \
     mkdir -p /bot/downloads/ffmpeg && \
     cd /bot/downloads/ffmpeg && \
@@ -75,7 +78,7 @@ RUN --mount=type=cache,target=/bot/downloads/ffmpeg \
     cp -rv ffmpeg/include/* /usr/local/include/ && \
     cp -rv ffmpeg/lib/pkgconfig/* /usr/local/lib/pkgconfig/ && \
     ldconfig /usr/local
-
+    
 WORKDIR /bot
 
 # copy go.mod and go.sum first for better caching
@@ -100,17 +103,16 @@ COPY . .
 # build the application with build cache
 RUN --mount=type=cache,target=/go-cache \
     --mount=type=cache,target=/gomod-cache \
-    chmod +x build.sh && ./build.sh
+    go build -o govd ./cmd/main.go
 
 # final stage - create a smaller runtime image
-FROM debian:bookworm-slim AS runtime
+FROM alpine:latest AS runtime
 
-# install only runtime dependencies with apt cache
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
-    apt-get install -y --no-install-recommends libde265-0 ca-certificates openssl && \
-    rm -rf /var/lib/apt/lists/*
+# install only runtime dependencies with apk cache
+RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
+    --mount=type=cache,target=/var/lib/apk,sharing=locked \
+    apk update && \
+    apk add --no-cache libde265 ca-certificates openssl
 
 # copy libraries and binaries from builder stage
 COPY --from=builder /usr/local/lib/ /usr/local/lib/
