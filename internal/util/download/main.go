@@ -63,15 +63,15 @@ func DownloadFile(
 			filepath.Ext(filePath),
 		) + "_remuxed" + filepath.Ext(filePath)
 
-		// track remuxed file for cleanup
-		ctx.FilesTracker.Add(&outputPath)
-
-		err = libav.RemuxVideo(filePath, outputPath)
+		err = libav.RemuxFile(filePath, outputPath)
 		if err != nil {
 			logger.L.Warnf("remuxing failed, using original file: %v", err)
 			return filePath, nil
 		}
+
+		// replace original file with remuxed file
 		os.Rename(outputPath, filePath)
+
 		return filePath, nil
 	}
 

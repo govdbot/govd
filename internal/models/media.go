@@ -114,10 +114,13 @@ func (f *MediaFormat) GetFileName() string {
 	if f.Type == database.MediaTypeAudio && f.Title != "" && f.Artist != "" {
 		artist := strings.ReplaceAll(f.Artist, "/", " ")
 		title := strings.ReplaceAll(f.Title, "/", " ")
-		return fmt.Sprintf("%s - %s.%s", artist, title, ext)
+		uid := strings.ToUpper(uuid.New().String()[:8])
+
+		return fmt.Sprintf("%s - %s [%s].%s", artist, title, uid, ext)
 	}
 	name := uuid.New().String()
 	name = strings.ReplaceAll(name, "-", "")
+
 	return fmt.Sprintf("%s.%s", name, ext)
 }
 
