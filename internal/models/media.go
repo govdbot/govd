@@ -339,3 +339,10 @@ func (format *MediaFormat) GetInputMediaWithFileID(
 		return nil, fmt.Errorf("unknown input type: %s", inputMediaType)
 	}
 }
+
+func (f *MediaFormat) MissingMetadata() bool {
+	if f.Type == database.MediaTypeVideo {
+		return f.Width == 0 || f.Height == 0 || f.Duration == 0
+	}
+	return false
+}

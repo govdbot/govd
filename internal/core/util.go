@@ -61,6 +61,16 @@ func getThumbnail(
 	return thumbnailFilePath, nil
 }
 
+func insertVideoInfo(format *models.MediaFormat, filePath string) {
+	duration, width, height := util.ExtractMP4Metadata(filePath)
+	if duration == 0 && width == 0 && height == 0 {
+		duration, width, height = libav.ExtractVideoMetadata(filePath)
+	}
+	format.Duration = duration
+	format.Width = width
+	format.Height = height
+}
+
 func formatCaption(media *models.Media, isEnabled bool) string {
 	caption := media.Caption
 

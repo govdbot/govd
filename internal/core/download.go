@@ -55,6 +55,9 @@ func downloadItem(
 		return
 	}
 
+	// validate format before download
+	// to avoid downloading large files
+	// or unsupported formats
 	err := validateFormat(format)
 	if err != nil {
 		formats <- &models.DownloadedFormat{
@@ -72,6 +75,19 @@ func downloadItem(
 		}
 		return
 	}
+
+	// validate format again after download
+	// in case metadata extraction is done
+	// after download
+	err = validateFormat(format)
+	if err != nil {
+		formats <- &models.DownloadedFormat{
+			Index: index,
+			Error: err,
+		}
+		return
+	}
+
 	formats <- downloadedFormat
 }
 
@@ -119,15 +135,21 @@ func downloadFormat(
 		ctx, format.URL,
 		fileName, format.DownloadSettings,
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to download file: %w", err)
 	}
 
 	thumbnailFilePath, err = getThumbnail(ctx, format, filePath)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to get thumbnail: %w", err)
+	}
+
+	if format.MissingMetadata() {
+		// extract video metadata if missing
+		// width, height, duration
+		// this is needed for Telegram video messages
+		// and for validating the format
+		insertVideoInfo(format, filePath)
 	}
 
 	return &models.DownloadedFormat{
