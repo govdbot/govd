@@ -10,6 +10,7 @@ import (
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
+	"github.com/govdbot/govd/internal/plugins"
 	"github.com/govdbot/govd/internal/util"
 
 	"github.com/bytedance/sonic"
@@ -126,6 +127,7 @@ func GetTrackMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 		Duration:     duration,
 		Title:        title,
 		Artist:       artist,
+		Plugins:      []*models.Plugin{plugins.ID3},
 	})
 
 	return media, nil

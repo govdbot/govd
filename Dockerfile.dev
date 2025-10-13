@@ -1,6 +1,5 @@
 FROM golang:alpine
 
-ARG FFMPEG_VERSION=7.1
 ARG LIBHEIF_VERSION=1.20.2
 
 # environment variables for build
@@ -28,7 +27,9 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
         libde265-dev \
         x265-dev \
         aom-dev \
-        dav1d-dev
+        dav1d-dev \
+        ffmpeg-dev \
+        ffmpeg
 
 # prepare directories
 RUN mkdir -p \
@@ -56,27 +57,6 @@ RUN --mount=type=cache,target=/bot/downloads/libheif \
     cmake --preset=release .. && \
     make -j"$(nproc)" && \
     make install
-
-# download and install ffmpeg binaries
-RUN --mount=type=cache,target=/bot/downloads/ffmpeg \
-    mkdir -p /bot/downloads/ffmpeg && \
-    cd /bot/downloads/ffmpeg && \
-    ARCH="$(uname -m)" && \
-    if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then \
-        FFMPEG_BUILD="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n${FFMPEG_VERSION}-latest-linuxarm64-gpl-shared-${FFMPEG_VERSION}.tar.xz"; \
-    else \
-        FFMPEG_BUILD="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n${FFMPEG_VERSION}-latest-linux64-gpl-shared-${FFMPEG_VERSION}.tar.xz"; \
-    fi && \
-    if [ ! -f "ffmpeg-${FFMPEG_VERSION}.tar.xz" ]; then \
-        wget -O "ffmpeg-${FFMPEG_VERSION}.tar.xz" "${FFMPEG_BUILD}"; \
-    fi && \
-    mkdir -p ffmpeg && \
-    tar -xf "ffmpeg-${FFMPEG_VERSION}.tar.xz" -C ffmpeg --strip-components=1 && \
-    cp -rv ffmpeg/bin/* /usr/local/bin/ && \
-    cp -rv ffmpeg/lib/* /usr/local/lib/ && \
-    cp -rv ffmpeg/include/* /usr/local/include/ && \
-    cp -rv ffmpeg/lib/pkgconfig/* /usr/local/lib/pkgconfig/ && \
-    ldconfig /usr/local
 
 WORKDIR /bot
 

@@ -96,6 +96,20 @@ func downloadItem(
 		return
 	}
 
+	for _, plugin := range format.Plugins {
+		if plugin != nil {
+			logger.L.Debugf("running plugin: %s", plugin.ID)
+			err := plugin.GetFunc(ctx, downloadedFormat)
+			if err != nil {
+				formats <- &models.DownloadedFormat{
+					Index: index,
+					Error: fmt.Errorf("plugin %s failed: %w", plugin.ID, err),
+				}
+				return
+			}
+		}
+	}
+
 	formats <- downloadedFormat
 }
 

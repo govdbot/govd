@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -50,6 +51,7 @@ func ExceedsMaxFileSize(fileSize int32) bool {
 func ExceedsMaxDuration(duration int32) bool {
 	return duration > int32(config.Env.MaxDuration.Seconds())
 }
+
 func CleanupDownloads() {
 	logger.L.Debug("cleaning up downloads directory")
 
@@ -65,4 +67,9 @@ func CleanupDownloads() {
 		filePath := filepath.Join(path, file.Name())
 		os.Remove(filePath)
 	}
+}
+
+func CheckFFmpeg() bool {
+	_, err := exec.LookPath("ffmpeg")
+	return err == nil
 }

@@ -16,6 +16,10 @@ func main() {
 	config.Load()
 	logger.SetLevel(config.Env.LogLevel)
 
+	if !util.CheckFFmpeg() {
+		logger.L.Fatal("ffmpeg binary not found in PATH")
+	}
+
 	if len(config.Env.Whitelist) > 0 {
 		logger.L.Infof("whitelist is enabled: %v", config.Env.Whitelist)
 	}

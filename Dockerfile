@@ -1,7 +1,6 @@
 FROM golang:alpine AS builder
 
 # build arguments
-ARG FFMPEG_VERSION=7.1
 ARG LIBHEIF_VERSION=1.20.2
 
 # environment variables for build
@@ -29,8 +28,9 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
         libde265-dev \
         x265-dev \
         aom-dev \
-        dav1d-dev
-        
+        dav1d-dev \
+        ffmpeg-dev
+
 # prepare directories
 RUN mkdir -p \
     /usr/local/bin \
@@ -58,27 +58,6 @@ RUN --mount=type=cache,target=/bot/downloads/libheif \
     make -j"$(nproc)" && \
     make install
 
-# download and install ffmpeg binaries
-RUN --mount=type=cache,target=/bot/downloads/ffmpeg \
-    mkdir -p /bot/downloads/ffmpeg && \
-    cd /bot/downloads/ffmpeg && \
-    ARCH="$(uname -m)" && \
-    if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then \
-        FFMPEG_BUILD="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n${FFMPEG_VERSION}-latest-linuxarm64-gpl-shared-${FFMPEG_VERSION}.tar.xz"; \
-    else \
-        FFMPEG_BUILD="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n${FFMPEG_VERSION}-latest-linux64-gpl-shared-${FFMPEG_VERSION}.tar.xz"; \
-    fi && \
-    if [ ! -f "ffmpeg-${FFMPEG_VERSION}.tar.xz" ]; then \
-        wget -O "ffmpeg-${FFMPEG_VERSION}.tar.xz" "${FFMPEG_BUILD}"; \
-    fi && \
-    mkdir -p ffmpeg && \
-    tar -xf "ffmpeg-${FFMPEG_VERSION}.tar.xz" -C ffmpeg --strip-components=1 && \
-    cp -rv ffmpeg/bin/* /usr/local/bin/ && \
-    cp -rv ffmpeg/lib/* /usr/local/lib/ && \
-    cp -rv ffmpeg/include/* /usr/local/include/ && \
-    cp -rv ffmpeg/lib/pkgconfig/* /usr/local/lib/pkgconfig/ && \
-    ldconfig /usr/local
-    
 WORKDIR /bot
 
 # copy go.mod and go.sum first for better caching
@@ -110,13 +89,17 @@ FROM alpine:latest AS runtime
 
 # install only runtime dependencies with apk cache
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
-    --mount=type=cache,target=/var/lib/apk,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apk update && \
-    apk add --no-cache libde265 ca-certificates openssl
+    apk add --no-cache \
+        libde265 \
+        ca-certificates \
+        openssl \
+        ffmpeg
 
 # copy libraries and binaries from builder stage
-COPY --from=builder /usr/local/lib/ /usr/local/lib/
-COPY --from=builder /usr/local/bin/ /usr/local/bin/
+COPY --from=builder /usr/local/lib/libheif* /usr/local/lib/
+COPY --from=builder /usr/local/lib/pkgconfig/libheif.pc /usr/local/lib/pkgconfig/
 
 # configure dynamic linker to include /usr/local/lib
 RUN ldconfig /usr/local

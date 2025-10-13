@@ -61,6 +61,7 @@ type MediaFormat struct {
 	URL              []string
 	ThumbnailURL     []string
 	DownloadSettings *DownloadSettings
+	Plugins          []*Plugin
 }
 
 type DownloadedFormat struct {

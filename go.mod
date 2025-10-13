@@ -9,6 +9,7 @@ require (
 	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.33
 	github.com/abema/go-mp4 v1.4.1
 	github.com/aki237/nscjar v0.0.0-20210417074043-bbb606196143
+	github.com/bogem/id3v2/v2 v2.1.4
 	github.com/bytedance/sonic v1.14.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.5
