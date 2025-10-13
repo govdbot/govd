@@ -112,26 +112,27 @@ func (f *MediaFormat) GetInfo() (FileExtension, FileType) {
 func (f *MediaFormat) ToString() string {
 	parts := make([]string, 0)
 
-	parts = append(parts, string(f.Type))
+	parts = append(parts, fmt.Sprintf("id: %s", f.FormatID))
+	parts = append(parts, fmt.Sprintf("type: %s", f.Type))
 	if f.Width != 0 && f.Height != 0 {
-		parts = append(parts, fmt.Sprintf("%dx%d", f.Width, f.Height))
+		parts = append(parts, fmt.Sprintf("resolution: %dx%d", f.Width, f.Height))
 	}
 	if duration := f.formatDuration(); duration != "" {
-		parts = append(parts, duration)
+		parts = append(parts, fmt.Sprintf("duration: %s", duration))
 	}
 	if f.VideoCodec != "" {
-		parts = append(parts, string(f.VideoCodec))
+		parts = append(parts, fmt.Sprintf("video: %s", f.VideoCodec))
 	}
 	if f.AudioCodec != "" {
-		parts = append(parts, string(f.AudioCodec))
+		parts = append(parts, fmt.Sprintf("audio: %s", f.AudioCodec))
 	}
 	if bitrate := f.formatBitrate(); bitrate != "" {
-		parts = append(parts, bitrate)
+		parts = append(parts, fmt.Sprintf("bitrate: %s", bitrate))
 	}
 	if fileSize := f.formatFileSize(); fileSize != "" {
-		parts = append(parts, fileSize)
+		parts = append(parts, fmt.Sprintf("size: %s", fileSize))
 	}
-	return strings.Join(parts, ", ")
+	return "[" + strings.Join(parts, ", ") + "]"
 }
 
 func (f *MediaFormat) GetFileName() string {

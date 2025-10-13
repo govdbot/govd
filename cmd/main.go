@@ -6,6 +6,7 @@ import (
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/localization"
 	"github.com/govdbot/govd/internal/logger"
+	"github.com/govdbot/govd/internal/util"
 )
 
 func main() {
@@ -21,6 +22,7 @@ func main() {
 
 	localization.Init()
 	database.Init()
+	util.CleanupDownloads()
 
 	go bot.Start()
 

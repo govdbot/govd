@@ -105,10 +105,8 @@ func downloadFormat(
 	format *models.MediaFormat,
 ) (*models.DownloadedFormat, error) {
 	if len(format.URL) == 0 {
-		return nil, fmt.Errorf("no URL found for format %s", format.FormatID)
+		return nil, fmt.Errorf("no URL found for selected format")
 	}
-
-	logger.L.Debugf("downloading media item with format %s", format.FormatID)
 
 	fileName := format.GetFileName()
 	var filePath string

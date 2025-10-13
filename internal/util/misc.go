@@ -3,10 +3,13 @@ package util
 import (
 	"errors"
 	"net/url"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/govdbot/govd/internal/config"
+	"github.com/govdbot/govd/internal/logger"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -46,4 +49,20 @@ func ExceedsMaxFileSize(fileSize int32) bool {
 
 func ExceedsMaxDuration(duration int32) bool {
 	return duration > int32(config.Env.MaxDuration.Seconds())
+}
+func CleanupDownloads() {
+	logger.L.Debug("cleaning up downloads directory")
+
+	if config.Env == nil || config.Env.DownloadsDirectory == "" {
+		return
+	}
+	path := config.Env.DownloadsDirectory
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return
+	}
+	for _, file := range files {
+		filePath := filepath.Join(path, file.Name())
+		os.Remove(filePath)
+	}
 }
