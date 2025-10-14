@@ -63,10 +63,8 @@ func (ctx *ExtractorContext) Fetch(
 		params = &networking.RequestParams{}
 	}
 	return ctx.HTTPClient.FetchWithContext(
-		ctx.Context,
-		method,
-		url,
-		params,
+		ctx.Context, method,
+		url, params,
 	)
 }
 

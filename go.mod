@@ -12,6 +12,7 @@ require (
 	github.com/bogem/id3v2/v2 v2.1.4
 	github.com/bytedance/sonic v1.14.0
 	github.com/google/uuid v1.6.0
+	github.com/grafov/m3u8 v0.12.1
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/joho/godotenv v1.5.1
 	github.com/nicksnyder/go-i18n/v2 v2.6.0

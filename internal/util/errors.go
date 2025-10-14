@@ -31,6 +31,7 @@ var (
 	ErrTelegramFileTooLarge          = &Error{ID: localization.ErrorTelegramFileTooLarge.ID}
 	ErrDurationTooLong               = &Error{ID: localization.ErrorDurationTooLong.ID}
 	ErrPaidContent                   = &Error{ID: localization.ErrorPaidContent.ID}
+	ErrAgeRestricted                 = &Error{ID: localization.ErrorAgeRestricted.ID}
 )
 
 func HashedError(message string) string {

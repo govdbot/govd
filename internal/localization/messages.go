@@ -151,4 +151,8 @@ var (
 		ID:    "ErrorPaidContent",
 		Other: "this content is paid and requires a subscription to access.",
 	}
+	ErrorAgeRestricted = &i18n.Message{
+		ID:    "ErrorAgeRestricted",
+		Other: "this content is age-restricted and cannot be accessed.",
+	}
 )
