@@ -19,6 +19,7 @@ require (
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/strukturag/libheif v1.20.2
 	github.com/sunfish-shogi/bufseekio v0.1.0
+	github.com/titanous/json5 v1.0.0
 	github.com/u2takey/ffmpeg-go v0.5.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/image v0.30.0

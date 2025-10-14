@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+
+	"github.com/govdbot/govd/internal/logger"
 )
 
 type EdgeProxyClient struct {
@@ -27,6 +29,9 @@ func (c *EdgeProxyClient) Do(req *http.Request) (*http.Response, error) {
 	if c.ProxyURL == "" {
 		return nil, errors.New("proxy URL is not set")
 	}
+
+	logger.L.Debug("routing request via edge proxy")
+
 	targetURL := req.URL.String()
 	encodedURL := url.QueryEscape(targetURL)
 	proxyURLWithParam := c.ProxyURL + "?url=" + encodedURL

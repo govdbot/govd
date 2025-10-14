@@ -1,6 +1,7 @@
 package extractors
 
 import (
+	"github.com/govdbot/govd/internal/extractors/instagram"
 	"github.com/govdbot/govd/internal/extractors/soundcloud"
 	"github.com/govdbot/govd/internal/extractors/tiktok"
 	"github.com/govdbot/govd/internal/extractors/twitter"
@@ -14,4 +15,7 @@ var Extractors = []*models.Extractor{
 	soundcloud.ShortExtractor,
 	twitter.Extractor,
 	twitter.ShortExtractor,
+	instagram.Extractor,
+	instagram.StoriesExtractor,
+	instagram.ShareURLExtractor,
 }
