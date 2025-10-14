@@ -4,9 +4,9 @@ tmp_dir = "tmp"
 
 [build]
   bin = "./tmp/main"
-  cmd = "go build -o ./tmp/main ./cmd/main.go"
+  cmd = "sqlc generate && go build -o ./tmp/main ./cmd/main.go"
   exclude_dir = ["tmp", "testdata", "logs", "downloads", "private"]
-  exclude_regex = ["_test.go"]
+  exclude_regex = ["_test.go", "_gen.go"]
   include_ext = ["go", "toml", "yaml", "yml"]
   stop_on_error = false
 

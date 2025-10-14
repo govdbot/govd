@@ -54,11 +54,11 @@ RUN --mount=type=cache,target=/bot/downloads/libheif \
     cd libheif && \
     mkdir -p build && \
     cd build && \
-    cmake --preset=release .. && \
+    cmake -DCMAKE_BUILD_TYPE=Release .. && \
     make -j"$(nproc)" && \
     make install
 
-WORKDIR /bot
+WORKDIR /app
 
 # copy go.mod and go.sum first for better caching
 COPY go.mod go.sum ./
@@ -69,15 +69,6 @@ RUN --mount=type=cache,target=/gomod-cache \
     go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest && \
     go install github.com/air-verse/air@latest
 
-# copy source files needed for sqlc
-COPY sqlc.yaml ./
-COPY internal/database/queries/ ./internal/database/queries/
-COPY internal/database/migrations/ ./internal/database/migrations/
+COPY . .
 
-# generate sqlc code
-RUN sqlc generate
-
-WORKDIR /app
-
-# run air for hot reload
 CMD ["air", "-c", ".air.toml"]

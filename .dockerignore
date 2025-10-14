@@ -1,6 +1,3 @@
-# generated files
-*_gen.go
-
 # git
 .gitignore
 

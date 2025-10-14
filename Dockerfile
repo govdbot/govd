@@ -54,7 +54,7 @@ RUN --mount=type=cache,target=/bot/downloads/libheif \
     cd libheif && \
     mkdir -p build && \
     cd build && \
-    cmake --preset=release .. && \
+    cmake -DCMAKE_BUILD_TYPE=Release .. && \
     make -j"$(nproc)" && \
     make install
 
@@ -68,28 +68,23 @@ RUN --mount=type=cache,target=/gomod-cache \
     go mod download && \
     go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 
-# copy source files needed for sqlc
-COPY sqlc.yaml ./
-COPY internal/database/queries/ ./internal/database/queries/
-COPY internal/database/migrations/ ./internal/database/migrations/
+# copy the rest of the source code
+COPY . .
 
 # generate sqlc code
 RUN sqlc generate
 
-# copy the rest of the source code
-COPY . .
-
 # build the application with build cache
 RUN --mount=type=cache,target=/go-cache \
     --mount=type=cache,target=/gomod-cache \
-    go build -o govd ./cmd/main.go
+    CGO_ENABLED=1 go build -ldflags="-s -w" -o govd ./cmd/main.go
 
 # final stage - create a smaller runtime image
 FROM alpine:latest AS runtime
 
 # install only runtime dependencies with apk cache
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apk,sharing=locked \
     apk update && \
     apk add --no-cache \
         libde265 \
@@ -98,11 +93,9 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
         ffmpeg
 
 # copy libraries and binaries from builder stage
-COPY --from=builder /usr/local/lib/libheif* /usr/local/lib/
+COPY --from=builder /usr/local/lib/ /usr/local/lib/
+COPY --from=builder /usr/local/include/ /usr/local/include/
 COPY --from=builder /usr/local/lib/pkgconfig/libheif.pc /usr/local/lib/pkgconfig/
-
-# configure dynamic linker to include /usr/local/lib
-RUN ldconfig /usr/local
 
 # copy the built binary from builder stage
 COPY --from=builder /bot/govd /app/govd
