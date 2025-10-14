@@ -25,6 +25,7 @@ type NewHTTPClientOptions struct {
 	EdgeProxy     string
 	DownloadProxy string
 	Impersonate   bool
+	DisableProxy  bool
 }
 
 type RequestParams struct {

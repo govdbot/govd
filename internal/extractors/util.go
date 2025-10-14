@@ -66,6 +66,7 @@ func FromURL(ctx context.Context, url string) *models.ExtractorContext {
 					EdgeProxy:     cfg.EdgeProxy,
 					DownloadProxy: cfg.DownloadProxy,
 					Proxy:         cfg.Proxy,
+					DisableProxy:  cfg.DisableProxy,
 				},
 			),
 		}

@@ -26,6 +26,14 @@ func NewTransport() *http.Transport {
 	}
 }
 
+func NewTransportNoProxyFromEnv() *http.Transport {
+	transport := NewTransport()
+	transport.Proxy = func(_ *http.Request) (*url.URL, error) {
+		return nil, nil
+	}
+	return transport
+}
+
 func NewTransportWithProxy(proxyURL *url.URL) *http.Transport {
 	transport := NewTransport()
 	transport.Proxy = http.ProxyURL(proxyURL)

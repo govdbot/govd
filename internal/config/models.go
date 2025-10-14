@@ -45,6 +45,7 @@ type ExtractorConfig struct {
 	Proxy         string `yaml:"proxy"`
 	DownloadProxy string `yaml:"download_proxy"`
 	EdgeProxy     string `yaml:"edge_proxy"`
+	DisableProxy  bool   `yaml:"disable_proxy"`
 
 	Impersonate bool `yaml:"impersonate"`
 

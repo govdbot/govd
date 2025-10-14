@@ -30,7 +30,13 @@ func NewHTTPClient(options *NewHTTPClientOptions) *HTTPClient {
 	} else if options.EdgeProxy != "" {
 		client.Client = NewEdgeProxyClient(options.EdgeProxy)
 		client.EdgeProxy = options.EdgeProxy
-	} else if options.Impersonate {
+	} else if options.DisableProxy {
+		client.Client = &http.Client{
+			Transport: NewTransportNoProxyFromEnv(),
+			Timeout:   defaultTimeout,
+		}
+	}
+	if options.Impersonate {
 		client.Client = NewChromeClient()
 	}
 
