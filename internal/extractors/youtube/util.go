@@ -8,6 +8,7 @@ import (
 
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/models"
+	"github.com/govdbot/govd/internal/util"
 )
 
 const invEndpoint = "/api/v1/videos/"
@@ -22,8 +23,8 @@ func ParseInvFormats(data *InvResponse) []*models.MediaFormat {
 		if format.URL == "" {
 			continue
 		}
-		mediaType, vCodec, aCodec := ParseStreamType(format.Type)
-		if mediaType == "" {
+		mediaType, vCodec, aCodec, err := ParseStreamType(format.Type)
+		if err != nil {
 			continue
 		}
 		var bitrate int64
@@ -62,61 +63,30 @@ func ParseInvFormats(data *InvResponse) []*models.MediaFormat {
 	return formats
 }
 
-func ParseStreamType(streamType string) (database.MediaType, database.MediaCodec, database.MediaCodec) {
+func ParseStreamType(streamType string) (database.MediaType, database.MediaCodec, database.MediaCodec, error) {
 	parts := strings.Split(streamType, "; ")
 	if len(parts) != 2 {
 		// unknown stream type
-		return "", "", ""
+		return "", "", "", fmt.Errorf("unknown stream type: %s", streamType)
 	}
 	codecs := parts[1]
 
 	var mediaType database.MediaType
 	var videoCodec, audioCodec database.MediaCodec
 
-	videoCodec = ParseVideoCodec(codecs)
-	audioCodec = ParseAudioCodec(codecs)
+	videoCodec = util.ParseVideoCodec(codecs)
+	audioCodec = util.ParseAudioCodec(codecs)
 
 	if videoCodec != "" {
 		mediaType = database.MediaTypeVideo
 	} else if audioCodec != "" {
 		mediaType = database.MediaTypeAudio
+	} else {
+		// unknown codec
+		return "", "", "", fmt.Errorf("unknown codec in stream type: %s", streamType)
 	}
 
-	return mediaType, videoCodec, audioCodec
-}
-
-func ParseVideoCodec(codecs string) database.MediaCodec {
-	switch {
-	case strings.Contains(codecs, "avc"), strings.Contains(codecs, "h264"):
-		return database.MediaCodecAvc
-	case strings.Contains(codecs, "hvc"), strings.Contains(codecs, "h265"):
-		return database.MediaCodecHevc
-	case strings.Contains(codecs, "av01"), strings.Contains(codecs, "av1"):
-		return database.MediaCodecAv1
-	case strings.Contains(codecs, "vp9"):
-		return database.MediaCodecVp9
-	case strings.Contains(codecs, "vp8"):
-		return database.MediaCodecVp8
-	default:
-		return ""
-	}
-}
-
-func ParseAudioCodec(codecs string) database.MediaCodec {
-	switch {
-	case strings.Contains(codecs, "mp4a"):
-		return database.MediaCodecAac
-	case strings.Contains(codecs, "opus"):
-		return database.MediaCodecOpus
-	case strings.Contains(codecs, "mp3"):
-		return database.MediaCodecMp3
-	case strings.Contains(codecs, "flac"):
-		return database.MediaCodecFlac
-	case strings.Contains(codecs, "vorbis"):
-		return database.MediaCodecVorbis
-	default:
-		return ""
-	}
+	return mediaType, videoCodec, audioCodec, nil
 }
 
 func ParseInvURL(url string) string {

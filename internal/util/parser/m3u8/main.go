@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/grafov/m3u8"
 )
@@ -75,14 +74,12 @@ func ParseM3U8FromURL(
 func (p *M3U8Parser) Parse() ([]*models.MediaFormat, error) {
 	switch p.PlaylistType {
 	case m3u8.MASTER:
-		logger.L.Debug("detected master playlist")
 		master, ok := p.Playlist.(*m3u8.MasterPlaylist)
 		if !ok {
 			return nil, fmt.Errorf("failed to cast to master playlist")
 		}
 		return p.parseMasterPlaylist(master)
 	case m3u8.MEDIA:
-		logger.L.Debug("detected media playlist")
 		media, ok := p.Playlist.(*m3u8.MediaPlaylist)
 		if !ok {
 			return nil, fmt.Errorf("failed to cast to media playlist")

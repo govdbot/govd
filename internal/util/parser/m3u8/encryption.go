@@ -17,11 +17,11 @@ func (p *M3U8Parser) handleEncryption(
 	if playlist.Key == nil || playlist.Key.URI == "" {
 		return nil
 	}
+
 	keyURL := p.resolveURL(playlist.Key.URI)
 	resp, err := p.Context.Fetch(
 		http.MethodGet,
-		keyURL,
-		nil,
+		keyURL, nil,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to fetch encryption key: %w", err)
