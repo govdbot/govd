@@ -7,6 +7,7 @@ import (
 	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/models"
+	"github.com/govdbot/govd/internal/plugins"
 	"github.com/govdbot/govd/internal/util"
 	"github.com/govdbot/govd/internal/util/download"
 	"github.com/govdbot/govd/internal/util/libav"
@@ -89,4 +90,23 @@ func formatCaption(media *models.Media, isEnabled bool) string {
 		)
 	}
 	return header + "\n" + description
+}
+
+// utility function to merge audio into video formats with no audio
+func mergeFormats(item *models.MediaItem, format *models.DownloadedFormat) {
+	if format.Format.Type != database.MediaTypeVideo {
+		return
+	}
+	if format.Format.AudioCodec != "" {
+		return
+	}
+	audioFormat := item.GetDefaultAudioFormat()
+	if audioFormat == nil {
+		return
+	}
+	format.Format.AudioCodec = audioFormat.AudioCodec
+	format.Format.Plugins = append(
+		format.Format.Plugins,
+		plugins.MergeAudio,
+	)
 }

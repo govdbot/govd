@@ -34,8 +34,10 @@ func (ft *FilesTracker) Cleanup() {
 		}
 		seen[*filePtr] = true
 
-		logger.L.Debugf("removing temporary file: %s", *filePtr)
-		_ = os.Remove(*filePtr)
+		err := os.Remove(*filePtr)
+		if err == nil {
+			logger.L.Debugf("removed temporary file: %s", *filePtr)
+		}
 	}
 
 	ft.Files = make([]*string, 0)

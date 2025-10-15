@@ -2,5 +2,5 @@ package models
 
 type Plugin struct {
 	ID      string
-	RunFunc func(*ExtractorContext, *DownloadedFormat) error
+	RunFunc func(*ExtractorContext, *MediaItem, *DownloadedFormat) error
 }

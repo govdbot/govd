@@ -12,7 +12,7 @@ import (
 
 var ID3 = &models.Plugin{
 	ID: "id3",
-	RunFunc: func(ctx *models.ExtractorContext, format *models.DownloadedFormat) error {
+	RunFunc: func(ctx *models.ExtractorContext, item *models.MediaItem, format *models.DownloadedFormat) error {
 		if format.FilePath == "" {
 			return fmt.Errorf("file path is empty")
 		}

@@ -33,6 +33,9 @@ type ExtractorContext struct {
 	HTTPClient   *networking.HTTPClient
 	Config       *config.ExtractorConfig
 	FilesTracker *FilesTracker
+
+	// allows plugins to download additional formats
+	DownloadFunc func(*ExtractorContext, int, *MediaFormat) (*DownloadedFormat, error)
 }
 
 func (e *ExtractorContext) SetSettings(settings *database.GetOrCreateChatRow) {

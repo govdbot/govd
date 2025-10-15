@@ -17,6 +17,8 @@ func downloadMediaFormats(
 ) ([]*models.DownloadedFormat, error) {
 	var wg sync.WaitGroup
 
+	ctx.DownloadFunc = downloadFormat
+
 	numItems := len(media.Items)
 	formats := make(chan *models.DownloadedFormat, numItems)
 	semaphore := make(chan struct{}, 3)
@@ -96,10 +98,13 @@ func downloadItem(
 		return
 	}
 
+	// merge audio into video if needed
+	mergeFormats(item, downloadedFormat)
+
 	for _, plugin := range format.Plugins {
 		if plugin != nil {
 			logger.L.Debugf("running plugin: %s", plugin.ID)
-			err := plugin.RunFunc(ctx, downloadedFormat)
+			err := plugin.RunFunc(ctx, item, downloadedFormat)
 			if err != nil {
 				formats <- &models.DownloadedFormat{
 					Index: index,
