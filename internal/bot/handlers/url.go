@@ -32,7 +32,10 @@ func URLHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 		return ext.EndGroups
 	}
 
-	taskCtx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	taskCtx, cancel := context.WithTimeout(
+		context.Background(),
+		5*time.Minute,
+	)
 	defer cancel()
 
 	extractorCtx := extractors.FromURL(taskCtx, url)
@@ -54,5 +57,5 @@ func URLHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 		core.HandleError(bot, ctx, extractorCtx, err)
 	}
 
-	return nil
+	return ext.EndGroups
 }
