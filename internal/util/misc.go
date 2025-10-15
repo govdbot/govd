@@ -2,7 +2,9 @@ package util
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"os/exec"
@@ -11,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/govdbot/govd/internal/config"
+	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/logger"
 	"golang.org/x/net/publicsuffix"
 )
@@ -111,4 +114,55 @@ func RandomAlphaString(length int) string {
 		i++
 	}
 	return string(result)
+}
+
+func ParseHex(str string) ([]byte, error) {
+	if strings.HasPrefix(str, "0x") || strings.HasPrefix(str, "0X") {
+		str = str[2:]
+	}
+	iv, err := hex.DecodeString(str)
+	if err != nil {
+		return nil, fmt.Errorf("invalid hex IV: %w", err)
+	}
+	if len(iv) != 16 {
+		return nil, fmt.Errorf("IV must be 16 bytes, got %d", len(iv))
+	}
+
+	return iv, nil
+}
+
+func ParseVideoCodec(codecs string) database.MediaCodec {
+	codecs = strings.ToLower(codecs)
+	switch {
+	case strings.Contains(codecs, "avc") || strings.Contains(codecs, "h264"):
+		return database.MediaCodecAvc
+	case strings.Contains(codecs, "hvc") || strings.Contains(codecs, "h265") || strings.Contains(codecs, "hev1"):
+		return database.MediaCodecHevc
+	case strings.Contains(codecs, "av01"):
+		return database.MediaCodecAv1
+	case strings.Contains(codecs, "vp9"):
+		return database.MediaCodecVp9
+	case strings.Contains(codecs, "vp8"):
+		return database.MediaCodecVp9
+	default:
+		return ""
+	}
+}
+
+func ParseAudioCodec(codecs string) database.MediaCodec {
+	codecs = strings.ToLower(codecs)
+	switch {
+	case strings.Contains(codecs, "mp4a"):
+		return database.MediaCodecAac
+	case strings.Contains(codecs, "opus"):
+		return database.MediaCodecOpus
+	case strings.Contains(codecs, "mp3"):
+		return database.MediaCodecMp3
+	case strings.Contains(codecs, "flac"):
+		return database.MediaCodecFlac
+	case strings.Contains(codecs, "vorbis"):
+		return database.MediaCodecVorbis
+	default:
+		return ""
+	}
 }

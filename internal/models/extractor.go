@@ -76,7 +76,7 @@ func (ctx *ExtractorContext) FetchLocation(
 	params *networking.RequestParams,
 ) (string, error) {
 	resp, err := ctx.Fetch(
-		http.MethodPost,
+		http.MethodGet,
 		url, params,
 	)
 	if err != nil {

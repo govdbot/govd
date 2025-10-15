@@ -23,6 +23,12 @@ type ChunkedDownloader struct {
 	wg sync.WaitGroup
 }
 
+type Chunk struct {
+	index int
+	data  []byte
+	err   error
+}
+
 func NewChunkedDownloader(
 	ctx context.Context,
 	client *networking.HTTPClient,
@@ -122,23 +128,23 @@ func (cd *ChunkedDownloader) downloadChunk(
 			Headers: headers,
 		})
 	if err != nil {
-		chunks <- &Chunk{Index: index, Error: fmt.Errorf("failed to download chunk %d: %w", index, err)}
+		chunks <- &Chunk{index: index, err: fmt.Errorf("failed to download chunk %d: %w", index, err)}
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusPartialContent {
-		chunks <- &Chunk{Index: index, Error: fmt.Errorf("expected status 206, got %d for chunk %d", resp.StatusCode, index)}
+		chunks <- &Chunk{index: index, err: fmt.Errorf("expected status 206, got %d for chunk %d", resp.StatusCode, index)}
 		return
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		chunks <- &Chunk{Index: index, Error: fmt.Errorf("failed to read chunk %d: %w", index, err)}
+		chunks <- &Chunk{index: index, err: fmt.Errorf("failed to read chunk %d: %w", index, err)}
 		return
 	}
 
-	chunks <- &Chunk{Index: index, Data: data}
+	chunks <- &Chunk{index: index, data: data}
 }
 
 func (cd *ChunkedDownloader) Download(
@@ -178,15 +184,15 @@ func (cd *ChunkedDownloader) writeChunks(writer io.Writer, chunks <-chan *Chunk)
 	for chunk := range chunks {
 		chunksReceived++
 
-		if chunk.Error != nil {
-			return fmt.Errorf("chunk %d failed: %w", chunk.Index, chunk.Error)
+		if chunk.err != nil {
+			return fmt.Errorf("chunk %d failed: %w", chunk.index, chunk.err)
 		}
 
-		chunkBuffer[chunk.Index] = chunk
+		chunkBuffer[chunk.index] = chunk
 
 		for {
 			if chunk, exists := chunkBuffer[nextIndex]; exists {
-				if _, err := writer.Write(chunk.Data); err != nil {
+				if _, err := writer.Write(chunk.data); err != nil {
 					return fmt.Errorf("failed to write chunk %d: %w", nextIndex, err)
 				}
 				delete(chunkBuffer, nextIndex)

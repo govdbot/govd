@@ -37,6 +37,12 @@ func (ft *FilesTracker) Cleanup() {
 		err := os.Remove(*filePtr)
 		if err == nil {
 			logger.L.Debugf("removed temporary file: %s", *filePtr)
+			return
+		}
+		err = os.RemoveAll(*filePtr)
+		if err == nil {
+			logger.L.Debugf("removed temporary directory: %s", *filePtr)
+			return
 		}
 	}
 

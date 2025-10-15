@@ -46,6 +46,9 @@ func NewHTTPClient(options *NewHTTPClientOptions) *HTTPClient {
 }
 
 func DefaultHTTPClient(options *NewHTTPClientOptions) *HTTPClient {
+	if options == nil {
+		options = &NewHTTPClientOptions{}
+	}
 	return &HTTPClient{
 		Client: &http.Client{
 			Transport: NewTransport(),
