@@ -156,10 +156,22 @@ func downloadFormat(
 	}
 
 	// for video and audio, download to file
-	filePath, err := download.DownloadFile(
-		ctx, format.URL,
-		fileName, format.DownloadSettings,
-	)
+	var err error
+	if len(format.Segments) > 0 {
+		// add decryption key to download settings if present
+		format.DownloadSettings.DecryptionKey = format.DecryptionKey
+		filePath, err = download.DownloadFileWithSegments(
+			ctx, format.InitSegment,
+			format.Segments,
+			fileName,
+			format.DownloadSettings,
+		)
+	} else {
+		filePath, err = download.DownloadFile(
+			ctx, format.URL,
+			fileName, format.DownloadSettings,
+		)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to download file: %w", err)
 	}

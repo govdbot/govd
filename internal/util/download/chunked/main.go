@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/govdbot/govd/internal/models"
@@ -109,44 +107,6 @@ func NewChunkedDownloader(
 	return nil, fmt.Errorf("content length not available or server does not support ranged requests")
 }
 
-func (cd *ChunkedDownloader) downloadChunk(
-	ctx *models.ExtractorContext,
-	index int,
-	chunks chan<- *Chunk,
-) {
-	start := int64(index) * cd.chunkSize
-	end := min(start+cd.chunkSize-1, cd.totalSize-1)
-
-	headers := map[string]string{
-		"Range": fmt.Sprintf("bytes=%d-%d", start, end),
-	}
-
-	resp, err := cd.client.FetchWithContext(
-		ctx.Context,
-		http.MethodGet,
-		cd.url, &networking.RequestParams{
-			Headers: headers,
-		})
-	if err != nil {
-		chunks <- &Chunk{index: index, err: fmt.Errorf("failed to download chunk %d: %w", index, err)}
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusPartialContent {
-		chunks <- &Chunk{index: index, err: fmt.Errorf("expected status 206, got %d for chunk %d", resp.StatusCode, index)}
-		return
-	}
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		chunks <- &Chunk{index: index, err: fmt.Errorf("failed to read chunk %d: %w", index, err)}
-		return
-	}
-
-	chunks <- &Chunk{index: index, data: data}
-}
-
 func (cd *ChunkedDownloader) Download(
 	ctx *models.ExtractorContext,
 	writer io.Writer,
@@ -174,6 +134,45 @@ func (cd *ChunkedDownloader) Download(
 	}()
 
 	return cd.writeChunks(writer, chunks)
+}
+
+func (cd *ChunkedDownloader) downloadChunk(
+	ctx *models.ExtractorContext,
+	index int,
+	chunks chan<- *Chunk,
+) {
+	start := int64(index) * cd.chunkSize
+	end := min(start+cd.chunkSize-1, cd.totalSize-1)
+
+	headers := map[string]string{
+		"Range": fmt.Sprintf("bytes=%d-%d", start, end),
+	}
+
+	resp, err := cd.client.FetchWithContext(
+		ctx.Context,
+		http.MethodGet,
+		cd.url, &networking.RequestParams{
+			Headers: headers,
+		},
+	)
+	if err != nil {
+		chunks <- &Chunk{index: index, err: fmt.Errorf("failed to download chunk %d: %w", index, err)}
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusPartialContent {
+		chunks <- &Chunk{index: index, err: fmt.Errorf("expected status 206, got %d for chunk %d", resp.StatusCode, index)}
+		return
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		chunks <- &Chunk{index: index, err: fmt.Errorf("failed to read chunk %d: %w", index, err)}
+		return
+	}
+
+	chunks <- &Chunk{index: index, data: data}
 }
 
 func (cd *ChunkedDownloader) writeChunks(writer io.Writer, chunks <-chan *Chunk) error {
@@ -212,24 +211,4 @@ func (cd *ChunkedDownloader) writeChunks(writer io.Writer, chunks <-chan *Chunk)
 	}
 
 	return nil
-}
-
-func parseContentRange(contentRange string) (int64, error) {
-	// expected format: "bytes START-END/TOTAL" or "bytes */TOTAL"
-	if !strings.HasPrefix(contentRange, "bytes ") {
-		return 0, fmt.Errorf("invalid content-range format: %s", contentRange)
-	}
-
-	parts := strings.Split(contentRange, "/")
-	if len(parts) != 2 {
-		return 0, fmt.Errorf("invalid content-range format, missing '/': %s", contentRange)
-	}
-
-	totalStr := strings.TrimSpace(parts[1])
-	total, err := strconv.ParseInt(totalStr, 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("failed to parse total size from content-range '%s': %w", contentRange, err)
-	}
-
-	return total, nil
 }

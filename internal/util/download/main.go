@@ -9,9 +9,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/util/download/chunked"
+	"github.com/govdbot/govd/internal/util/download/segmented"
 	"github.com/govdbot/govd/internal/util/libav"
 )
 
@@ -49,9 +51,9 @@ func DownloadFile(
 		if err != nil {
 			return "", err
 		}
+		defer file.Close()
 
 		err = cd.Download(ctx, file, settings.NumConnections)
-		file.Close()
 
 		if err != nil {
 			lastErr = err
@@ -76,6 +78,69 @@ func DownloadFile(
 	}
 
 	return "", lastErr
+}
+
+func DownloadFileWithSegments(
+	ctx *models.ExtractorContext,
+	initSegmentURL string,
+	segmentURLs []string,
+	fileName string,
+	settings *models.DownloadSettings,
+) (string, error) {
+	if ctx == nil {
+		return "", fmt.Errorf("nil extractor context")
+	}
+	settings = ensureDownloadSettings(settings)
+	ensureDownloadDir()
+
+	client := ctx.HTTPClient.AsDownloadClient()
+	filePath := ToPath(fileName)
+
+	// track file for cleanup
+	ctx.FilesTracker.Add(&filePath)
+
+	tempDir := ToPath("segments" + uuid.NewString())
+	if err := os.MkdirAll(tempDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create temporary directory: %w", err)
+	}
+
+	ctx.FilesTracker.Add(&tempDir)
+
+	sd := segmented.NewSegmentedDownloader(
+		ctx.Context, client,
+		tempDir, segmentURLs,
+		&segmented.SegmentedDownloaderOptions{
+			InitSegment:   initSegmentURL,
+			DecryptionKey: settings.DecryptionKey,
+		},
+	)
+
+	file, err := os.Create(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	err = sd.Download(ctx.Context, file, settings.NumConnections)
+	if err != nil {
+		return "", err
+	}
+
+	outputPath := strings.TrimSuffix(
+		filePath,
+		filepath.Ext(filePath),
+	) + "_remuxed" + filepath.Ext(filePath)
+
+	err = libav.RemuxFile(filePath, outputPath)
+	if err != nil {
+		logger.L.Warnf("remuxing failed, using original file: %v", err)
+		return filePath, nil
+	}
+
+	// replace original file with remuxed file
+	os.Rename(outputPath, filePath)
+
+	return filePath, nil
 }
 
 func DownloadFileInMemory(

@@ -7,4 +7,5 @@ type DownloadSettings struct {
 	ChunkSize      int64
 	Headers        map[string]string
 	Cookies        []*http.Cookie
+	DecryptionKey  *DecryptionKey
 }
