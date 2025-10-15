@@ -35,6 +35,7 @@ func NewHTTPClient(options *NewHTTPClientOptions) *HTTPClient {
 			Transport: NewTransportNoProxyFromEnv(),
 			Timeout:   defaultTimeout,
 		}
+		client.DisableProxy = true
 	}
 	if options.Impersonate {
 		client.Client = NewChromeClient()
@@ -70,6 +71,13 @@ func (c *HTTPClient) AsDownloadClient() *HTTPClient {
 			Transport: NewTransportWithProxy(proxyURL),
 			Timeout:   defaultTimeout,
 		}
+		client.DownloadProxy = c.DownloadProxy
+	} else if c.DisableProxy {
+		client.Client = &http.Client{
+			Transport: NewTransportNoProxyFromEnv(),
+			Timeout:   defaultTimeout,
+		}
+		client.DisableProxy = true
 	}
 	return client
 }

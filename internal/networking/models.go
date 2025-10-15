@@ -16,6 +16,7 @@ type HTTPClient struct {
 	Proxy         string
 	EdgeProxy     string
 	DownloadProxy string
+	DisableProxy  bool
 }
 
 type NewHTTPClientOptions struct {
