@@ -23,6 +23,10 @@ func ParseInvFormats(data *InvResponse) []*models.MediaFormat {
 		if format.URL == "" {
 			continue
 		}
+		if strings.Contains(format.URL, "dubbed-auto") {
+			// skip auto-dubbed audio formats
+			continue
+		}
 		mediaType, vCodec, aCodec, err := ParseStreamType(format.Type)
 		if err != nil {
 			continue
