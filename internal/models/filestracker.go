@@ -18,31 +18,29 @@ func NewFilesTracker() *FilesTracker {
 }
 
 func (ft *FilesTracker) Add(files ...*string) {
-	for _, filePtr := range files {
-		if filePtr != nil {
-			ft.Files = append(ft.Files, filePtr)
-		}
-	}
+	ft.Files = append(ft.Files, files...)
 }
 
 func (ft *FilesTracker) Cleanup() {
-	var seen map[string]bool = make(map[string]bool)
-
 	for _, filePtr := range ft.Files {
-		if filePtr == nil || *filePtr == "" || seen[*filePtr] {
+		if filePtr == nil || *filePtr == "" {
 			continue
 		}
-		seen[*filePtr] = true
-
-		err := os.Remove(*filePtr)
-		if err == nil {
-			logger.L.Debugf("removed temporary file: %s", *filePtr)
-			return
+		fileName := *filePtr
+		info, err := os.Stat(fileName)
+		if err != nil {
+			continue
 		}
-		err = os.RemoveAll(*filePtr)
-		if err == nil {
-			logger.L.Debugf("removed temporary directory: %s", *filePtr)
-			return
+		if !info.IsDir() {
+			err = os.Remove(*filePtr)
+			if err == nil {
+				logger.L.Debugf("removed temporary file: %s", *filePtr)
+			}
+		} else {
+			err = os.RemoveAll(*filePtr)
+			if err == nil {
+				logger.L.Debugf("removed temporary directory: %s", *filePtr)
+			}
 		}
 	}
 

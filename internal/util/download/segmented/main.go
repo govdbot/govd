@@ -92,8 +92,9 @@ func (sd *SegmentedDownloader) Download(
 	}
 
 	// download init segment if available
+	var initSegmentPath string
 	if sd.initSegment != "" {
-		initSegmentPath := filepath.Join(sd.path, "init_segment")
+		initSegmentPath = filepath.Join(sd.path, "init_segment")
 		err := sd.downloadSegmentToFile(ctx, sd.initSegment, initSegmentPath)
 		if err != nil {
 			return fmt.Errorf("failed to download init segment: %w", err)
@@ -107,7 +108,7 @@ func (sd *SegmentedDownloader) Download(
 		}
 	}
 
-	return writeSegments(writer, sd.initSegment, segments)
+	return writeSegments(writer, initSegmentPath, segments)
 }
 
 func (sd *SegmentedDownloader) collectSegments(segments <-chan *Segment) ([]string, error) {

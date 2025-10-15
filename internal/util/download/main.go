@@ -99,12 +99,16 @@ func DownloadFileWithSegments(
 	// track file for cleanup
 	ctx.FilesTracker.Add(&filePath)
 
-	tempDir := ToPath("segments" + uuid.NewString())
+	tempDir := ToPath("segments" + uuid.NewString()[:8])
+
+	// track temp dir for cleanup
+	ctx.FilesTracker.Add(&tempDir)
+
 	if err := os.MkdirAll(tempDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create temporary directory: %w", err)
 	}
 
-	ctx.FilesTracker.Add(&tempDir)
+	logger.L.Debugf("attempting download from: %s", segmentURLs[0])
 
 	sd := segmented.NewSegmentedDownloader(
 		ctx.Context, client,
