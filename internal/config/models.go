@@ -19,9 +19,7 @@ type EnvConfig struct {
 
 	DownloadsDirectory string
 
-	HTTPSProxy string
-	HTTPProxy  string
-	NoProxy    string
+	Proxy string
 
 	MaxDuration  time.Duration
 	MaxFileSize  int32

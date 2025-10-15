@@ -9,7 +9,7 @@ import (
 
 func NewTransport() *http.Transport {
 	return &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
+		Proxy: proxyFromEnv,
 		DialContext: (&net.Dialer{
 			Timeout:   defaultTimeout,
 			KeepAlive: defaultTimeout,
