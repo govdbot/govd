@@ -24,16 +24,20 @@ type Extractor struct {
 }
 
 type ExtractorContext struct {
-	ContentURL   string
-	ContentID    string
-	MatchGroups  map[string]string
-	Extractor    *Extractor
-	Context      context.Context
-	CancelFunc   context.CancelFunc // function to cancel the context
-	Settings     *database.GetOrCreateChatRow
-	HTTPClient   *networking.HTTPClient
-	Config       *config.ExtractorConfig
+	ContentURL  string
+	ContentID   string
+	MatchGroups map[string]string
+	Extractor   *Extractor
+	Settings    *database.GetOrCreateChatRow
+	HTTPClient  *networking.HTTPClient
+	Config      *config.ExtractorConfig
+
+	// allow to track downloaded files
 	FilesTracker *FilesTracker
+
+	// context for HTTP requests and timeouts
+	Context    context.Context
+	CancelFunc context.CancelFunc
 
 	// allows plugins to download additional formats
 	DownloadFunc func(*ExtractorContext, int, *MediaFormat) (*DownloadedFormat, error)

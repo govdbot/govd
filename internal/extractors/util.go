@@ -2,6 +2,7 @@ package extractors
 
 import (
 	"context"
+	"time"
 
 	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/logger"
@@ -14,7 +15,12 @@ const maxRedirects = 5
 
 var extractorsByHost = getExtractorsMap()
 
-func FromURL(ctx context.Context, url string) *models.ExtractorContext {
+func FromURL(url string) *models.ExtractorContext {
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		5*time.Minute,
+	)
+
 	var redirectCount int
 
 	currentURL := url
@@ -22,11 +28,13 @@ func FromURL(ctx context.Context, url string) *models.ExtractorContext {
 	for redirectCount <= maxRedirects {
 		host, err := util.ExtractBaseHost(currentURL)
 		if err != nil {
+			cancel()
 			return nil
 		}
 
 		extractors := getExtractorsByHost(host)
 		if len(extractors) == 0 {
+			cancel()
 			return nil
 		}
 
@@ -44,11 +52,13 @@ func FromURL(ctx context.Context, url string) *models.ExtractorContext {
 		}
 
 		if extractor == nil || matches == nil {
+			cancel()
 			return nil
 		}
 
 		cfg := config.GetExtractorConfig(extractor.ID)
 		if cfg.IsDisabled {
+			cancel()
 			return nil
 		}
 
@@ -58,6 +68,7 @@ func FromURL(ctx context.Context, url string) *models.ExtractorContext {
 			MatchGroups:  groups,
 			Extractor:    extractor,
 			Context:      ctx,
+			CancelFunc:   cancel,
 			Config:       cfg,
 			FilesTracker: models.NewFilesTracker(),
 			HTTPClient: networking.NewHTTPClient(
@@ -78,10 +89,12 @@ func FromURL(ctx context.Context, url string) *models.ExtractorContext {
 		response, err := extractor.GetFunc(extractorCtx)
 		if err != nil {
 			logger.L.Errorf("%s: %v", extractor.ID, err)
+			cancel()
 			return nil
 		}
 		if response.URL == "" {
 			logger.L.Errorf("%s: no URL found in response", extractor.ID)
+			cancel()
 			return nil
 		}
 
@@ -90,9 +103,12 @@ func FromURL(ctx context.Context, url string) *models.ExtractorContext {
 
 		if redirectCount > maxRedirects {
 			logger.L.Errorf("%s: exceeded maximum number of redirects (%d)", extractor.ID, maxRedirects)
+			cancel()
 			return nil
 		}
 	}
+
+	cancel()
 	return nil
 }
 

@@ -1,9 +1,7 @@
 package handlers
 
 import (
-	"context"
 	"strings"
-	"time"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
@@ -28,14 +26,8 @@ func InlineHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 		return ext.EndGroups
 	}
 
-	taskCtx, cancel := context.WithTimeout(
-		context.Background(),
-		5*time.Minute,
-	)
-
-	extractorCtx := extractors.FromURL(taskCtx, url)
+	extractorCtx := extractors.FromURL(url)
 	if extractorCtx == nil || extractorCtx.Extractor == nil {
-		cancel() // Cancel immediately if extractor not found
 		ctx.InlineQuery.Answer(
 			bot, []gotgbot.InlineQueryResult{},
 			&gotgbot.AnswerInlineQueryOpts{
@@ -46,21 +38,17 @@ func InlineHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 		return ext.EndGroups
 	}
 
-	// save the cancel function so it can
-	// be called later in InlineResultHandler
-	extractorCtx.CancelFunc = cancel
-
 	settings, err := util.SettingsFromContext(ctx)
 	if err != nil {
 		logger.L.Errorf("failed to get settings from context: %v", err)
-		cancel()
+		extractorCtx.CancelFunc()
 		return ext.EndGroups
 	}
 	extractorCtx.SetSettings(settings)
 
 	err = core.HandleInlineTask(bot, ctx, extractorCtx)
 	if err != nil {
-		cancel()
+		extractorCtx.CancelFunc()
 		core.HandleError(bot, ctx, extractorCtx, err)
 	}
 
@@ -78,9 +66,7 @@ func InlineResultHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 	defer core.RemoveTask(taskID)
 
 	// cancel the context after the task is complete
-	if extractorCtx.CancelFunc != nil {
-		defer extractorCtx.CancelFunc()
-	}
+	defer extractorCtx.CancelFunc()
 
 	err := core.HandleInlineResultTask(bot, ctx, extractorCtx)
 	if err != nil {

@@ -1,9 +1,6 @@
 package handlers
 
 import (
-	"context"
-	"time"
-
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/message"
@@ -32,16 +29,12 @@ func URLHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 		return ext.EndGroups
 	}
 
-	taskCtx, cancel := context.WithTimeout(
-		context.Background(),
-		5*time.Minute,
-	)
-	defer cancel()
-
-	extractorCtx := extractors.FromURL(taskCtx, url)
+	extractorCtx := extractors.FromURL(url)
 	if extractorCtx == nil || extractorCtx.Extractor == nil {
 		return ext.EndGroups
 	}
+
+	defer extractorCtx.CancelFunc()
 
 	settings, err := util.SettingsFromContext(ctx)
 	if err != nil {
