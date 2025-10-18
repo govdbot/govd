@@ -3,7 +3,6 @@ package segmented
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"errors"
 	"fmt"
 	"os"
 )
@@ -44,10 +43,10 @@ func decryptSegmentFile(
 		return fmt.Errorf("failed to read segment file: %w", err)
 	}
 	if len(encryptedData) == 0 {
-		return errors.New("segment file is empty")
+		return fmt.Errorf("segment file is empty")
 	}
 	if len(encryptedData)%aes.BlockSize != 0 {
-		return errors.New("encrypted data length is not a multiple of block size")
+		return fmt.Errorf("encrypted data length is not a multiple of block size")
 	}
 	iv := calculateSegmentIV(baseIV, segmentSequence)
 	mode := cipher.NewCBCDecrypter(block, iv)

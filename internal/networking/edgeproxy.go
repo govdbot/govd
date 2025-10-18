@@ -2,7 +2,7 @@ package networking
 
 import (
 	"bytes"
-	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -27,7 +27,7 @@ func NewEdgeProxyClient(proxyURL string) HTTPClientInterface {
 
 func (c *EdgeProxyClient) Do(req *http.Request) (*http.Response, error) {
 	if c.ProxyURL == "" {
-		return nil, errors.New("proxy URL is not set")
+		return nil, fmt.Errorf("proxy URL is not set")
 	}
 
 	logger.L.Debug("routing request via edge proxy")

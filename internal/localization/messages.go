@@ -63,6 +63,18 @@ var (
 		ID:    "MediaAlbumSettingsMessage",
 		Other: "select maximum number of files allowed in a single media album",
 	}
+	InlineLoadingMessage = &i18n.Message{
+		ID:    "InlineLoadingMessage",
+		Other: "loading... please wait",
+	}
+	InlineProcessingMessage = &i18n.Message{
+		ID:    "InlineProcessingMessage",
+		Other: "shared a media! processing download... please wait",
+	}
+	InlineShareMessage = &i18n.Message{
+		ID:    "InlineShareMessage",
+		Other: "share this media",
+	}
 	NoPermission = &i18n.Message{
 		ID:    "NoPermission",
 		Other: "you don't have permissions to perform this action",

@@ -2,6 +2,7 @@ package util
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -13,23 +14,39 @@ import (
 )
 
 func SettingsFromContext(ctx *ext.Context) (*database.GetOrCreateChatRow, error) {
-	chat := ctx.EffectiveMessage.Chat
-	isGroup := chat.Type != gotgbot.ChatTypePrivate
-	user := ctx.EffectiveUser
-
+	var id int64
 	var chatType database.ChatType
-	if isGroup {
-		chatType = database.ChatTypeGroup
-	} else {
+	var languageCode string
+
+	if ctx.Message != nil {
+		chat := ctx.EffectiveMessage.Chat
+		id = chat.Id
+		if ctx.EffectiveUser != nil {
+			languageCode = ctx.EffectiveUser.LanguageCode
+		}
+		if chat.Type == gotgbot.ChatTypePrivate {
+			chatType = database.ChatTypePrivate
+		} else {
+			chatType = database.ChatTypeGroup
+		}
+	} else if ctx.InlineQuery != nil {
+		id = ctx.InlineQuery.From.Id
+		languageCode = ctx.InlineQuery.From.LanguageCode
 		chatType = database.ChatTypePrivate
+	} else if ctx.CallbackQuery != nil {
+		id = ctx.CallbackQuery.From.Id
+		languageCode = ctx.CallbackQuery.From.LanguageCode
+		chatType = database.ChatTypePrivate
+	} else {
+		return nil, fmt.Errorf("unable to determine chat from context")
 	}
 
 	settings, err := database.Q().GetOrCreateChat(
 		context.Background(),
 		database.GetOrCreateChatParams{
-			ChatID:   chat.Id,
+			ChatID:   id,
 			Type:     chatType,
-			Language: localization.GetLocaleFromCode(user.LanguageCode),
+			Language: localization.GetLocaleFromCode(languageCode),
 		},
 	)
 	if err != nil {

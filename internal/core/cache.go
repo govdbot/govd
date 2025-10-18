@@ -2,7 +2,7 @@ package core
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/govdbot/govd/internal/database"
@@ -20,15 +20,15 @@ func StoreMedia(
 	formats []*models.DownloadedFormat,
 ) error {
 	if len(media.Items) == 0 {
-		return errors.New("no item to store")
+		return fmt.Errorf("no item to store")
 	}
 
 	fileIDs, fileSizes := collectMessageData(messages)
 	if len(fileIDs) != len(media.Items) {
-		return errors.New("number of file IDs does not match number of media items")
+		return fmt.Errorf("number of file IDs does not match number of media items")
 	}
 	if len(fileSizes) != len(media.Items) {
-		return errors.New("number of file sizes does not match number of media items")
+		return fmt.Errorf("number of file sizes does not match number of media items")
 	}
 
 	tx, err := database.Conn().Begin(ctx)
@@ -138,7 +138,7 @@ func ParseStoredMedia(
 		return nil, err
 	}
 	if len(itemRows) == 0 {
-		return nil, errors.New("no media items found")
+		return nil, fmt.Errorf("no media items found")
 	}
 
 	items := make([]*models.MediaItem, 0, len(itemRows))

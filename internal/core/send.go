@@ -1,7 +1,6 @@
 package core
 
 import (
-	"errors"
 	"fmt"
 	"slices"
 	"time"
@@ -46,17 +45,15 @@ func SendFormats(
 		}
 	case ctx.CallbackQuery != nil:
 		chatID = ctx.CallbackQuery.Message.GetChat().Id
-		messageOptions = nil
 	case ctx.InlineQuery != nil:
 		chatID = ctx.InlineQuery.From.Id
-		messageOptions = nil
 	case ctx.ChosenInlineResult != nil:
 		chatID = ctx.ChosenInlineResult.From.Id
 		messageOptions = &gotgbot.SendMediaGroupOpts{
 			DisableNotification: true,
 		}
 	default:
-		return nil, errors.New("failed to get chat id")
+		return nil, fmt.Errorf("failed to get chat id")
 	}
 
 	var sentMessages []gotgbot.Message
@@ -91,6 +88,15 @@ func SendFormats(
 			return nil, err
 		}
 
+		// delete original messages if needed
+		if options.Delete {
+			go func(messages []gotgbot.Message) {
+				for _, m := range messages {
+					m.Delete(bot, nil)
+				}
+			}(msgs)
+		}
+
 		sentMessages = append(sentMessages, msgs...)
 		if sentMessages[0].Chat.Type != gotgbot.ChatTypePrivate {
 			// avoid floodwait
@@ -100,7 +106,7 @@ func SendFormats(
 		}
 	}
 	if len(sentMessages) == 0 {
-		return nil, errors.New("no messages sent")
+		return nil, fmt.Errorf("no messages sent")
 	}
 
 	if !options.IsStored && config.Env.Caching {
@@ -115,4 +121,51 @@ func SendFormats(
 		}
 	}
 	return sentMessages, nil
+}
+
+func SendInlineFormats(
+	bot *gotgbot.Bot,
+	ctx *ext.Context,
+	extractorCtx *models.ExtractorContext,
+	media *models.Media,
+	formats []*models.DownloadedFormat,
+	options *models.SendFormatsOptions,
+) error {
+	messages, err := SendFormats(
+		bot, ctx, extractorCtx,
+		media, formats,
+		&models.SendFormatsOptions{
+			Caption:  options.Caption,
+			IsStored: options.IsStored,
+			Delete:   true,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	msg := messages[0]
+	format := formats[0]
+	fileID := util.GetMessageFileID(&msg)
+	format.Format.FileID = fileID
+
+	inputMedia, err := format.Format.GetInputMedia(
+		format.FilePath, format.ThumbnailFilePath,
+		options.Caption, options.IsSpoiler,
+	)
+	if err != nil {
+		return err
+	}
+
+	_, _, err = bot.EditMessageMedia(
+		inputMedia,
+		&gotgbot.EditMessageMediaOpts{
+			InlineMessageId: ctx.ChosenInlineResult.InlineMessageId,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

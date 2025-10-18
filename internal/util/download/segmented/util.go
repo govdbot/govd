@@ -2,14 +2,13 @@ package segmented
 
 import (
 	"crypto/aes"
-	"errors"
 	"fmt"
 )
 
 // removes PKCS#7 padding from decrypted data
 func removePKCS7Padding(data []byte) ([]byte, error) {
 	if len(data) == 0 {
-		return nil, errors.New("data is empty")
+		return nil, fmt.Errorf("data is empty")
 	}
 	paddingLength := int(data[len(data)-1])
 	if paddingLength == 0 || paddingLength > aes.BlockSize {

@@ -29,6 +29,7 @@ type ExtractorContext struct {
 	MatchGroups  map[string]string
 	Extractor    *Extractor
 	Context      context.Context
+	CancelFunc   context.CancelFunc // function to cancel the context
 	Settings     *database.GetOrCreateChatRow
 	HTTPClient   *networking.HTTPClient
 	Config       *config.ExtractorConfig

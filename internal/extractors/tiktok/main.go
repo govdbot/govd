@@ -1,7 +1,6 @@
 package tiktok
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -83,7 +82,7 @@ func GetMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 
 	videoInfo := data.VideoInfo
 	if videoInfo == nil {
-		return nil, errors.New("no video info found")
+		return nil, fmt.Errorf("no video info found")
 	}
 
 	duration := int32(videoInfo.Meta.Duration / 1000)
@@ -146,7 +145,7 @@ func GetFromWebAPI(ctx *models.ExtractorContext) (*Item, error) {
 		return nil, util.ErrUnavailable
 	}
 	if len(data.Items) == 0 {
-		return nil, errors.New("no items found in response")
+		return nil, fmt.Errorf("no items found in response")
 	}
 	var item *Item
 	for i := range data.Items {
@@ -157,7 +156,7 @@ func GetFromWebAPI(ctx *models.ExtractorContext) (*Item, error) {
 		}
 	}
 	if item == nil {
-		return nil, errors.New("no matching item found in response")
+		return nil, fmt.Errorf("no matching item found in response")
 	}
 	return item, nil
 }

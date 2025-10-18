@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 func calculateSegmentIV(baseIV []byte, mediaSequence int) []byte {
@@ -32,7 +30,7 @@ func calculateSegmentIV(baseIV []byte, mediaSequence int) []byte {
 
 func removePKCS7Padding(data []byte) ([]byte, error) {
 	if len(data) == 0 {
-		return nil, errors.New("data is empty")
+		return nil, fmt.Errorf("data is empty")
 	}
 	paddingLength := int(data[len(data)-1])
 	if paddingLength == 0 || paddingLength > aes.BlockSize {

@@ -11,6 +11,7 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/callbackquery"
+	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/choseninlineresult"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/inlinequery"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/message"
 	botHandlers "github.com/govdbot/govd/internal/bot/handlers"
@@ -73,6 +74,20 @@ func registerHandlers(dispatcher *ext.Dispatcher) {
 	dispatcher.AddHandler(handlers.NewMessage(
 		botHandlers.URLFilter,
 		botHandlers.URLHandler,
+	))
+
+	// inline
+	dispatcher.AddHandler(handlers.NewInlineQuery(
+		inlinequery.All,
+		botHandlers.InlineHandler,
+	))
+	dispatcher.AddHandler(handlers.NewChosenInlineResult(
+		choseninlineresult.All,
+		botHandlers.InlineResultHandler,
+	))
+	dispatcher.AddHandler(handlers.NewCallback(
+		callbackquery.Equal("inline:loading"),
+		botHandlers.InlineLoadingHandler,
 	))
 
 	// start

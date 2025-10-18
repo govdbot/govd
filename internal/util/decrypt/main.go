@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-
-	"github.com/pkg/errors"
 )
 
 func DecryptSegments(
@@ -46,10 +44,10 @@ func decryptSegment(
 		return fmt.Errorf("failed to read segment file: %w", err)
 	}
 	if len(encryptedData) == 0 {
-		return errors.New("segment file is empty")
+		return fmt.Errorf("segment file is empty")
 	}
 	if len(encryptedData)%aes.BlockSize != 0 {
-		return errors.New("encrypted data length is not a multiple of block size")
+		return fmt.Errorf("encrypted data length is not a multiple of block size")
 	}
 	iv := calculateSegmentIV(baseIV, segmentSequence)
 	mode := cipher.NewCBCDecrypter(block, iv)
@@ -102,10 +100,10 @@ func decryptSegmentInPlace(
 		return fmt.Errorf("failed to read segment file: %w", err)
 	}
 	if len(encryptedData) == 0 {
-		return errors.New("segment file is empty")
+		return fmt.Errorf("segment file is empty")
 	}
 	if len(encryptedData)%aes.BlockSize != 0 {
-		return errors.New("encrypted data length is not a multiple of block size")
+		return fmt.Errorf("encrypted data length is not a multiple of block size")
 	}
 	iv := calculateSegmentIV(baseIV, segmentSequence)
 	mode := cipher.NewCBCDecrypter(block, iv)
@@ -141,10 +139,10 @@ func DecryptSegmentStream(
 		return fmt.Errorf("failed to read encrypted data: %w", err)
 	}
 	if len(encryptedData) == 0 {
-		return errors.New("no data to decrypt")
+		return fmt.Errorf("no data to decrypt")
 	}
 	if len(encryptedData)%aes.BlockSize != 0 {
-		return errors.New("encrypted data length is not a multiple of block size")
+		return fmt.Errorf("encrypted data length is not a multiple of block size")
 	}
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -178,10 +176,10 @@ func DecryptSegmentBytes(
 	}
 
 	if len(encryptedData) == 0 {
-		return nil, errors.New("no data to decrypt")
+		return nil, fmt.Errorf("no data to decrypt")
 	}
 	if len(encryptedData)%aes.BlockSize != 0 {
-		return nil, errors.New("encrypted data length is not a multiple of block size")
+		return nil, fmt.Errorf("encrypted data length is not a multiple of block size")
 	}
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -206,7 +204,7 @@ func DecryptSegmentsWithSequences(
 	mediaSequences []int,
 ) error {
 	if len(segments) != len(mediaSequences) {
-		return errors.New("segments and mediaSequences arrays must have the same length")
+		return fmt.Errorf("segments and mediaSequences arrays must have the same length")
 	}
 
 	if !isValidAESKey(key) {
@@ -237,7 +235,7 @@ func DecryptSegmentsWithSequencesInPlace(
 	mediaSequences []int,
 ) error {
 	if len(segments) != len(mediaSequences) {
-		return errors.New("segments and mediaSequences arrays must have the same length")
+		return fmt.Errorf("segments and mediaSequences arrays must have the same length")
 	}
 
 	if !isValidAESKey(key) {

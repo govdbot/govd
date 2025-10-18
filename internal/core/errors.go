@@ -25,7 +25,14 @@ func HandleError(
 	for currentErr != nil {
 		var botError *util.Error
 		if errors.As(currentErr, &botError) {
-			HandleBotError(b, ctx, extractorCtx, botError)
+			if extractorCtx.Settings.Silent {
+				return
+			}
+			localizer := localization.New(extractorCtx.Settings.Language)
+			errorMessage := "⚠️ " + localizer.T(&i18n.LocalizeConfig{
+				MessageID: botError.ID,
+			})
+			sendErrorMessage(b, ctx, errorMessage)
 			return
 		}
 		currentErr = errors.Unwrap(currentErr)
@@ -38,11 +45,14 @@ func HandleError(
 
 	errorMessage := "⚠️ " + localizer.T(&i18n.LocalizeConfig{
 		MessageID: localization.ErrorMessage.ID,
-	}) + " [<code>" + errorID + "</code>]"
-
-	if !extractorCtx.Settings.Silent {
-		ctx.EffectiveMessage.Reply(b, errorMessage, nil)
+	})
+	if ctx.CallbackQuery != nil || ctx.InlineQuery != nil {
+		errorMessage += " [" + errorID + "]"
+	} else {
+		errorMessage += " [<code>" + errorID + "</code>]"
 	}
+
+	sendErrorMessage(b, ctx, errorMessage)
 
 	database.Q().LogError(
 		extractorCtx.Context,
@@ -54,20 +64,38 @@ func HandleError(
 
 }
 
-func HandleBotError(
+func sendErrorMessage(
 	b *gotgbot.Bot,
 	ctx *ext.Context,
-	extractorCtx *models.ExtractorContext,
-	err *util.Error,
+	message string,
 ) {
-	if extractorCtx.Settings.Silent {
-		return
+	switch {
+	case ctx.Message != nil:
+		ctx.EffectiveMessage.Reply(b, message, nil)
+	case ctx.CallbackQuery != nil:
+		ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
+			Text:      message,
+			ShowAlert: true,
+		})
+	case ctx.InlineQuery != nil:
+		ctx.InlineQuery.Answer(b, nil,
+			&gotgbot.AnswerInlineQueryOpts{
+				CacheTime: 1,
+				Button: &gotgbot.InlineQueryResultsButton{
+					Text:           message,
+					StartParameter: "start",
+				},
+			},
+		)
+	case ctx.ChosenInlineResult != nil:
+		b.EditMessageText(
+			message,
+			&gotgbot.EditMessageTextOpts{
+				InlineMessageId: ctx.ChosenInlineResult.InlineMessageId,
+				LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+					IsDisabled: true,
+				},
+			},
+		)
 	}
-
-	localizer := localization.New(extractorCtx.Settings.Language)
-	errorMessage := "⚠️ " + localizer.T(&i18n.LocalizeConfig{
-		MessageID: err.ID,
-	})
-
-	ctx.EffectiveMessage.Reply(b, errorMessage, nil)
 }

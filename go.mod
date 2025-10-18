@@ -13,10 +13,10 @@ require (
 	github.com/bytedance/sonic v1.14.0
 	github.com/google/uuid v1.6.0
 	github.com/grafov/m3u8 v0.12.1
+	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/joho/godotenv v1.5.1
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
-	github.com/pkg/errors v0.9.1
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/strukturag/libheif v1.20.2
 	github.com/sunfish-shogi/bufseekio v0.1.0

@@ -3,7 +3,6 @@ package util
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -43,7 +42,7 @@ func ExtractBaseHost(rawURL string) (string, error) {
 	}
 	parts := strings.Split(etld, ".")
 	if len(parts) == 0 {
-		return "", errors.New("invalid domain structure")
+		return "", fmt.Errorf("invalid domain structure")
 	}
 	return parts[0], nil
 }
@@ -69,7 +68,15 @@ func CleanupDownloads() {
 	}
 	for _, file := range files {
 		filePath := filepath.Join(path, file.Name())
-		os.Remove(filePath)
+		stat, err := os.Stat(filePath)
+		if err != nil {
+			continue
+		}
+		if stat.IsDir() {
+			os.RemoveAll(filePath)
+		} else {
+			os.Remove(filePath)
+		}
 	}
 }
 

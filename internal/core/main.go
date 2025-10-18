@@ -26,20 +26,10 @@ func HandleDownloadTask(
 	isSpoiler := util.HasHashtagEntity(message, "spoiler") ||
 		util.HasHashtagEntity(message, "nsfw")
 
-	// use singleflight to deduplicate
-	// parallel downloads of the same content
-	key := extractorCtx.Extractor.ID + "/" + extractorCtx.ContentID
-	result, err, shared := sf.Do(key, func() (interface{}, error) {
-		return executeDownload(extractorCtx)
-	})
+	taskResult, err := getDownloadResult(extractorCtx, false)
 	if err != nil {
 		return err
 	}
-	if shared {
-		logger.L.Debugf("shared download result for key: %s", key)
-	}
-
-	taskResult := result.(*models.TaskResult)
 
 	caption := formatCaption(
 		taskResult.Media,
@@ -64,10 +54,13 @@ func HandleDownloadTask(
 // performs the actual download operation
 // this function is wrapped by singleflight
 // to prevent duplicate downloads
-func executeDownload(extractorCtx *models.ExtractorContext) (*models.TaskResult, error) {
+func executeDownload(extractorCtx *models.ExtractorContext, isInline bool) (*models.TaskResult, error) {
 	if config.Env.Caching {
 		task, err := taskFromDatabase(extractorCtx)
 		if err == nil {
+			if isInline && len(task.Media.Items) > 1 {
+				return nil, util.ErrInlineMediaAlbum
+			}
 			err = checkAlbumLimit(len(task.Media.Items), extractorCtx.Settings)
 			if err != nil {
 				return nil, err
@@ -88,6 +81,9 @@ func executeDownload(extractorCtx *models.ExtractorContext) (*models.TaskResult,
 		return nil, fmt.Errorf("no media found")
 	}
 
+	if isInline && len(resp.Media.Items) > 1 {
+		return nil, util.ErrInlineMediaAlbum
+	}
 	err = checkAlbumLimit(len(resp.Media.Items), extractorCtx.Settings)
 	if err != nil {
 		return nil, err
@@ -134,6 +130,20 @@ func taskFromDatabase(ctx *models.ExtractorContext) (*models.TaskResult, error) 
 		Formats:  formats,
 		IsStored: true,
 	}, nil
+}
+
+func getDownloadResult(ctx *models.ExtractorContext, isInline bool) (*models.TaskResult, error) {
+	key := ctx.Extractor.ID + "/" + ctx.ContentID
+	result, err, shared := sf.Do(key, func() (interface{}, error) {
+		return executeDownload(ctx, isInline)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if shared {
+		logger.L.Debugf("shared download result for key: %s", key)
+	}
+	return result.(*models.TaskResult), nil
 }
 
 func checkAlbumLimit(n int, settings *database.GetOrCreateChatRow) error {
