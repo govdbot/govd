@@ -34,9 +34,14 @@ func SettingsFromContext(ctx *ext.Context) (*database.GetOrCreateChatRow, error)
 		languageCode = ctx.InlineQuery.From.LanguageCode
 		chatType = database.ChatTypePrivate
 	} else if ctx.CallbackQuery != nil {
-		id = ctx.CallbackQuery.From.Id
+		chat := ctx.CallbackQuery.Message.GetChat()
+		if chat.Type == gotgbot.ChatTypePrivate {
+			chatType = database.ChatTypePrivate
+		} else {
+			chatType = database.ChatTypeGroup
+		}
 		languageCode = ctx.CallbackQuery.From.LanguageCode
-		chatType = database.ChatTypePrivate
+		id = chat.Id
 	} else {
 		return nil, fmt.Errorf("unable to determine chat from context")
 	}
