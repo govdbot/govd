@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"sync"
 
@@ -15,8 +16,8 @@ type ChunkedDownloader struct {
 	client    *networking.HTTPClient
 	url       string
 	totalSize int64
-	chunkSize int64
 	numChunks int
+	settings  *models.DownloadSettings
 
 	wg sync.WaitGroup
 }
@@ -31,13 +32,20 @@ func NewChunkedDownloader(
 	ctx context.Context,
 	client *networking.HTTPClient,
 	url string,
-	chunkSize int64,
+	settings *models.DownloadSettings,
 ) (*ChunkedDownloader, error) {
 	if client == nil {
 		return nil, fmt.Errorf("http client cannot be nil")
 	}
 
-	resp, err := client.FetchWithContext(ctx, http.MethodHead, url, nil)
+	resp, err := client.FetchWithContext(
+		ctx, http.MethodHead, url,
+		&networking.RequestParams{
+			Cookies: settings.Cookies,
+		},
+	)
+
+	chunkSize := settings.ChunkSize
 
 	// prefer HEAD, but some servers block/close HEAD requests (EOF). If HEAD fails
 	// fallback to a small GET with Range to infer content length and range support.
@@ -50,17 +58,23 @@ func NewChunkedDownloader(
 				client:    client,
 				url:       resp.Request.URL.String(),
 				totalSize: totalSize,
-				chunkSize: chunkSize,
 				numChunks: numChunks,
+				settings:  settings,
 			}, nil
 		}
 	}
 
 	// fallback: try a ranged GET for the first byte to get Content-Range or Content-Length
+	headers := map[string]string{
+		"Range": "bytes=0-0",
+	}
+	maps.Copy(headers, settings.Headers)
+
 	resp, err = client.FetchWithContext(
 		ctx, http.MethodGet,
 		url, &networking.RequestParams{
-			Headers: map[string]string{"Range": "bytes=0-0"},
+			Headers: headers,
+			Cookies: settings.Cookies,
 		},
 	)
 	if err != nil {
@@ -80,8 +94,8 @@ func NewChunkedDownloader(
 				client:    client,
 				url:       resp.Request.URL.String(),
 				totalSize: total,
-				chunkSize: chunkSize,
 				numChunks: numChunks,
+				settings:  settings,
 			}, nil
 		}
 	}
@@ -99,8 +113,8 @@ func NewChunkedDownloader(
 			client:    client,
 			url:       resp.Request.URL.String(),
 			totalSize: totalSize,
-			chunkSize: chunkSize,
 			numChunks: numChunks,
+			settings:  settings,
 		}, nil
 	}
 
@@ -141,18 +155,22 @@ func (cd *ChunkedDownloader) downloadChunk(
 	index int,
 	chunks chan<- *Chunk,
 ) {
-	start := int64(index) * cd.chunkSize
-	end := min(start+cd.chunkSize-1, cd.totalSize-1)
+	chunkSize := cd.settings.ChunkSize
+
+	start := int64(index) * chunkSize
+	end := min(start+chunkSize-1, cd.totalSize-1)
 
 	headers := map[string]string{
 		"Range": fmt.Sprintf("bytes=%d-%d", start, end),
 	}
+	maps.Copy(headers, cd.settings.Headers)
 
 	resp, err := cd.client.FetchWithContext(
 		ctx.Context,
 		http.MethodGet,
 		cd.url, &networking.RequestParams{
 			Headers: headers,
+			Cookies: cd.settings.Cookies,
 		},
 	)
 	if err != nil {

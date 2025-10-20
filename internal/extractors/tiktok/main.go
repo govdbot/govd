@@ -5,9 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"strconv"
 
-	"github.com/bytedance/sonic"
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
@@ -73,90 +71,58 @@ var Extractor = &models.Extractor{
 }
 
 func GetMedia(ctx *models.ExtractorContext) (*models.Media, error) {
-	data, err := GetFromWebAPI(ctx)
-	if err != nil {
-		return nil, err
-	}
-	media := ctx.NewMedia()
-	media.SetCaption(data.Desc)
+	var details *WebItemStruct
+	var cookies []*http.Cookie
+	var err error
 
-	videoInfo := data.VideoInfo
-	if videoInfo == nil {
-		return nil, fmt.Errorf("no video info found")
-	}
-
-	duration := int32(videoInfo.Meta.Duration / 1000)
-
-	isSlide := data.ImagePostInfo != nil && len(data.ImagePostInfo.Images) > 0
-
-	if !isSlide {
-		videoInfo := data.VideoInfo
-
-		item := media.NewItem()
-		item.AddFormats(&models.MediaFormat{
-			FormatID:   data.VideoInfo.URI,
-			Type:       database.MediaTypeVideo,
-			URL:        videoInfo.URLList,
-			Duration:   duration,
-			Width:      int32(videoInfo.Meta.Width),
-			Height:     int32(videoInfo.Meta.Height),
-			Bitrate:    int32(videoInfo.Meta.Bitrate),
-			AudioCodec: database.MediaCodecAac,
-			VideoCodec: database.MediaCodecAvc,
-		})
-
-		return media, nil
-	}
-
-	for i, image := range data.ImagePostInfo.Images {
-		item := media.NewItem()
-		item.AddFormats(&models.MediaFormat{
-			FormatID: "image" + strconv.Itoa(i),
-			Type:     database.MediaTypePhoto,
-			URL:      image.DisplayImage.URLList,
-		})
-	}
-
-	return media, nil
-}
-
-func GetFromWebAPI(ctx *models.ExtractorContext) (*Item, error) {
-	videoID := ctx.ContentID
-	apiURL := apiEndpoint + "?" + RequestParams(videoID).Encode()
-	resp, err := ctx.Fetch(
-		http.MethodGet,
-		apiURL,
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	logger.WriteFile("tiktok_api", resp)
-
-	var data *Response
-	decoder := sonic.ConfigFastest.NewDecoder(resp.Body)
-	err = decoder.Decode(&data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
-	}
-	if data.StatusCode == 2053 {
-		return nil, util.ErrUnavailable
-	}
-	if len(data.Items) == 0 {
-		return nil, fmt.Errorf("no items found in response")
-	}
-	var item *Item
-	for i := range data.Items {
-		detail := data.Items[i]
-		if detail.IDStr == videoID {
-			item = detail
+	// sometimes web page just returns a
+	// login page, so we need to retry
+	// a few times to get the correct page
+	for range 5 {
+		details, cookies, err = GetVideoWeb(ctx)
+		if err == nil {
 			break
 		}
 	}
-	if item == nil {
-		return nil, fmt.Errorf("no matching item found in response")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get from web: %w", err)
 	}
-	return item, nil
+
+	media := ctx.NewMedia()
+	media.SetCaption(details.Desc)
+
+	isImageSlide := details.ImagePost != nil
+	if !isImageSlide {
+		item := media.NewItem()
+		video := details.Video
+		if video.PlayAddr != nil {
+			item.AddFormats(&models.MediaFormat{
+				Type:       database.MediaTypeVideo,
+				FormatID:   video.PlayAddr.URI,
+				URL:        video.PlayAddr.URLList,
+				VideoCodec: database.MediaCodecAvc,
+				AudioCodec: database.MediaCodecAac,
+				Width:      video.PlayAddr.Width,
+				Height:     video.PlayAddr.Height,
+				Duration:   video.Duration,
+				DownloadSettings: &models.DownloadSettings{
+					// avoid 403 error for videos
+					Cookies: cookies,
+				},
+			})
+			return media, nil
+		}
+		return nil, fmt.Errorf("no video formats found")
+	} else {
+		images := details.ImagePost.Images
+		for _, image := range images {
+			item := media.NewItem()
+			item.AddFormats(&models.MediaFormat{
+				Type:     database.MediaTypePhoto,
+				FormatID: "image",
+				URL:      image.URL.URLList,
+			})
+		}
+		return media, nil
+	}
 }

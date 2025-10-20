@@ -53,6 +53,7 @@ func (client *HTTPClient) FetchWithContext(
 	if req.Header.Get("User-Agent") == "" {
 		req.Header.Set("User-Agent", generateChromeUA())
 	}
+
 	resp, err := client.Client.Do(req)
 	if err != nil {
 		return nil, err

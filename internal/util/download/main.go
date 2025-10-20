@@ -40,8 +40,7 @@ func DownloadFile(
 		logger.L.Debugf("attempting download from: %s", url)
 
 		cd, err := chunked.NewChunkedDownloader(
-			ctx.Context, client, url,
-			settings.ChunkSize,
+			ctx.Context, client, url, settings,
 		)
 		if err != nil {
 			lastErr = err
