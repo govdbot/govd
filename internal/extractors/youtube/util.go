@@ -13,9 +13,7 @@ import (
 
 const invEndpoint = "/api/v1/videos/"
 
-var invInstance string
-
-func ParseInvFormats(data *InvResponse) []*models.MediaFormat {
+func ParseInvFormats(data *InvResponse, instance string) []*models.MediaFormat {
 	formats := make([]*models.MediaFormat, 0, len(data.AdaptiveFormats))
 	duration := data.LengthSeconds
 
@@ -54,7 +52,7 @@ func ParseInvFormats(data *InvResponse) []*models.MediaFormat {
 			Height:     int32(height),
 			Bitrate:    int32(bitrate),
 			Duration:   duration,
-			URL:        []string{ParseInvURL(format.URL)},
+			URL:        []string{ParseInvURL(format.URL, instance)},
 			Title:      data.Title,
 			Artist:     data.Author,
 			DownloadSettings: &models.DownloadSettings{
@@ -93,18 +91,15 @@ func ParseStreamType(streamType string) (database.MediaType, database.MediaCodec
 	return mediaType, videoCodec, audioCodec, nil
 }
 
-func ParseInvURL(url string) string {
-	if strings.HasPrefix(url, invInstance) {
+func ParseInvURL(url string, instance string) string {
+	if strings.HasPrefix(url, instance) {
 		return url
 	}
-	return invInstance + url
+	return instance + url
 }
 
-func GetInvInstance(ctx *models.ExtractorContext) (string, error) {
-	if invInstance != "" {
-		return invInstance, nil
-	}
-	instance := ctx.Config.Instance
+func GetInvInstance(ctx *models.ExtractorContext, idx int) (string, error) {
+	instance := ctx.Config.Instance[idx]
 	if instance == "" {
 		return "", fmt.Errorf("no youtube instance configured")
 	}
@@ -112,6 +107,5 @@ func GetInvInstance(ctx *models.ExtractorContext) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to parse youtube instance url: %w", err)
 	}
-	invInstance = strings.TrimSuffix(parsedURL.String(), "/")
-	return invInstance, nil
+	return strings.TrimSuffix(parsedURL.String(), "/"), nil
 }

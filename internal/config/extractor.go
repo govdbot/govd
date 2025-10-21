@@ -49,7 +49,7 @@ func validateConfig() {
 		if active > 1 {
 			logger.L.Fatalf("[%s] invalid config: cannot enable more than one proxy option at the same time", id)
 		}
-		if cfg.Instance != "" && id != "youtube" {
+		if len(cfg.Instance) > 0 && id != "youtube" {
 			logger.L.Fatalf("[%s] invalid config: custom instance is only supported for youtube extractor", id)
 		}
 	}

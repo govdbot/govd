@@ -49,5 +49,5 @@ type ExtractorConfig struct {
 
 	IsDisabled bool `yaml:"disabled"`
 
-	Instance string `yaml:"instance"`
+	Instance []string `yaml:"instance"`
 }

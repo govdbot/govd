@@ -38,10 +38,22 @@ func GetVideoFromInv(ctx *models.ExtractorContext) (*models.Media, error) {
 	if ctx.Config == nil {
 		return nil, fmt.Errorf("youtube not configured")
 	}
-	instance, err := GetInvInstance(ctx)
-	if err != nil {
-		return nil, err
+	var err error
+	for i := range ctx.Config.Instance {
+		instance, err := GetInvInstance(ctx, i)
+		if err != nil {
+			continue
+		}
+		media, err := GetFromInstance(ctx, instance)
+		if err == nil {
+			return media, nil
+		}
+		logger.L.Debugf("invidious instance %s failed: %v", instance, err)
 	}
+	return nil, err
+}
+
+func GetFromInstance(ctx *models.ExtractorContext, instance string) (*models.Media, error) {
 	videoID := ctx.ContentID
 	reqURL := instance +
 		invEndpoint +
@@ -77,7 +89,7 @@ func GetVideoFromInv(ctx *models.ExtractorContext) (*models.Media, error) {
 		}
 	}
 
-	formats := ParseInvFormats(data)
+	formats := ParseInvFormats(data, instance)
 	if len(formats) == 0 {
 		return nil, fmt.Errorf("no formats found")
 	}
