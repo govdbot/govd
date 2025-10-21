@@ -20,13 +20,13 @@ func parseFormatFromDB(row *database.GetMediaFormatRow) *models.MediaFormat {
 		Type:       row.Type,
 		AudioCodec: row.AudioCodec.MediaCodec,
 		VideoCodec: row.VideoCodec.MediaCodec,
-		FileSize:   row.FileSize.Int32,
+		FileSize:   row.FileSize.Int64,
 		Duration:   row.Duration.Int32,
 		Title:      row.Title.String,
 		Artist:     row.Artist.String,
 		Width:      row.Width.Int32,
 		Height:     row.Height.Int32,
-		Bitrate:    row.Bitrate.Int32,
+		Bitrate:    row.Bitrate.Int64,
 	}
 }
 

@@ -51,13 +51,13 @@ type MediaFormat struct {
 	Type             database.MediaType
 	AudioCodec       database.MediaCodec
 	VideoCodec       database.MediaCodec
-	FileSize         int32
+	FileSize         int64
 	Duration         int32
 	Title            string
 	Artist           string
 	Width            int32
 	Height           int32
-	Bitrate          int32
+	Bitrate          int64
 	URL              []string
 	ThumbnailURL     []string
 	DownloadSettings *DownloadSettings

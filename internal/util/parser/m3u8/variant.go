@@ -58,7 +58,7 @@ func (p *M3U8Parser) parseVariant(results chan<- *models.MediaFormat, variant *m
 		Type:       mediaType,
 		VideoCodec: videoCodec,
 		AudioCodec: audioCodec,
-		Bitrate:    int32(variant.Bandwidth),
+		Bitrate:    int64(variant.Bandwidth),
 		Width:      width,
 		Height:     height,
 		URL:        []string{variantURL},

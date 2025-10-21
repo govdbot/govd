@@ -1,7 +1,7 @@
 services:
-  govd-bot:
+  bot:
     image: govdbot/govd:main
-    container_name: govd-bot
+    container_name: bot
     restart: unless-stopped
     networks:
       - govd-network
@@ -17,7 +17,7 @@ services:
 
   db:
     image: postgres:latest
-    container_name: postgres
+    container_name: db
     restart: unless-stopped
     environment:
       POSTGRES_DB: govd
@@ -25,8 +25,8 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - db:/var/lib/postgresql/data
-    networks:
-      - govd-network
+    ports:
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U govd"]
       interval: 3s
@@ -35,8 +35,4 @@ services:
 
 volumes:
   db:
-
-networks:
-  govd-network:
-    driver: bridge
 

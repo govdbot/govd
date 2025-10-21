@@ -125,7 +125,7 @@ func ExtractVideoFormats(media *MediaEntity) ([]*models.MediaFormat, error) {
 				ThumbnailURL: []string{media.MediaURLHTTPS},
 				Width:        width,
 				Height:       height,
-				Bitrate:      int32(variant.Bitrate),
+				Bitrate:      variant.Bitrate,
 			})
 		}
 	}

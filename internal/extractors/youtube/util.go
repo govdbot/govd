@@ -50,7 +50,7 @@ func ParseInvFormats(data *InvResponse, instance string) []*models.MediaFormat {
 			FormatID:   format.Itag,
 			Width:      int32(width),
 			Height:     int32(height),
-			Bitrate:    int32(bitrate),
+			Bitrate:    bitrate,
 			Duration:   duration,
 			URL:        []string{ParseInvURL(format.URL, instance)},
 			Title:      data.Title,

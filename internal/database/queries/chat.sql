@@ -6,8 +6,8 @@ WITH upsert_chat AS (
     RETURNING chat_id, type
 ),
 upsert_settings AS (
-    INSERT INTO settings (chat_id, language)
-    SELECT chat_id, @language FROM upsert_chat
+    INSERT INTO settings (chat_id, language, captions, silent, nsfw, media_album_limit)
+    SELECT chat_id, @language, @captions, @silent, @nsfw, @media_album_limit FROM upsert_chat
     ON CONFLICT (chat_id) DO NOTHING
     RETURNING chat_id, nsfw, media_album_limit, silent, captions, language
 ),

@@ -22,7 +22,7 @@ func loadEnv() {
 	parseEnvString("DOWNLOADS_DIR", &Env.DownloadsDirectory, false)
 	parseEnvString("PROXY", &Env.Proxy, false)
 	parseEnvDuration("MAX_DURATION", &Env.MaxDuration, false)
-	parseEnvInt32("MAX_FILE_SIZE", &Env.MaxFileSize, false)
+	parseEnvInt64("MAX_FILE_SIZE", &Env.MaxFileSize, false)
 	parseEnvString("REPO_URL", &Env.RepoURL, false)
 	parseEnvInt("PROFILER_PORT", &Env.ProfilerPort, false)
 	parseEnvLevel("LOG_LEVEL", &Env.LogLevel, false)
@@ -34,12 +34,13 @@ func loadEnv() {
 	parseEnvBool("DEFAULT_ENABLE_CAPTIONS", &Env.DefaultCaptions, false)
 	parseEnvBool("DEFAULT_ENABLE_SILENT", &Env.DefaultSilent, false)
 	parseEnvBool("DEFAULT_ENABLE_NSFW", &Env.DefaultNSFW, false)
-	parseEnvIntRange("DEFAULT_MEDIA_ALBUM_LIMIT", &Env.DefaultMediaAlbumLimit, 1, 20, false)
+	parseEnvInt32Range("DEFAULT_MEDIA_ALBUM_LIMIT", &Env.DefaultMediaAlbumLimit, 1, 20, false)
+	parseEnvLanguage("DEFAULT_LANGUAGE", &Env.DefaultLanguage, false)
 }
 
 func GetDefaultConfig() *EnvConfig {
 	return &EnvConfig{
-		DBHost: "localhost",
+		DBHost: "db",
 		DBPort: 5432,
 		DBName: "govd",
 		DBUser: "govd",
@@ -58,9 +59,10 @@ func GetDefaultConfig() *EnvConfig {
 		CaptionsHeader:      "<a href='{{url}}'>source</a> - @govd_bot",
 		CaptionsDescription: "<blockquote expandable>{{text}}</blockquote>",
 
-		DefaultCaptions:        false,
+		DefaultCaptions:        true,
 		DefaultSilent:          false,
 		DefaultNSFW:            false,
 		DefaultMediaAlbumLimit: 10,
+		DefaultLanguage:        "en",
 	}
 }

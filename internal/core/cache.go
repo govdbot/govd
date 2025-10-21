@@ -63,7 +63,7 @@ func StoreMedia(
 		fileSize := fileSizes[i]
 		format := formats[i].Format
 
-		_, err = qtx.CreateMediaFormat(ctx, database.CreateMediaFormatParams{
+		err = qtx.CreateMediaFormat(ctx, database.CreateMediaFormatParams{
 			ItemID:   itemID,
 			FormatID: format.FormatID,
 			FileID:   fileID,
@@ -76,8 +76,8 @@ func StoreMedia(
 				MediaCodec: format.VideoCodec,
 				Valid:      format.VideoCodec != "",
 			},
-			FileSize: pgtype.Int4{
-				Int32: fileSize,
+			FileSize: pgtype.Int8{
+				Int64: fileSize,
 				Valid: fileSize != 0,
 			},
 			Duration: pgtype.Int4{
@@ -100,8 +100,8 @@ func StoreMedia(
 				Int32: format.Height,
 				Valid: format.Height != 0,
 			},
-			Bitrate: pgtype.Int4{
-				Int32: format.Bitrate,
+			Bitrate: pgtype.Int8{
+				Int64: format.Bitrate,
 				Valid: format.Bitrate != 0,
 			},
 		})
@@ -115,15 +115,15 @@ func StoreMedia(
 	return tx.Commit(ctx)
 }
 
-func collectMessageData(messages []gotgbot.Message) ([]string, []int32) {
+func collectMessageData(messages []gotgbot.Message) ([]string, []int64) {
 	fileIDs := make([]string, 0, len(messages))
-	fileSizes := make([]int32, 0, len(messages))
+	fileSizes := make([]int64, 0, len(messages))
 	for _, msg := range messages {
 		fileID := util.GetMessageFileID(&msg)
 		fileIDs = append(fileIDs, fileID)
 
 		fileSize := util.GetMessageFileSize(&msg)
-		fileSizes = append(fileSizes, int32(fileSize))
+		fileSizes = append(fileSizes, fileSize)
 	}
 	return fileIDs, fileSizes
 }

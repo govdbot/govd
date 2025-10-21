@@ -1,20 +1,15 @@
 services:
-  govd-bot:
+  bot:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    container_name: govd-bot-dev
+    container_name: bot-dev
     restart: unless-stopped
-    networks:
-      - govd-network
     env_file:
       - .env
     volumes:
-      # mount source code for hot reload
       - .:/app
-      # exclude tmp directory (air build artifacts)
       - /app/tmp
-      # cache go modules
       - go-build-cache:/go-cache
       - go-mod-cache:/gomod-cache
     depends_on:
@@ -23,7 +18,7 @@ services:
 
   db:
     image: postgres:latest
-    container_name: postgres
+    container_name: db-dev
     restart: unless-stopped
     environment:
       POSTGRES_DB: govd
@@ -31,8 +26,8 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - db:/var/lib/postgresql/data
-    networks:
-      - govd-network
+    ports:
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U govd"]
       interval: 3s
@@ -41,7 +36,7 @@ services:
 
   pgweb:
     image: sosedoff/pgweb:latest
-    container_name: pgweb
+    container_name: pgweb-dev
     restart: unless-stopped
     command: >
       --bind=0.0.0.0
@@ -49,8 +44,6 @@ services:
       --log-level=error
     ports:
       - "8081:8081"
-    networks:
-      - govd-network
     depends_on:
       db:
         condition: service_healthy
@@ -59,8 +52,3 @@ volumes:
   db:
   go-build-cache:
   go-mod-cache:
-
-networks:
-  govd-network:
-    driver: bridge
-

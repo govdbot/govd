@@ -22,7 +22,7 @@ type EnvConfig struct {
 	Proxy string
 
 	MaxDuration  time.Duration
-	MaxFileSize  int32
+	MaxFileSize  int64
 	RepoURL      string
 	ProfilerPort int
 	LogLevel     zapcore.Level
@@ -36,7 +36,8 @@ type EnvConfig struct {
 	DefaultCaptions        bool
 	DefaultSilent          bool
 	DefaultNSFW            bool
-	DefaultMediaAlbumLimit int
+	DefaultMediaAlbumLimit int32
+	DefaultLanguage        string
 }
 
 type ExtractorConfig struct {

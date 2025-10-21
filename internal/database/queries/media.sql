@@ -20,7 +20,7 @@ INSERT INTO media_item (
     @media_id
 ) RETURNING id;
 
--- name: CreateMediaFormat :one
+-- name: CreateMediaFormat :exec
 INSERT INTO media_format (
     format_id,
     item_id,
@@ -49,7 +49,7 @@ INSERT INTO media_format (
     @width,
     @height,
     @bitrate
-) RETURNING id;
+);
 
 -- name: GetMediaByContentID :one
 SELECT 
@@ -80,7 +80,6 @@ FROM media_item WHERE media_id = @media_id;
 
 -- name: GetMediaFormat :one
 SELECT 
-    id,
     format_id,
     item_id,
     file_id,

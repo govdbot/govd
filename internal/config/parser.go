@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/govdbot/govd/internal/localization"
 	"github.com/govdbot/govd/internal/logger"
 	"go.uber.org/zap/zapcore"
 )
@@ -42,25 +43,10 @@ func parseEnvInt(env string, dest *int, required bool) {
 	}
 }
 
-func parseEnvIntRange(env string, dest *int, min, max int, required bool) {
+func parseEnvInt64(env string, dest *int64, required bool) {
 	if value := os.Getenv(env); value != "" {
-		if parsed, err := strconv.Atoi(value); err == nil {
-			if parsed < min || parsed > max {
-				logger.L.Fatalf("%s env must be between %d and %d", env, min, max)
-			}
+		if parsed, err := strconv.ParseInt(value, 10, 64); err == nil {
 			*dest = parsed
-		} else {
-			logger.L.Fatalf("%s env is not a valid integer", env)
-		}
-	} else if required {
-		logger.L.Fatalf("%s env is not set", env)
-	}
-}
-
-func parseEnvInt32(env string, dest *int32, required bool) {
-	if value := os.Getenv(env); value != "" {
-		if parsed, err := strconv.ParseInt(value, 10, 32); err == nil {
-			*dest = int32(parsed)
 		} else {
 			logger.L.Fatalf("%s env is not a valid int32", env)
 		}
@@ -107,6 +93,32 @@ func parseEnvInt64Slice(env string, dest *[]int64, required bool) {
 			}
 			*dest = append(*dest, id)
 		}
+	} else if required {
+		logger.L.Fatalf("%s env is not set", env)
+	}
+}
+
+func parseEnvInt32Range(env string, dest *int32, min, max int, required bool) {
+	if value := os.Getenv(env); value != "" {
+		if parsed, err := strconv.Atoi(value); err == nil {
+			if parsed < min || parsed > max {
+				logger.L.Fatalf("%s env must be between %d and %d", env, min, max)
+			}
+			*dest = int32(parsed)
+		} else {
+			logger.L.Fatalf("%s env is not a valid integer", env)
+		}
+	} else if required {
+		logger.L.Fatalf("%s env is not set", env)
+	}
+}
+
+func parseEnvLanguage(env string, dest *string, required bool) {
+	if value := os.Getenv(env); value != "" {
+		if !localization.IsCodeSupported(value) {
+			logger.L.Fatalf("%s env contains unsupported language code: %s", env, value)
+		}
+		*dest = value
 	} else if required {
 		logger.L.Fatalf("%s env is not set", env)
 	}

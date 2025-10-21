@@ -11,11 +11,6 @@ CREATE TABLE IF NOT EXISTS media (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     UNIQUE (content_id, extractor_id)
 );
-
-CREATE INDEX IF NOT EXISTS idx_media_content_id
-    ON media (content_id);
-CREATE INDEX IF NOT EXISTS idx_media_extractor_id
-    ON media (extractor_id);
 -- +goose StatementEnd
 
 -- +goose Down

@@ -122,7 +122,7 @@ type VideoInfo struct {
 }
 
 type Variant struct {
-	Bitrate     int    `json:"bitrate"`
+	Bitrate     int64  `json:"bitrate"`
 	ContentType string `json:"content_type"`
 	URL         string `json:"url"`
 }

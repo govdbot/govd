@@ -8,6 +8,7 @@ import (
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
+	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/localization"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -49,9 +50,15 @@ func SettingsFromContext(ctx *ext.Context) (*database.GetOrCreateChatRow, error)
 	settings, err := database.Q().GetOrCreateChat(
 		context.Background(),
 		database.GetOrCreateChatParams{
-			ChatID:   id,
-			Type:     chatType,
-			Language: localization.GetLocaleFromCode(languageCode),
+			ChatID: id,
+			Type:   chatType,
+			Language: localization.GetLocaleFromCode(
+				languageCode, config.Env.DefaultLanguage,
+			),
+			Captions:        config.Env.DefaultCaptions,
+			Silent:          config.Env.DefaultSilent,
+			Nsfw:            config.Env.DefaultNSFW,
+			MediaAlbumLimit: config.Env.DefaultMediaAlbumLimit,
 		},
 	)
 	if err != nil {
