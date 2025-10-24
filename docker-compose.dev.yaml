@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile.dev
     container_name: bot-dev
     restart: unless-stopped
+    networks:
+      - govd-network
     env_file:
       - .env
     volumes:
@@ -26,8 +28,8 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - db:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    networks:
+      - govd-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U govd"]
       interval: 3s
@@ -44,6 +46,8 @@ services:
       --log-level=error
     ports:
       - "8081:8081"
+    networks:
+      - govd-network
     depends_on:
       db:
         condition: service_healthy
@@ -52,3 +56,7 @@ volumes:
   db:
   go-build-cache:
   go-mod-cache:
+
+networks:
+  govd-network:
+    driver: bridge

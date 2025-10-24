@@ -49,7 +49,11 @@ func extractRawData(content any) ([]byte, error) {
 	case fmt.Stringer:
 		return []byte(v.String()), nil
 	default:
-		return nil, fmt.Errorf("unsupported content type: %T", content)
+		data, err := sonic.ConfigFastest.Marshal(v)
+		if err != nil {
+			return nil, fmt.Errorf("unsupported content type: %T", content)
+		}
+		return data, nil
 	}
 }
 
