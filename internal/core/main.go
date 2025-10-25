@@ -1,8 +1,6 @@
 package core
 
 import (
-	"fmt"
-
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/govdbot/govd/internal/config"
@@ -78,7 +76,8 @@ func executeDownload(extractorCtx *models.ExtractorContext, isInline bool) (*mod
 		return nil, err
 	}
 	if resp.Media == nil || len(resp.Media.Items) == 0 {
-		return nil, fmt.Errorf("no media found")
+		// no media extracted (e.g. text only post)
+		return nil, nil
 	}
 
 	if isInline && len(resp.Media.Items) > 1 {
