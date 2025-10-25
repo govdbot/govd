@@ -29,7 +29,7 @@ func main() {
 
 	localization.Init()
 	database.Init()
-	util.CleanupDownloads()
+	util.CleanupDownloadsJob()
 
 	go bot.Start()
 

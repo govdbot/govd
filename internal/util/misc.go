@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/database"
@@ -55,7 +56,7 @@ func ExceedsMaxDuration(duration int32) bool {
 	return duration > int32(config.Env.MaxDuration.Seconds())
 }
 
-func CleanupDownloads() {
+func CleanupDownloads(ignoreTime bool) {
 	logger.L.Debug("cleaning up downloads directory")
 
 	if config.Env == nil || config.Env.DownloadsDirectory == "" {
@@ -68,16 +69,33 @@ func CleanupDownloads() {
 	}
 	for _, file := range files {
 		filePath := filepath.Join(path, file.Name())
-		stat, err := os.Stat(filePath)
 		if err != nil {
 			continue
 		}
-		if stat.IsDir() {
-			os.RemoveAll(filePath)
-		} else {
-			os.Remove(filePath)
+		info, err := file.Info()
+		if err != nil {
+			continue
+		}
+		modTime := info.ModTime()
+		if ignoreTime || time.Since(modTime) > 10*time.Minute {
+			if file.IsDir() {
+				os.RemoveAll(filePath)
+			} else {
+				os.Remove(filePath)
+			}
 		}
 	}
+}
+
+func CleanupDownloadsJob() {
+	CleanupDownloads(true) // initial cleanup on startup
+
+	tikcer := time.NewTicker(10 * time.Minute)
+	go func() {
+		for range tikcer.C {
+			CleanupDownloads(false)
+		}
+	}()
 }
 
 func CheckFFmpeg() bool {
