@@ -19,8 +19,6 @@ func HandleError(
 	extractorCtx *models.ExtractorContext,
 	err error,
 ) {
-	logger.L.Errorf("unexpected error: %v", err)
-
 	currentErr := err
 	for currentErr != nil {
 		var botError *util.Error
@@ -38,8 +36,13 @@ func HandleError(
 		currentErr = errors.Unwrap(currentErr)
 	}
 
-	localizer := localization.New(extractorCtx.Settings.Language)
+	if errors.Is(err, NoMedia) {
+		return
+	}
 
+	logger.L.Errorf("unexpected error: %v", err)
+
+	localizer := localization.New(extractorCtx.Settings.Language)
 	errorString := err.Error()
 	errorID := util.HashedError(errorString)
 

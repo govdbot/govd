@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"path/filepath"
 	"strings"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/govdbot/govd/internal/util/download"
 	"github.com/govdbot/govd/internal/util/libav"
 )
+
+var NoMedia = errors.New("no media found")
 
 func parseFormatFromDB(row *database.GetMediaFormatRow) *models.MediaFormat {
 	return &models.MediaFormat{
