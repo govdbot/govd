@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS media (
     id BIGSERIAL PRIMARY KEY,
-    content_id VARCHAR(150) NOT NULL,
+    content_id VARCHAR(50) NOT NULL,
     content_url TEXT NOT NULL,
     extractor_id VARCHAR(30) NOT NULL,
     caption TEXT,
