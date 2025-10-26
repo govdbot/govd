@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
@@ -9,6 +10,7 @@ import (
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/util"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -50,6 +52,12 @@ func StoreMedia(
 		Nsfw: media.NSFW,
 	})
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			// unique violation, media already exists
+			logger.L.Debugf("media %s already exists in database", media.ContentID)
+			return nil
+		}
 		return err
 	}
 
