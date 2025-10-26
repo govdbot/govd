@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 
+	_ "net/http/pprof" // profiler
+
 	"github.com/govdbot/govd/internal/bot"
 	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/database"
