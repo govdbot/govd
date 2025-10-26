@@ -23,9 +23,9 @@ type ChunkedDownloader struct {
 }
 
 type Chunk struct {
-	index int
-	data  []byte
-	err   error
+	index  int
+	reader io.ReadCloser
+	err    error
 }
 
 func NewChunkedDownloader(
@@ -47,8 +47,6 @@ func NewChunkedDownloader(
 
 	chunkSize := settings.ChunkSize
 
-	// prefer HEAD, but some servers block/close HEAD requests (EOF). If HEAD fails
-	// fallback to a small GET with Range to infer content length and range support.
 	if err == nil {
 		defer resp.Body.Close()
 		totalSize := resp.ContentLength
@@ -64,7 +62,6 @@ func NewChunkedDownloader(
 		}
 	}
 
-	// fallback: try a ranged GET for the first byte to get Content-Range or Content-Length
 	headers := map[string]string{
 		"Range": "bytes=0-0",
 	}
@@ -82,7 +79,6 @@ func NewChunkedDownloader(
 	}
 	defer resp.Body.Close()
 
-	// prefer Content-Range: "bytes 0-0/12345"
 	if cr := resp.Header.Get("Content-Range"); cr != "" {
 		total, parseErr := parseContentRange(cr)
 		if parseErr == nil && total > 0 {
@@ -100,9 +96,6 @@ func NewChunkedDownloader(
 		}
 	}
 
-	// fallback to Content-Length header on GET response. only accept this if
-	// the response is a full GET (200). For a ranged GET the Content-Length
-	// will be the size of the fragment (e.g. 1) and is not the total size.
 	if resp.StatusCode == http.StatusOK && resp.ContentLength > 0 {
 		if resp.Header.Get("Accept-Ranges") != "bytes" {
 			return nil, fmt.Errorf("server does not support range requests")
@@ -135,13 +128,12 @@ func (cd *ChunkedDownloader) Download(
 	for i := 0; i < cd.numChunks; i++ {
 		go func(index int) {
 			defer cd.wg.Done()
-			semaphore <- struct{}{}        // acquire
-			defer func() { <-semaphore }() // release
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
 			cd.downloadChunk(ctx, index, chunks)
 		}(i)
 	}
 
-	// close chunks channel when all downloads complete
 	go func() {
 		cd.wg.Wait()
 		close(chunks)
@@ -177,56 +169,25 @@ func (cd *ChunkedDownloader) downloadChunk(
 		chunks <- &Chunk{index: index, err: fmt.Errorf("failed to download chunk %d: %w", index, err)}
 		return
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusPartialContent {
+		resp.Body.Close()
 		chunks <- &Chunk{index: index, err: fmt.Errorf("expected status 206, got %d for chunk %d", resp.StatusCode, index)}
 		return
 	}
 
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		chunks <- &Chunk{index: index, err: fmt.Errorf("failed to read chunk %d: %w", index, err)}
-		return
-	}
-
-	chunks <- &Chunk{index: index, data: data}
+	chunks <- &Chunk{index: index, reader: resp.Body}
 }
 
 func (cd *ChunkedDownloader) writeChunks(writer io.Writer, chunks <-chan *Chunk) error {
-	nextIndex := 0
-	chunkBuffer := make(map[int]*Chunk)
-	chunksReceived := 0
+	chunkWriter := newChunkWriter(writer, cd.numChunks)
 
 	for chunk := range chunks {
-		chunksReceived++
-
-		if chunk.err != nil {
-			return fmt.Errorf("chunk %d failed: %w", chunk.index, chunk.err)
-		}
-
-		chunkBuffer[chunk.index] = chunk
-
-		for {
-			if chunk, exists := chunkBuffer[nextIndex]; exists {
-				if _, err := writer.Write(chunk.data); err != nil {
-					return fmt.Errorf("failed to write chunk %d: %w", nextIndex, err)
-				}
-				delete(chunkBuffer, nextIndex)
-				nextIndex++
-			} else {
-				break
-			}
+		if err := chunkWriter.addChunk(chunk); err != nil {
+			chunkWriter.cleanup()
+			return err
 		}
 	}
 
-	if chunksReceived != cd.numChunks {
-		return fmt.Errorf("expected %d chunks, got %d", cd.numChunks, chunksReceived)
-	}
-
-	if nextIndex != cd.numChunks {
-		return fmt.Errorf("expected %d chunks, wrote %d", cd.numChunks, nextIndex)
-	}
-
-	return nil
+	return chunkWriter.finalize()
 }
