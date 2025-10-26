@@ -49,7 +49,14 @@ func downloadItem(
 	index int,
 ) {
 	var format *models.MediaFormat
-	if len(item.Formats) > 1 {
+
+	if len(item.Formats) == 0 {
+		formats <- &models.DownloadedFormat{
+			Index: index,
+			Error: fmt.Errorf("no formats found for media item at index %d", index),
+		}
+		return
+	} else if len(item.Formats) > 1 {
 		format = item.GetDefaultFormat()
 	} else {
 		format = item.Formats[0]
