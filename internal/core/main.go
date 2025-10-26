@@ -8,10 +8,7 @@ import (
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/util"
-	"golang.org/x/sync/singleflight"
 )
-
-var sf singleflight.Group
 
 func HandleDownloadTask(
 	bot *gotgbot.Bot,
@@ -20,11 +17,16 @@ func HandleDownloadTask(
 ) error {
 	defer extractorCtx.FilesTracker.Cleanup()
 
+	key := extractorCtx.Key()
+
+	taskQueue.Acquire(key)
+	defer taskQueue.Release(key)
+
 	message := ctx.EffectiveMessage
 	isSpoiler := util.HasHashtagEntity(message, "spoiler") ||
 		util.HasHashtagEntity(message, "nsfw")
 
-	taskResult, err := getDownloadResult(extractorCtx, false)
+	taskResult, err := executeDownload(extractorCtx, false)
 	if err != nil {
 		return err
 	}
@@ -129,20 +131,6 @@ func taskFromDatabase(ctx *models.ExtractorContext) (*models.TaskResult, error) 
 		Formats:  formats,
 		IsStored: true,
 	}, nil
-}
-
-func getDownloadResult(ctx *models.ExtractorContext, isInline bool) (*models.TaskResult, error) {
-	key := ctx.Extractor.ID + "/" + ctx.ContentID
-	result, err, shared := sf.Do(key, func() (interface{}, error) {
-		return executeDownload(ctx, isInline)
-	})
-	if err != nil {
-		return nil, err
-	}
-	if shared {
-		logger.L.Debugf("shared download result for key: %s", key)
-	}
-	return result.(*models.TaskResult), nil
 }
 
 func checkAlbumLimit(n int, settings *database.GetOrCreateChatRow) error {

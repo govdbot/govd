@@ -43,6 +43,10 @@ type ExtractorContext struct {
 	DownloadFunc func(*ExtractorContext, int, *MediaFormat) (*DownloadedFormat, error)
 }
 
+func (e *ExtractorContext) Key() string {
+	return e.Extractor.ID + "/" + e.ContentID
+}
+
 func (e *ExtractorContext) SetSettings(settings *database.GetOrCreateChatRow) {
 	e.Settings = settings
 }

@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -48,6 +49,9 @@ func getThumbnail(
 		file, err := download.DownloadFileInMemory(ctx, format.ThumbnailURL)
 		if err != nil {
 			return "", err
+		}
+		if file == nil {
+			return "", fmt.Errorf("downloaded file is nil")
 		}
 
 		var size int

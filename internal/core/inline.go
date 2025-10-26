@@ -74,7 +74,12 @@ func HandleInlineResultTask(
 ) error {
 	defer extractorCtx.FilesTracker.Cleanup()
 
-	taskResult, err := getDownloadResult(extractorCtx, false)
+	key := extractorCtx.Key()
+
+	taskQueue.Acquire(key)
+	defer taskQueue.Release(key)
+
+	taskResult, err := executeDownload(extractorCtx, true)
 	if err != nil {
 		return err
 	}
