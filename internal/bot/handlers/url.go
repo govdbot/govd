@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"slices"
+
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/message"
@@ -41,6 +43,10 @@ func URLHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 		logger.L.Errorf("failed to get settings from context: %v", err)
 		return ext.EndGroups
 	}
+	if settings != nil && slices.Contains(settings.DisabledExtractors, extractorCtx.Extractor.ID) {
+		return ext.EndGroups
+	}
+
 	extractorCtx.SetSettings(settings)
 
 	util.SendTypingAction(bot, chat.Id)

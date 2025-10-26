@@ -19,6 +19,7 @@ type SettingsType string
 
 const (
 	SettingsTypeSelect SettingsType = "select"
+	SettingsTypeMany   SettingsType = "many"
 	SettingsTypeToggle SettingsType = "toggle"
 )
 
@@ -33,8 +34,10 @@ type BotSettings struct {
 	OptionsFunc         func(*localization.Localizer) []*BotSettingsOptions
 	GetCurrentValueFunc func(*database.GetOrCreateChatRow) any
 
-	ToggleFunc   func(context.Context, int64) error
-	SetValueFunc func(context.Context, int64, any) error
+	ToggleFunc      func(context.Context, int64) error
+	SetValueFunc    func(context.Context, int64, any) error
+	AddValueFunc    func(context.Context, int64, any) error
+	RemoveValueFunc func(context.Context, int64, any) error
 
 	OptionsChunk int
 }

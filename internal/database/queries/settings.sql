@@ -22,3 +22,14 @@ WHERE chat_id = @chat_id;
 UPDATE settings
 SET media_album_limit = @media_album_limit, updated_at = CURRENT_TIMESTAMP
 WHERE chat_id = @chat_id;
+
+-- name: AddDisabledExtractor :exec
+UPDATE settings
+SET disabled_extractors = array_append(disabled_extractors, @extractor_id), updated_at = CURRENT_TIMESTAMP
+WHERE chat_id = @chat_id
+AND NOT (@extractor_id = ANY(disabled_extractors));
+
+-- name: RemoveDisabledExtractor :exec
+UPDATE settings
+SET disabled_extractors = array_remove(disabled_extractors, @extractor_id), updated_at = CURRENT_TIMESTAMP
+WHERE chat_id = @chat_id;

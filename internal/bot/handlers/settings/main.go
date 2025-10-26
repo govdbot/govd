@@ -6,7 +6,9 @@ import (
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
+	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/database"
+	"github.com/govdbot/govd/internal/extractors"
 	"github.com/govdbot/govd/internal/localization"
 	"github.com/govdbot/govd/internal/util"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -135,6 +137,56 @@ var botSettings = []BotSettings{
 		GetCurrentValueFunc: func(res *database.GetOrCreateChatRow) any {
 			return res.Nsfw
 		},
+	},
+	{
+		ID:             "disabled_extractors",
+		ButtonKey:      localization.DisabledExtractorsButton.ID,
+		DescriptionKey: localization.DisabledExtractorsSettingsMessage.ID,
+
+		Type:  SettingsTypeMany,
+		Scope: SettingsScopeAll,
+
+		OptionsFunc: func(l *localization.Localizer) []*BotSettingsOptions {
+			options := make([]*BotSettingsOptions, 0, len(extractors.Extractors))
+			for _, extractor := range extractors.Extractors {
+				if extractor.Redirect || extractor.Hidden {
+					continue
+				}
+				cfg := config.GetExtractorConfig(extractor.ID)
+				if cfg != nil && cfg.IsDisabled {
+					continue
+				}
+				options = append(options, &BotSettingsOptions{
+					Name:  extractor.DisplayName,
+					Value: extractor.ID,
+				})
+			}
+			return options
+		},
+		AddValueFunc: func(ctx context.Context, chatID int64, value any) error {
+			extractorID, ok := value.(string)
+			if !ok {
+				return nil
+			}
+			return database.Q().AddDisabledExtractor(ctx, database.AddDisabledExtractorParams{
+				ExtractorID: extractorID,
+				ChatID:      chatID,
+			})
+		},
+		RemoveValueFunc: func(ctx context.Context, chatID int64, value any) error {
+			extractorID, ok := value.(string)
+			if !ok {
+				return nil
+			}
+			return database.Q().RemoveDisabledExtractor(ctx, database.RemoveDisabledExtractorParams{
+				ExtractorID: extractorID,
+				ChatID:      chatID,
+			})
+		},
+		GetCurrentValueFunc: func(res *database.GetOrCreateChatRow) any {
+			return res.DisabledExtractors
+		},
+		OptionsChunk: 2,
 	},
 }
 

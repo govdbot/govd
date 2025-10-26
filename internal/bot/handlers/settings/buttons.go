@@ -85,6 +85,45 @@ func BuildSettingsOptionsButtons(
 			}
 			buttons = append(buttons, slices.Collect(slices.Chunk(optionButtons, chunkSize))...)
 		}
+	case SettingsTypeMany:
+		if setting.OptionsFunc != nil {
+			options := setting.OptionsFunc(localizer)
+			currentValue := setting.GetCurrentValueFunc(chatSettings)
+
+			var currentValues []string
+			if strSlice, ok := currentValue.([]string); ok {
+				currentValues = strSlice
+			}
+
+			var optionButtons []gotgbot.InlineKeyboardButton
+
+			for _, option := range options {
+				var buttonText string
+				var action string
+				optionValueStr, ok := option.Value.(string)
+				if !ok {
+					continue
+				}
+
+				if slices.Contains(currentValues, optionValueStr) {
+					buttonText = "☑ " + option.Name
+					action = "remove"
+				} else {
+					buttonText = "☐ " + option.Name
+					action = "add"
+				}
+
+				optionButtons = append(optionButtons, gotgbot.InlineKeyboardButton{
+					Text:         buttonText,
+					CallbackData: "settings.many." + setting.ID + "." + action + "." + optionValueStr,
+				})
+			}
+			chunkSize := setting.OptionsChunk
+			if chunkSize <= 0 {
+				chunkSize = 1
+			}
+			buttons = append(buttons, slices.Collect(slices.Chunk(optionButtons, chunkSize))...)
+		}
 	}
 
 	return buttons

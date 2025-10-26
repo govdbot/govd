@@ -127,6 +127,10 @@ func registerHandlers(dispatcher *ext.Dispatcher) {
 		callbackquery.Prefix("settings.select"),
 		botSettings.SettingsSelectHandler,
 	))
+	dispatcher.AddHandler(handlers.NewCallback(
+		callbackquery.Prefix("settings.many"),
+		botSettings.SettingsManyHandler,
+	))
 
 	// other
 	dispatcher.AddHandler(handlers.NewCallback(
