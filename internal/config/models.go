@@ -21,14 +21,14 @@ type EnvConfig struct {
 
 	Proxy string
 
-	MaxDuration  time.Duration
-	MaxFileSize  int64
-	RepoURL      string
-	ProfilerPort int
-	LogLevel     zapcore.Level
-	Whitelist    []int64
-	Caching      bool
-	Admins       []int64
+	MaxDuration time.Duration
+	MaxFileSize int64
+	RepoURL     string
+	Profiler    bool
+	LogLevel    zapcore.Level
+	Whitelist   []int64
+	Caching     bool
+	Admins      []int64
 
 	CaptionsHeader      string
 	CaptionsDescription string

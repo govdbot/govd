@@ -24,7 +24,7 @@ func loadEnv() {
 	parseEnvDuration("MAX_DURATION", &Env.MaxDuration, false)
 	parseEnvInt64("MAX_FILE_SIZE", &Env.MaxFileSize, false)
 	parseEnvString("REPO_URL", &Env.RepoURL, false)
-	parseEnvInt("PROFILER_PORT", &Env.ProfilerPort, false)
+	parseEnvBool("PROFILER", &Env.Profiler, false)
 	parseEnvLevel("LOG_LEVEL", &Env.LogLevel, false)
 	parseEnvInt64Slice("WHITELIST", &Env.Whitelist, false)
 	parseEnvInt64Slice("ADMINS", &Env.Admins, false)
