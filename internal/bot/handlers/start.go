@@ -18,11 +18,11 @@ func StartHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 	}
 	user := ctx.EffectiveUser
 
-	settings, err := util.SettingsFromContext(ctx)
+	chat, err := util.ChatFromContext(ctx)
 	if err != nil {
 		return err
 	}
-	localizer := localization.New(settings.Language)
+	localizer := localization.New(chat.Language)
 
 	keyboard := getStartKeyboard(bot, localizer)
 

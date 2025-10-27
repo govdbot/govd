@@ -175,4 +175,8 @@ var (
 		ID:    "ErrorAgeRestricted",
 		Other: "this content is age-restricted and cannot be accessed.",
 	}
+	ErrorPermissionDenied = &i18n.Message{
+		ID:    "ErrorPermissionDenied",
+		Other: "the bot does not have sufficient permissions to send this media. please grant the necessary permissions and try again.",
+	}
 )

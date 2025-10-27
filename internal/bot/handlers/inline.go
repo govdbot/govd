@@ -38,13 +38,13 @@ func InlineHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 		return ext.EndGroups
 	}
 
-	settings, err := util.SettingsFromContext(ctx)
+	chat, err := util.ChatFromContext(ctx)
 	if err != nil {
 		logger.L.Errorf("failed to get settings from context: %v", err)
 		extractorCtx.CancelFunc()
 		return ext.EndGroups
 	}
-	extractorCtx.SetSettings(settings)
+	extractorCtx.SetChat(chat)
 
 	err = core.HandleInlineTask(bot, ctx, extractorCtx)
 	if err != nil {
@@ -76,11 +76,11 @@ func InlineResultHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 }
 
 func InlineLoadingHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
-	settings, err := util.SettingsFromContext(ctx)
+	chat, err := util.ChatFromContext(ctx)
 	if err != nil {
 		return err
 	}
-	localizer := localization.New(settings.Language)
+	localizer := localization.New(chat.Language)
 
 	ctx.CallbackQuery.Answer(bot, &gotgbot.AnswerCallbackQueryOpts{
 		Text: localizer.T(&i18n.LocalizeConfig{

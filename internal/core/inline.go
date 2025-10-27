@@ -26,7 +26,7 @@ func HandleInlineTask(
 		return fmt.Errorf("failed to add inline task to cache")
 	}
 
-	localizer := localization.New(extractorCtx.Settings.Language)
+	localizer := localization.New(extractorCtx.Chat.Language)
 
 	inlineResult := &gotgbot.InlineQueryResultArticle{
 		Id: taskID,
@@ -86,7 +86,7 @@ func HandleInlineResultTask(
 
 	caption := formatCaption(
 		taskResult.Media,
-		extractorCtx.Settings.Captions,
+		extractorCtx.Chat.Captions,
 	)
 
 	err = SendInlineFormats(

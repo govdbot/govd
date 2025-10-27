@@ -191,15 +191,14 @@ var botSettings = []BotSettings{
 }
 
 func SettingsHandler(b *gotgbot.Bot, ctx *ext.Context) error {
-	chat := ctx.EffectiveChat
-	isGroup := chat.Type != gotgbot.ChatTypePrivate
-
-	settings, err := util.SettingsFromContext(ctx)
+	chat, err := util.ChatFromContext(ctx)
 	if err != nil {
 		return err
 	}
 
-	localizer := localization.New(settings.Language)
+	isGroup := chat.Type == database.ChatTypeGroup
+
+	localizer := localization.New(chat.Language)
 	if isGroup && !util.CheckAdminPermission(b, ctx, localizer) {
 		return nil
 	}

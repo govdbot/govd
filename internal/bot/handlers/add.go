@@ -10,22 +10,21 @@ import (
 
 func AddedToGroupHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 	if !isAddedUpdate(bot, ctx) {
-		return nil
+		return ext.EndGroups
 	}
-	chat := ctx.MyChatMember.Chat
-	settings, err := util.SettingsFromContext(ctx)
+	chat, err := util.ChatFromContext(ctx)
 	if err != nil {
 		return err
 	}
-	localizer := localization.New(settings.Language)
-	chat.SendMessage(
-		bot,
+	localizer := localization.New(chat.Language)
+	bot.SendMessage(
+		chat.ChatID,
 		localizer.T(&i18n.LocalizeConfig{
 			MessageID: localization.AddedToGroupMessage.ID,
 		}),
 		nil,
 	)
-	return nil
+	return ext.EndGroups
 }
 
 func isAddedUpdate(bot *gotgbot.Bot, ctx *ext.Context) bool {

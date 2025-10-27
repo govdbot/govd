@@ -34,11 +34,11 @@ var (
 	ErrAgeRestricted                 = &Error{ID: localization.ErrorAgeRestricted.ID}
 )
 
-func HashedError(message string) string {
+func HashedError(err error) string {
 	const length = 8
 
 	h := fnv.New64a()
-	h.Write([]byte(message))
+	h.Write([]byte(err.Error()))
 
 	sum := h.Sum(nil)
 	hexStr := hex.EncodeToString(sum)

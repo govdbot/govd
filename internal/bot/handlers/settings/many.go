@@ -6,6 +6,7 @@ import (
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
+	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/localization"
 	"github.com/govdbot/govd/internal/util"
 )
@@ -25,15 +26,14 @@ func SettingsManyHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 		return nil
 	}
 
-	chat := ctx.EffectiveChat
-	isGroup := chat.Type != gotgbot.ChatTypePrivate
-
-	settings, err := util.SettingsFromContext(ctx)
+	chat, err := util.ChatFromContext(ctx)
 	if err != nil {
 		return err
 	}
 
-	localizer := localization.New(settings.Language)
+	isGroup := chat.Type == database.ChatTypeGroup
+
+	localizer := localization.New(chat.Language)
 	if isGroup && !util.CheckAdminPermission(b, ctx, localizer) {
 		return nil
 	}
@@ -41,14 +41,20 @@ func SettingsManyHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 	switch action {
 	case "add":
 		if setting.AddValueFunc != nil {
-			err = setting.AddValueFunc(context.Background(), chat.Id, value)
+			err = setting.AddValueFunc(
+				context.Background(),
+				chat.ChatID, value,
+			)
 			if err != nil {
 				return err
 			}
 		}
 	case "remove":
 		if setting.RemoveValueFunc != nil {
-			err = setting.RemoveValueFunc(context.Background(), chat.Id, value)
+			err = setting.RemoveValueFunc(
+				context.Background(),
+				chat.ChatID, value,
+			)
 			if err != nil {
 				return err
 			}

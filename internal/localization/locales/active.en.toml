@@ -19,6 +19,7 @@ ErrorMediaAlbumLimitExceeded = "media album limit exceeds the maximum allowed fo
 ErrorMessage = "an error occurred, please try again later"
 ErrorNSFWNotAllowed = "this content is marked as nsfw and can't be downloaded in this group. change /settings to allow nsfw content or use the bot privately."
 ErrorPaidContent = "this content is paid and requires a subscription to access."
+ErrorPermissionDenied = "the bot does not have sufficient permissions to send this media. please grant the necessary permissions and try again."
 ErrorTelegramFileTooLarge = "this file is too large for telegram and exceeds the maximum allowed size."
 ErrorTimeout = "timeout error when downloading. try again later."
 ErrorUnavailable = "this content is unavailable"

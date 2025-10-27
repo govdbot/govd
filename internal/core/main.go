@@ -33,7 +33,7 @@ func HandleDownloadTask(
 
 	caption := formatCaption(
 		taskResult.Media,
-		extractorCtx.Settings.Captions,
+		extractorCtx.Chat.Captions,
 	)
 
 	_, err = SendFormats(
@@ -61,7 +61,10 @@ func executeDownload(extractorCtx *models.ExtractorContext, isInline bool) (*mod
 			if isInline && len(task.Media.Items) > 1 {
 				return nil, util.ErrInlineMediaAlbum
 			}
-			err = checkAlbumLimit(len(task.Media.Items), extractorCtx.Settings)
+			err = checkAlbumLimit(
+				len(task.Media.Items),
+				extractorCtx.Chat,
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -85,7 +88,10 @@ func executeDownload(extractorCtx *models.ExtractorContext, isInline bool) (*mod
 	if isInline && len(resp.Media.Items) > 1 {
 		return nil, util.ErrInlineMediaAlbum
 	}
-	err = checkAlbumLimit(len(resp.Media.Items), extractorCtx.Settings)
+	err = checkAlbumLimit(
+		len(resp.Media.Items),
+		extractorCtx.Chat,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -133,9 +139,9 @@ func taskFromDatabase(ctx *models.ExtractorContext) (*models.TaskResult, error) 
 	}, nil
 }
 
-func checkAlbumLimit(n int, settings *database.GetOrCreateChatRow) error {
-	if settings.Type == database.ChatTypeGroup {
-		if n > int(settings.MediaAlbumLimit) {
+func checkAlbumLimit(n int, chat *database.GetOrCreateChatRow) error {
+	if chat.Type == database.ChatTypeGroup {
+		if n > int(chat.MediaAlbumLimit) {
 			return util.ErrMediaAlbumLimitExceeded
 		}
 	}

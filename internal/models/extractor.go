@@ -28,7 +28,7 @@ type ExtractorContext struct {
 	ContentID   string
 	MatchGroups map[string]string
 	Extractor   *Extractor
-	Settings    *database.GetOrCreateChatRow
+	Chat        *database.GetOrCreateChatRow
 	HTTPClient  *networking.HTTPClient
 	Config      *config.ExtractorConfig
 
@@ -47,8 +47,8 @@ func (e *ExtractorContext) Key() string {
 	return e.Extractor.ID + "/" + e.ContentID
 }
 
-func (e *ExtractorContext) SetSettings(settings *database.GetOrCreateChatRow) {
-	e.Settings = settings
+func (e *ExtractorContext) SetChat(chat *database.GetOrCreateChatRow) {
+	e.Chat = chat
 }
 
 func (e *ExtractorContext) NewMedia() *Media {

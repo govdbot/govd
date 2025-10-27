@@ -14,12 +14,13 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
-func SettingsFromContext(ctx *ext.Context) (*database.GetOrCreateChatRow, error) {
+func ChatFromContext(ctx *ext.Context) (*database.GetOrCreateChatRow, error) {
 	var id int64
 	var chatType database.ChatType
 	var languageCode string
 
-	if ctx.Message != nil {
+	switch {
+	case ctx.Message != nil:
 		chat := ctx.EffectiveMessage.Chat
 		id = chat.Id
 		if ctx.EffectiveUser != nil {
@@ -30,11 +31,11 @@ func SettingsFromContext(ctx *ext.Context) (*database.GetOrCreateChatRow, error)
 		} else {
 			chatType = database.ChatTypeGroup
 		}
-	} else if ctx.InlineQuery != nil {
+	case ctx.InlineQuery != nil:
 		id = ctx.InlineQuery.From.Id
 		languageCode = ctx.InlineQuery.From.LanguageCode
 		chatType = database.ChatTypePrivate
-	} else if ctx.CallbackQuery != nil {
+	case ctx.CallbackQuery != nil:
 		if ctx.CallbackQuery.Message == nil {
 			chatType = database.ChatTypePrivate
 			id = ctx.CallbackQuery.From.Id
@@ -49,11 +50,22 @@ func SettingsFromContext(ctx *ext.Context) (*database.GetOrCreateChatRow, error)
 			languageCode = ctx.CallbackQuery.From.LanguageCode
 			id = chat.Id
 		}
-	} else {
+	case ctx.MyChatMember != nil:
+		chat := ctx.MyChatMember.Chat
+		if chat.Type == gotgbot.ChatTypePrivate {
+			chatType = database.ChatTypePrivate
+		} else {
+			chatType = database.ChatTypeGroup
+		}
+		if ctx.EffectiveUser != nil {
+			languageCode = ctx.EffectiveUser.LanguageCode
+		}
+		id = chat.Id
+	default:
 		return nil, fmt.Errorf("unable to determine chat from context")
 	}
 
-	settings, err := database.Q().GetOrCreateChat(
+	res, err := database.Q().GetOrCreateChat(
 		context.Background(),
 		database.GetOrCreateChatParams{
 			ChatID: id,
@@ -71,7 +83,7 @@ func SettingsFromContext(ctx *ext.Context) (*database.GetOrCreateChatRow, error)
 		return nil, err
 	}
 
-	return &settings, nil
+	return &res, nil
 }
 
 func HashHashtagEntity(msg *gotgbot.Message, entity string) bool {
@@ -91,8 +103,9 @@ func HashHashtagEntity(msg *gotgbot.Message, entity string) bool {
 	return false
 }
 
-func SendTypingAction(b *gotgbot.Bot, chatID int64) {
-	b.SendChatAction(chatID, "typing", nil)
+func SendTypingAction(b *gotgbot.Bot, chatID int64) error {
+	_, err := b.SendChatAction(chatID, "typing", nil)
+	return err
 }
 
 func SendMediaAction(b *gotgbot.Bot, chatID int64, mediaType database.MediaType) {

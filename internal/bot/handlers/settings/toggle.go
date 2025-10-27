@@ -6,6 +6,7 @@ import (
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
+	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/localization"
 	"github.com/govdbot/govd/internal/util"
 )
@@ -23,20 +24,19 @@ func SettingsToggleHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 		return nil
 	}
 
-	chat := ctx.EffectiveChat
-	isGroup := chat.Type != gotgbot.ChatTypePrivate
-
-	settings, err := util.SettingsFromContext(ctx)
+	chat, err := util.ChatFromContext(ctx)
 	if err != nil {
 		return err
 	}
-	localizer := localization.New(settings.Language)
+	isGroup := chat.Type == database.ChatTypeGroup
+
+	localizer := localization.New(chat.Language)
 	if isGroup && !util.CheckAdminPermission(b, ctx, localizer) {
 		return nil
 	}
 	err = setting.ToggleFunc(
 		context.Background(),
-		chat.Id,
+		chat.ChatID,
 	)
 	if err != nil {
 		return err

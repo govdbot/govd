@@ -24,13 +24,13 @@ func SendFormats(
 	var chatID int64
 	var messageOptions *gotgbot.SendMediaGroupOpts
 
-	chatSettings := extractorCtx.Settings
+	chat := extractorCtx.Chat
 
-	if chatSettings.Type == database.ChatTypeGroup {
-		if len(formats) > int(chatSettings.MediaAlbumLimit) {
+	if chat.Type == database.ChatTypeGroup {
+		if len(formats) > int(chat.MediaAlbumLimit) {
 			return nil, util.ErrMediaAlbumLimitExceeded
 		}
-		if !chatSettings.Nsfw && media.NSFW {
+		if !chat.Nsfw && media.NSFW {
 			return nil, util.ErrNSFWNotAllowed
 		}
 	}

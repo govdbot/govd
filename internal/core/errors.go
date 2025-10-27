@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
@@ -19,59 +20,96 @@ func HandleError(
 	extractorCtx *models.ExtractorContext,
 	err error,
 ) {
-	currentErr := err
-	for currentErr != nil {
-		var botError *util.Error
-		if errors.As(currentErr, &botError) {
-			if extractorCtx.Settings.Silent {
-				return
-			}
-			localizer := localization.New(extractorCtx.Settings.Language)
-			errorMessage := "⚠️ " + localizer.T(&i18n.LocalizeConfig{
+	chat := extractorCtx.Chat
+	localizer := localization.New(chat.Language)
+
+	botError := asBotError(err)
+	if botError != nil {
+		sendErrorMessage(
+			b, ctx, "",
+			localizer.T(&i18n.LocalizeConfig{
 				MessageID: botError.ID,
-			})
-			sendErrorMessage(b, ctx, errorMessage)
-			return
-		}
-		currentErr = errors.Unwrap(currentErr)
+			}),
+		)
+		return
 	}
 
 	if errors.Is(err, NoMedia) {
 		return
 	}
-
-	logger.L.Errorf("unexpected error: %v", err)
-
-	localizer := localization.New(extractorCtx.Settings.Language)
-	errorString := err.Error()
-	errorID := util.HashedError(errorString)
-
-	errorMessage := "⚠️ " + localizer.T(&i18n.LocalizeConfig{
-		MessageID: localization.ErrorMessage.ID,
-	})
-	if ctx.CallbackQuery != nil || ctx.InlineQuery != nil {
-		errorMessage += " [" + errorID + "]"
-	} else {
-		errorMessage += " [<code>" + errorID + "</code>]"
+	if isChatWriteForbidden(err) {
+		return
+	}
+	if isPermissionDenied(err) {
+		sendErrorMessage(
+			b, ctx, "",
+			localizer.T(&i18n.LocalizeConfig{
+				MessageID: localization.ErrorPermissionDenied.ID,
+			}),
+		)
+		return
 	}
 
-	sendErrorMessage(b, ctx, errorMessage)
+	errorID := util.HashedError(err)
+
+	logger.L.Errorf("unexpected error: [%s] %v", errorID, err)
+
+	sendErrorMessage(
+		b, ctx, errorID,
+		localizer.T(&i18n.LocalizeConfig{
+			MessageID: localization.ErrorMessage.ID,
+		}),
+	)
 
 	database.Q().LogError(
 		extractorCtx.Context,
 		database.LogErrorParams{
 			ID:      errorID,
-			Message: errorString,
+			Message: err.Error(),
 		},
 	)
+}
 
+func isChatWriteForbidden(err error) bool {
+	return strings.Contains(err.Error(), "CHAT_WRITE_FORBIDDEN")
+}
+
+func isPermissionDenied(err error) bool {
+	return strings.Contains(err.Error(), "not enough rights")
+}
+
+func asBotError(err error) *util.Error {
+	currentErr := err
+	for currentErr != nil {
+		var botError *util.Error
+		if errors.As(currentErr, &botError) {
+			return botError
+		}
+		currentErr = errors.Unwrap(currentErr)
+	}
+	return nil
+}
+
+func formatErrorMessage(ctx *ext.Context, message string, errorID string) string {
+	var suffix string
+	if errorID != "" {
+		if ctx.CallbackQuery != nil || ctx.InlineQuery != nil {
+			suffix = " [" + errorID + "]"
+		} else {
+			suffix = " [<code>" + errorID + "</code>]"
+		}
+	}
+	return "⚠️ " + message + suffix
 }
 
 func sendErrorMessage(
 	b *gotgbot.Bot,
 	ctx *ext.Context,
+	errroID string,
 	message string,
 ) {
+	message = formatErrorMessage(ctx, message, errroID)
+
 	switch {
 	case ctx.Message != nil:
 		ctx.EffectiveMessage.Reply(b, message, nil)

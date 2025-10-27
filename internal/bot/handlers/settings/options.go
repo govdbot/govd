@@ -5,6 +5,7 @@ import (
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
+	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/localization"
 	"github.com/govdbot/govd/internal/util"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -27,15 +28,13 @@ func ListOptionsByID(b *gotgbot.Bot, ctx *ext.Context, settingID string) error {
 		return nil
 	}
 
-	chat := ctx.EffectiveChat
-	isGroup := chat.Type != gotgbot.ChatTypePrivate
-
-	settings, err := util.SettingsFromContext(ctx)
+	chat, err := util.ChatFromContext(ctx)
 	if err != nil {
 		return err
 	}
+	isGroup := chat.Type == database.ChatTypeGroup
 
-	localizer := localization.New(settings.Language)
+	localizer := localization.New(chat.Language)
 	if isGroup && !util.CheckAdminPermission(b, ctx, localizer) {
 		return nil
 	}
@@ -45,7 +44,7 @@ func ListOptionsByID(b *gotgbot.Bot, ctx *ext.Context, settingID string) error {
 		MessageID: setting.DescriptionKey,
 	})
 
-	buttons := BuildSettingsOptionsButtons(setting, settings, localizer)
+	buttons := BuildSettingsOptionsButtons(setting, chat, localizer)
 	buttons = append(buttons, []gotgbot.InlineKeyboardButton{
 		{
 			Text: localizer.T(&i18n.LocalizeConfig{

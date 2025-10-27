@@ -26,7 +26,7 @@ func BuildSettingsButtons(
 
 func BuildSettingsOptionsButtons(
 	setting *BotSettings,
-	chatSettings *database.GetOrCreateChatRow,
+	chat *database.GetOrCreateChatRow,
 	localizer *localization.Localizer,
 ) [][]gotgbot.InlineKeyboardButton {
 	var buttons [][]gotgbot.InlineKeyboardButton
@@ -34,7 +34,7 @@ func BuildSettingsOptionsButtons(
 	switch setting.Type {
 	case SettingsTypeToggle:
 		var buttonText string
-		value := setting.GetCurrentValueFunc(chatSettings)
+		value := setting.GetCurrentValueFunc(chat)
 		enabled, ok := value.(bool)
 		if !ok {
 			enabled = false
@@ -57,7 +57,7 @@ func BuildSettingsOptionsButtons(
 	case SettingsTypeSelect:
 		if setting.OptionsFunc != nil {
 			options := setting.OptionsFunc(localizer)
-			currentValue := setting.GetCurrentValueFunc(chatSettings)
+			currentValue := setting.GetCurrentValueFunc(chat)
 
 			var optionButtons []gotgbot.InlineKeyboardButton
 
@@ -88,7 +88,7 @@ func BuildSettingsOptionsButtons(
 	case SettingsTypeMany:
 		if setting.OptionsFunc != nil {
 			options := setting.OptionsFunc(localizer)
-			currentValue := setting.GetCurrentValueFunc(chatSettings)
+			currentValue := setting.GetCurrentValueFunc(chat)
 
 			var currentValues []string
 			if strSlice, ok := currentValue.([]string); ok {
