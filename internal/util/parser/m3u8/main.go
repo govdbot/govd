@@ -8,22 +8,25 @@ import (
 	"net/url"
 
 	"github.com/govdbot/govd/internal/models"
+	"github.com/govdbot/govd/internal/networking"
 	"github.com/grafov/m3u8"
 )
 
 const MAX_CONCURRENT_REQUESTS = 5
 
 type M3U8Parser struct {
-	Context      *models.ExtractorContext
-	BaseURL      *url.URL
-	Playlist     m3u8.Playlist
-	PlaylistType m3u8.ListType
+	Context       *models.ExtractorContext
+	BaseURL       *url.URL
+	Playlist      m3u8.Playlist
+	PlaylistType  m3u8.ListType
+	RequestParams *networking.RequestParams
 }
 
 func ParseM3U8(
 	ctx *models.ExtractorContext,
 	baseURL string,
 	data []byte,
+	requestParams *networking.RequestParams,
 ) ([]*models.MediaFormat, error) {
 	baseURLObj, err := url.Parse(baseURL)
 	if err != nil {
@@ -37,10 +40,11 @@ func ParseM3U8(
 	}
 
 	parser := &M3U8Parser{
-		Context:      ctx,
-		BaseURL:      baseURLObj,
-		Playlist:     playlist,
-		PlaylistType: listType,
+		Context:       ctx,
+		BaseURL:       baseURLObj,
+		Playlist:      playlist,
+		PlaylistType:  listType,
+		RequestParams: requestParams,
 	}
 
 	return parser.Parse()
@@ -49,10 +53,11 @@ func ParseM3U8(
 func ParseM3U8FromURL(
 	ctx *models.ExtractorContext,
 	url string,
+	requestParams *networking.RequestParams,
 ) ([]*models.MediaFormat, error) {
 	resp, err := ctx.Fetch(
 		http.MethodGet,
-		url, nil,
+		url, requestParams,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch M3U8 playlist: %w", err)
@@ -68,7 +73,7 @@ func ParseM3U8FromURL(
 		return nil, fmt.Errorf("failed to read M3U8 playlist body: %w", err)
 	}
 
-	return ParseM3U8(ctx, resp.Request.URL.String(), body)
+	return ParseM3U8(ctx, resp.Request.URL.String(), body, requestParams)
 }
 
 func (p *M3U8Parser) Parse() ([]*models.MediaFormat, error) {

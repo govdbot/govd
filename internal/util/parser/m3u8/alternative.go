@@ -57,7 +57,7 @@ func (p *M3U8Parser) parseAlternative(variants []*m3u8.Variant, alt *m3u8.Altern
 }
 
 func (p *M3U8Parser) ParseAlternative(altURL string) ([]*models.MediaFormat, error) {
-	data, err := ParseM3U8FromURL(p.Context, altURL)
+	data, err := ParseM3U8FromURL(p.Context, altURL, p.RequestParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse alternative M3U8: %w", err)
 	}

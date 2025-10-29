@@ -78,7 +78,7 @@ func (p *M3U8Parser) parseVariant(results chan<- *models.MediaFormat, variant *m
 }
 
 func (p *M3U8Parser) ParseVariant(variantURL string) ([]*models.MediaFormat, error) {
-	data, err := ParseM3U8FromURL(p.Context, variantURL)
+	data, err := ParseM3U8FromURL(p.Context, variantURL, p.RequestParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse variant M3U8: %w", err)
 	}
