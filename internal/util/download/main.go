@@ -171,7 +171,7 @@ func DownloadFileInMemory(
 
 		if resp.StatusCode != 200 {
 			resp.Body.Close()
-			lastErr = err
+			lastErr = fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 			continue
 		}
 
