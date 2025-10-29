@@ -33,6 +33,9 @@ func ImgToJPEG(
 	outputPath string,
 	resize int,
 ) error {
+	if file == nil {
+		return fmt.Errorf("nil file provided")
+	}
 	outputFile, err := os.Create(outputPath)
 	if err != nil {
 		return fmt.Errorf("failed to create output file: %w", err)
