@@ -24,7 +24,7 @@ func (b Client) RequestWithContext(
 	ctx context.Context,
 	token string,
 	method string,
-	params map[string]any,
+	params map[string]string,
 	data map[string]gotgbot.FileReader,
 	opts *gotgbot.RequestOpts,
 ) (json.RawMessage, error) {
