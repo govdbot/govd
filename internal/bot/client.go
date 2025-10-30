@@ -3,18 +3,22 @@ package bot
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/govdbot/govd/internal/config"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 type Client struct {
 	gotgbot.BotClient
+	metrics bool
 }
 
 func (b Client) RequestWithContext(
@@ -25,6 +29,14 @@ func (b Client) RequestWithContext(
 	data map[string]gotgbot.FileReader,
 	opts *gotgbot.RequestOpts,
 ) (json.RawMessage, error) {
+	var timer *prometheus.Timer
+	if b.metrics {
+		totalRequests.WithLabelValues(method).Inc()
+		timer = prometheus.NewTimer(requestDuration.With(prometheus.Labels{
+			"api_method": method,
+		}))
+	}
+
 	if strings.HasPrefix(method, "send") || method == "copyMessage" {
 		params["allow_sending_without_reply"] = "true"
 	}
@@ -32,8 +44,19 @@ func (b Client) RequestWithContext(
 		params["parse_mode"] = gotgbot.ParseModeHTML
 	}
 	val, err := b.BotClient.RequestWithContext(ctx, token, method, params, data, opts)
-	if err != nil {
-		return nil, err
+	if b.metrics {
+		timer.ObserveDuration()
+		if err != nil {
+			tgErr := &gotgbot.TelegramError{}
+			if errors.As(err, &tgErr) {
+				totalAPIErrors.WithLabelValues(
+					method, strconv.Itoa(tgErr.Code),
+					tgErr.Description,
+				).Inc()
+			} else {
+				totalHTTPErrors.WithLabelValues(method).Inc()
+			}
+		}
 	}
 	return val, err
 }
@@ -55,5 +78,6 @@ func NewBotClient() Client {
 				APIURL:  config.Env.BotAPIURL,
 			},
 		},
+		metrics: config.Env.MetricsPort > 0,
 	}
 }
