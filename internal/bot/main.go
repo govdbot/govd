@@ -34,6 +34,7 @@ func Start() {
 		logger.L.Fatalf("failed to create bot: %v", err)
 	}
 	dispatcher := ext.NewDispatcher(&ext.DispatcherOpts{
+		Processor: metricsProcessor{processor: ext.BaseProcessor{}},
 		Error: func(_ *gotgbot.Bot, _ *ext.Context, err error) ext.DispatcherAction {
 			logger.L.Errorf("an error occurred while handling update: %v", err)
 			return ext.DispatcherActionNoop
@@ -47,6 +48,10 @@ func Start() {
 		},
 		MaxRoutines: config.Env.ConcurrentUpdates,
 	})
+
+	// prometheus monitoring
+	go monitorDispatcherBuffer(dispatcher)
+
 	updater := ext.NewUpdater(dispatcher, nil)
 
 	registerHandlers(dispatcher)
