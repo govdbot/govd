@@ -52,9 +52,6 @@ var (
 			"api_method",
 		},
 	)
-)
-
-var (
 	totalUpdates = promauto.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: "gotgbot",
