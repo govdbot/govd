@@ -8,4 +8,5 @@ type DownloadSettings struct {
 	Headers        map[string]string
 	Cookies        []*http.Cookie
 	DecryptionKey  *DecryptionKey
+	Retries        int
 }

@@ -144,7 +144,10 @@ func downloadFormat(
 
 	// for images, download in memory and convert to jpeg
 	if format.Type == database.MediaTypePhoto {
-		file, err := download.DownloadFileInMemory(ctx, format.URL)
+		file, err := download.DownloadFileInMemory(
+			ctx, format.URL,
+			format.DownloadSettings,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to download image: %w", err)
 		}

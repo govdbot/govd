@@ -19,6 +19,7 @@ type SegmentedDownloader struct {
 	initSegment   string
 	segments      []string
 	decryptionKey *models.DecryptionKey
+	retries       int
 
 	wg sync.WaitGroup
 }
@@ -26,6 +27,7 @@ type SegmentedDownloader struct {
 type SegmentedDownloaderOptions struct {
 	InitSegment   string
 	DecryptionKey *models.DecryptionKey
+	Retries       int
 }
 
 type Segment struct {
@@ -51,6 +53,7 @@ func NewSegmentedDownloader(
 		initSegment:   options.InitSegment,
 		segments:      segments,
 		decryptionKey: options.DecryptionKey,
+		retries:       options.Retries,
 	}
 }
 
@@ -145,29 +148,42 @@ func (sd *SegmentedDownloader) downloadSegmentToFile(
 	url string,
 	filePath string,
 ) error {
-	resp, err := sd.client.FetchWithContext(
-		ctx, http.MethodGet,
-		url, nil,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to fetch segment %q: %w", url, err)
-	}
-	defer resp.Body.Close()
+	maxRetries := max(sd.retries, 1)
+	var lastErr error
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to fetch segment %q: status %d", url, resp.StatusCode)
+	for attempt := range maxRetries {
+		resp, err := sd.client.FetchWithContext(
+			ctx, http.MethodGet,
+			url, nil,
+		)
+		if err != nil {
+			lastErr = fmt.Errorf("failed to fetch segment %q (attempt %d/%d): %w", url, attempt+1, maxRetries, err)
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			lastErr = fmt.Errorf("failed to fetch segment %q: status %d (attempt %d/%d)", url, resp.StatusCode, attempt+1, maxRetries)
+			continue
+		}
+
+		file, err := os.Create(filePath)
+		if err != nil {
+			resp.Body.Close()
+			return fmt.Errorf("failed to create file: %w", err)
+		}
+
+		_, err = io.Copy(file, resp.Body)
+		resp.Body.Close()
+		file.Close()
+
+		if err != nil {
+			lastErr = fmt.Errorf("failed to write segment to file (attempt %d/%d): %w", attempt+1, maxRetries, err)
+			continue
+		}
+
+		return nil
 	}
 
-	file, err := os.Create(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to create file: %w", err)
-	}
-	defer file.Close()
-
-	_, err = io.Copy(file, resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to write segment to file: %w", err)
-	}
-
-	return nil
+	return lastErr
 }

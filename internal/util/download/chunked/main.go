@@ -157,26 +157,34 @@ func (cd *ChunkedDownloader) downloadChunk(
 	}
 	maps.Copy(headers, cd.settings.Headers)
 
-	resp, err := cd.client.FetchWithContext(
-		ctx.Context,
-		http.MethodGet,
-		cd.url, &networking.RequestParams{
-			Headers: headers,
-			Cookies: cd.settings.Cookies,
-		},
-	)
-	if err != nil {
-		chunks <- &Chunk{index: index, err: fmt.Errorf("failed to download chunk %d: %w", index, err)}
+	maxRetries := max(cd.settings.Retries, 1)
+	var lastErr error
+
+	for attempt := range maxRetries {
+		resp, err := cd.client.FetchWithContext(
+			ctx.Context,
+			http.MethodGet,
+			cd.url, &networking.RequestParams{
+				Headers: headers,
+				Cookies: cd.settings.Cookies,
+			},
+		)
+		if err != nil {
+			lastErr = fmt.Errorf("failed to download chunk %d (attempt %d/%d): %w", index, attempt+1, maxRetries, err)
+			continue
+		}
+
+		if resp.StatusCode != http.StatusPartialContent {
+			resp.Body.Close()
+			lastErr = fmt.Errorf("expected status 206, got %d for chunk %d (attempt %d/%d)", resp.StatusCode, index, attempt+1, maxRetries)
+			continue
+		}
+
+		chunks <- &Chunk{index: index, reader: resp.Body}
 		return
 	}
 
-	if resp.StatusCode != http.StatusPartialContent {
-		resp.Body.Close()
-		chunks <- &Chunk{index: index, err: fmt.Errorf("expected status 206, got %d for chunk %d", resp.StatusCode, index)}
-		return
-	}
-
-	chunks <- &Chunk{index: index, reader: resp.Body}
+	chunks <- &Chunk{index: index, err: lastErr}
 }
 
 func (cd *ChunkedDownloader) writeChunks(writer io.Writer, chunks <-chan *Chunk) error {

@@ -13,6 +13,7 @@ func defaultSettings() *models.DownloadSettings {
 	return &models.DownloadSettings{
 		NumConnections: 4,
 		ChunkSize:      5 * 1024 * 1024, // 5 MB
+		Retries:        3,
 	}
 }
 
@@ -26,6 +27,9 @@ func ensureDownloadSettings(settings *models.DownloadSettings) *models.DownloadS
 	}
 	if settings.ChunkSize <= 0 {
 		settings.ChunkSize = defaultSettings.ChunkSize
+	}
+	if settings.Retries <= 0 {
+		settings.Retries = defaultSettings.Retries
 	}
 	return settings
 }

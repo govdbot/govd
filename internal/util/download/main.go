@@ -115,6 +115,7 @@ func DownloadFileWithSegments(
 		&segmented.SegmentedDownloaderOptions{
 			InitSegment:   initSegmentURL,
 			DecryptionKey: settings.DecryptionKey,
+			Retries:       settings.Retries,
 		},
 	)
 
@@ -149,42 +150,42 @@ func DownloadFileWithSegments(
 func DownloadFileInMemory(
 	ctx *models.ExtractorContext,
 	urlList []string,
+	settings *models.DownloadSettings,
 ) (*bytes.Reader, error) {
 	if ctx == nil {
 		return nil, fmt.Errorf("nil extractor context")
 	}
 
 	client := ctx.HTTPClient.AsDownloadClient()
+	maxRetries := max(settings.Retries, 1)
 
-	var lastErr error
 	for _, url := range urlList {
-		logger.L.Debugf("attempting download from: %s", url)
-		resp, err := client.FetchWithContext(
-			ctx.Context,
-			http.MethodGet,
-			url, nil,
-		)
-		if err != nil {
-			lastErr = err
-			continue
-		}
+		for attempt := range maxRetries {
+			logger.L.Debugf("attempting download from: %s (attempt %d/%d)", url, attempt+1, maxRetries)
+			resp, err := client.FetchWithContext(
+				ctx.Context,
+				http.MethodGet,
+				url, nil,
+			)
+			if err != nil {
+				continue
+			}
 
-		if resp.StatusCode != 200 {
+			if resp.StatusCode != 200 {
+				resp.Body.Close()
+				continue
+			}
+
+			data, err := io.ReadAll(resp.Body)
+			if err != nil {
+				resp.Body.Close()
+				continue
+			}
+
 			resp.Body.Close()
-			lastErr = fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-			continue
+			return bytes.NewReader(data), nil
 		}
-
-		data, err := io.ReadAll(resp.Body)
-		if err != nil {
-			resp.Body.Close()
-			lastErr = err
-			continue
-		}
-
-		resp.Body.Close()
-		return bytes.NewReader(data), nil
 	}
 
-	return nil, lastErr
+	return nil, fmt.Errorf("all download attempts failed")
 }
