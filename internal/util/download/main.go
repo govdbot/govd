@@ -155,6 +155,7 @@ func DownloadFileInMemory(
 	if ctx == nil {
 		return nil, fmt.Errorf("nil extractor context")
 	}
+	settings = ensureDownloadSettings(settings)
 
 	client := ctx.HTTPClient.AsDownloadClient()
 	maxRetries := max(settings.Retries, 1)
