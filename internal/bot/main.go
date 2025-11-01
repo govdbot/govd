@@ -27,13 +27,52 @@ var allowedUpdates = []string{
 }
 
 func Start() {
-	b, err := gotgbot.NewBot(config.Env.BotToken, &gotgbot.BotOpts{
-		BotClient: NewBotClient(),
+	bot := createBot()
+	dispatcher := newDispatcher()
+
+	// prometheus monitoring
+	go monitorDispatcherBuffer(dispatcher)
+
+	updater := ext.NewUpdater(dispatcher, nil)
+
+	logger.L.Debugf("starting updates polling. allowed updates: %v", allowedUpdates)
+	err := updater.StartPolling(bot, &ext.PollingOpts{
+		DropPendingUpdates: true,
+		GetUpdatesOpts: &gotgbot.GetUpdatesOpts{
+			Timeout: 9,
+			RequestOpts: &gotgbot.RequestOpts{
+				Timeout: time.Second * 10,
+			},
+			AllowedUpdates: allowedUpdates,
+		},
 	})
 	if err != nil {
-		logger.L.Fatalf("failed to create bot: %v", err)
+		logger.L.Fatalf("failed to start polling: %v", err)
 	}
-	dispatcher := ext.NewDispatcher(&ext.DispatcherOpts{
+
+	logger.L.Infof("bot started with username: %s", bot.Username)
+}
+
+func createBot() *gotgbot.Bot {
+	var b *gotgbot.Bot
+	var err error
+
+	for i := range 10 {
+		b, err = gotgbot.NewBot(config.Env.BotToken, &gotgbot.BotOpts{
+			BotClient: NewBotClient(),
+		})
+		if err == nil {
+			return b
+		}
+		logger.L.Errorf("failed to create bot (attempt %d/10): %v", i+1, err)
+		time.Sleep(3 * time.Second)
+	}
+	logger.L.Fatalf("failed to create bot: %v", err)
+	return nil
+}
+
+func newDispatcher() *ext.Dispatcher {
+	dp := ext.NewDispatcher(&ext.DispatcherOpts{
 		Processor: metricsProcessor{processor: ext.BaseProcessor{}},
 		Error: func(_ *gotgbot.Bot, _ *ext.Context, err error) ext.DispatcherAction {
 			logger.L.Errorf("an error occurred while handling update: %v", err)
@@ -48,33 +87,10 @@ func Start() {
 		},
 		MaxRoutines: config.Env.ConcurrentUpdates,
 	})
-
-	// prometheus monitoring
-	go monitorDispatcherBuffer(dispatcher)
-
-	updater := ext.NewUpdater(dispatcher, nil)
-
-	registerHandlers(dispatcher)
-	logger.L.Debugf("starting updates polling. allowed updates: %v", allowedUpdates)
-
-	err = updater.StartPolling(b, &ext.PollingOpts{
-		DropPendingUpdates: true,
-		GetUpdatesOpts: &gotgbot.GetUpdatesOpts{
-			Timeout: 9,
-			RequestOpts: &gotgbot.RequestOpts{
-				Timeout: time.Second * 10,
-			},
-			AllowedUpdates: allowedUpdates,
-		},
-	})
-	if err != nil {
-		logger.L.Fatalf("failed to start polling: %v", err)
-	}
-
-	logger.L.Infof("bot started with username: %s", b.Username)
+	return registerHandlers(dp)
 }
 
-func registerHandlers(dispatcher *ext.Dispatcher) {
+func registerHandlers(dispatcher *ext.Dispatcher) *ext.Dispatcher {
 	// url
 	dispatcher.AddHandler(handlers.NewMessage(
 		botHandlers.URLFilter,
@@ -162,4 +178,6 @@ func registerHandlers(dispatcher *ext.Dispatcher) {
 			botHandlers.WhitelistHandler,
 		), -10)
 	}
+
+	return dispatcher
 }
