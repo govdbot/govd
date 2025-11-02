@@ -17,11 +17,11 @@ func NewTransport() *http.Transport {
 		ForceAttemptHTTP2:     true,
 		MaxIdleConns:          100,
 		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   5 * time.Second,
+		TLSHandshakeTimeout:   15 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 		MaxIdleConnsPerHost:   100,
 		MaxConnsPerHost:       100,
-		ResponseHeaderTimeout: 10 * time.Second,
+		ResponseHeaderTimeout: 15 * time.Second,
 		DisableCompression:    false,
 	}
 }
