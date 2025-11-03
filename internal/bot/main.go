@@ -162,6 +162,10 @@ func registerHandlers(dispatcher *ext.Dispatcher) *ext.Dispatcher {
 		"derr",
 		botHandlers.DecodeErrorHandler,
 	))
+	dispatcher.AddHandlerToGroup(handlers.NewMessage(
+		message.All,
+		botHandlers.OldMessagesHandler,
+	), -100)
 
 	// whitelist
 	if len(config.Env.Whitelist) > 0 {

@@ -1,11 +1,23 @@
 package handlers
 
 import (
+	"time"
+
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/govdbot/govd/internal/localization"
 	"github.com/govdbot/govd/internal/util"
 )
+
+// prevents the bot from processing a large
+// backlog of messages after connection interruptions.
+func OldMessagesHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
+	ts := ctx.EffectiveMessage.Date
+	if time.Since(time.Unix(ts, 0)) > 2*time.Minute {
+		return ext.EndGroups
+	}
+	return ext.ContinueGroups
+}
 
 func CloseHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 	chat, err := util.ChatFromContext(ctx)
