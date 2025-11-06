@@ -40,7 +40,8 @@ func SendFormats(
 		chatID = ctx.EffectiveMessage.Chat.Id
 		messageOptions = &gotgbot.SendMediaGroupOpts{
 			ReplyParameters: &gotgbot.ReplyParameters{
-				MessageId: ctx.EffectiveMessage.MessageId,
+				MessageId:                ctx.EffectiveMessage.MessageId,
+				AllowSendingWithoutReply: true,
 			},
 		}
 	case ctx.CallbackQuery != nil:
