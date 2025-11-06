@@ -2,9 +2,11 @@ package util
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
@@ -255,4 +257,15 @@ func GetMessageFileSize(msg *gotgbot.Message) int64 {
 	default:
 		return 0
 	}
+}
+
+func AsFloodWaitError(err error) (time.Duration, bool) {
+	var tgErr *gotgbot.TelegramError
+	if errors.As(err, &tgErr) && tgErr.Code == 429 {
+		if tgErr.ResponseParams != nil && tgErr.ResponseParams.RetryAfter > 0 {
+			duration := time.Duration(tgErr.ResponseParams.RetryAfter) * time.Second
+			return duration, true
+		}
+	}
+	return 0, false
 }

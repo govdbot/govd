@@ -86,7 +86,19 @@ func SendFormats(
 			messageOptions,
 		)
 		if err != nil {
-			return nil, err
+			if duration, ok := util.AsFloodWaitError(err); ok {
+				time.Sleep(duration)
+				msgs, err = bot.SendMediaGroup(
+					chatID,
+					inputMediaList,
+					messageOptions,
+				)
+				if err != nil {
+					return nil, fmt.Errorf("floodwait: %w", err)
+				}
+			} else {
+				return nil, fmt.Errorf("failed to send media group: %w", err)
+			}
 		}
 
 		// delete original messages if needed
