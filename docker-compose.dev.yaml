@@ -47,8 +47,11 @@ services:
       --bind=0.0.0.0
       --url=postgres://govd:password@db:5432/govd?sslmode=disable
       --log-level=error
+    environment:
+      PGWEB_AUTH_USER: ${PGWEB_USER:-admin}
+      PGWEB_AUTH_PASS: ${PGWEB_PASSWORD:-password}
     ports:
-      - "8081:8081"
+      - "${PGWEB_PORT:-8081}:8081"
     networks:
       - govd-network
     depends_on:
