@@ -16,7 +16,8 @@ func NewHTTPClient(options *NewHTTPClientOptions) *HTTPClient {
 	}
 	client := DefaultHTTPClient(options)
 
-	if options.Proxy != "" {
+	switch {
+	case options.Proxy != "":
 		proxyURL, err := url.Parse(options.Proxy)
 		if err != nil {
 			logger.L.Warnf("invalid proxy URL: %v", err)
@@ -27,10 +28,10 @@ func NewHTTPClient(options *NewHTTPClientOptions) *HTTPClient {
 			}
 			client.Proxy = options.Proxy
 		}
-	} else if options.EdgeProxy != "" {
+	case options.EdgeProxy != "":
 		client.Client = NewEdgeProxyClient(options.EdgeProxy)
 		client.EdgeProxy = options.EdgeProxy
-	} else if options.DisableProxy {
+	case options.DisableProxy:
 		client.Client = &http.Client{
 			Transport: NewTransportNoProxyFromEnv(),
 			Timeout:   defaultTimeout,

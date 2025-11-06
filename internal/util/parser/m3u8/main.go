@@ -64,7 +64,7 @@ func ParseM3U8FromURL(
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to fetch M3U8 playlist, status code: %d", resp.StatusCode)
 	}
 

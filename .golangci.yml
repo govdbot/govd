@@ -1,22 +1,12 @@
-run:
-  timeout: 5m
+version: "2"
 
 linters:
   enable:
-    - bodyclose
-    - gocritic
-    - unconvert
-    - ineffassign
-    - staticcheck
-    - prealloc
-    - nilerr
-    - gosimple
     - asasalint
-    - canonicalheader
-    - perfsprint
-    - predeclared
     - asciicheck
     - bidichk
+    - bodyclose
+    - canonicalheader
     - contextcheck
     - copyloopvar
     - decorder
@@ -44,15 +34,14 @@ linters:
     - interfacebloat
     - intrange
     - mirror
+    - nilerr
     - nonamedreturns
     - nosprintfhostport
+    - prealloc
+    - predeclared
     - reassign
-    - unparam
+    - unconvert
     - usestdlibvars
     - wastedassign
   disable:
     - errcheck
-
-issues:
-  exclude-use-default: false
-

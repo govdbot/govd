@@ -390,11 +390,12 @@ func (f *MediaFormat) formatDuration() string {
 	minutes := (seconds % 3600) / 60
 	secs := seconds % 60
 
-	if hours > 0 {
+	switch {
+	case hours > 0:
 		return fmt.Sprintf("%d:%02d:%02d", hours, minutes, secs)
-	} else if minutes > 0 {
+	case minutes > 0:
 		return fmt.Sprintf("%d:%02d", minutes, secs)
-	} else {
+	default:
 		return fmt.Sprintf("%ds", secs)
 	}
 }

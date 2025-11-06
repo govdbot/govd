@@ -98,11 +98,11 @@ func parseEnvInt64Slice(env string, dest *[]int64, required bool) {
 	}
 }
 
-func parseEnvInt32Range(env string, dest *int32, min, max int, required bool) {
+func parseEnvInt32Range(env string, dest *int32, minVal int, maxVal int, required bool) {
 	if value := os.Getenv(env); value != "" {
 		if parsed, err := strconv.Atoi(value); err == nil {
-			if parsed < min || parsed > max {
-				logger.L.Fatalf("%s env must be between %d and %d", env, min, max)
+			if parsed < minVal || parsed > maxVal {
+				logger.L.Fatalf("%s env must be between %d and %d", env, minVal, maxVal)
 			}
 			*dest = int32(parsed)
 		} else {

@@ -82,7 +82,7 @@ func executeDownload(extractorCtx *models.ExtractorContext, isInline bool) (*mod
 	}
 	if resp.Media == nil || len(resp.Media.Items) == 0 {
 		// no media extracted (e.g. text only post)
-		return nil, NoMedia
+		return nil, ErrNoMedia
 	}
 
 	if isInline && len(resp.Media.Items) > 1 {

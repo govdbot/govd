@@ -34,7 +34,7 @@ func HandleError(
 		return
 	}
 
-	if errors.Is(err, NoMedia) {
+	if errors.Is(err, ErrNoMedia) {
 		return
 	}
 	if isChatWriteForbidden(err) {

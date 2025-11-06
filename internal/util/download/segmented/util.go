@@ -57,11 +57,3 @@ func calculateSegmentIV(baseIV []byte, mediaSequence int) []byte {
 func isValidAESKey(key []byte) bool {
 	return len(key) == 16
 }
-
-func isValidIV(iv []byte) bool {
-	return len(iv) == 16
-}
-
-func generateZeroIV() []byte {
-	return make([]byte, 16)
-}

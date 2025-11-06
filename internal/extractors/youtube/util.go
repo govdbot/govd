@@ -79,11 +79,12 @@ func ParseStreamType(streamType string) (database.MediaType, database.MediaCodec
 	videoCodec = util.ParseVideoCodec(codecs)
 	audioCodec = util.ParseAudioCodec(codecs)
 
-	if videoCodec != "" {
+	switch {
+	case videoCodec != "":
 		mediaType = database.MediaTypeVideo
-	} else if audioCodec != "" {
+	case audioCodec != "":
 		mediaType = database.MediaTypeAudio
-	} else {
+	default:
 		// unknown codec
 		return "", "", "", fmt.Errorf("unknown codec in stream type: %s", streamType)
 	}

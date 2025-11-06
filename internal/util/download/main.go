@@ -172,7 +172,7 @@ func DownloadFileInMemory(
 				continue
 			}
 
-			if resp.StatusCode != 200 {
+			if resp.StatusCode != http.StatusOK {
 				resp.Body.Close()
 				continue
 			}

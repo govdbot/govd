@@ -125,7 +125,7 @@ func (cd *ChunkedDownloader) Download(
 	semaphore := make(chan struct{}, maxConcurrency)
 
 	cd.wg.Add(cd.numChunks)
-	for i := 0; i < cd.numChunks; i++ {
+	for i := range cd.numChunks {
 		go func(index int) {
 			defer cd.wg.Done()
 			semaphore <- struct{}{}

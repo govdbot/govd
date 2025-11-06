@@ -34,7 +34,6 @@ func (tq *TaskQueue) Acquire(key string) {
 	}
 	tq.tasks[key] = true
 	tq.mu.Unlock()
-	return
 }
 
 // releases the lock for the given key and notifies all waiting tasks.

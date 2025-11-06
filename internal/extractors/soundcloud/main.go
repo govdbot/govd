@@ -64,19 +64,17 @@ func GetTrackMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	var infoURL string
 	var query = make(map[string]string)
 
-	contentID := ctx.ContentID
 	trackID := ctx.MatchGroups["track_id"]
 
 	if trackID != "" {
 		infoURL = apiHostname + "tracks/" + trackID
-		contentID = trackID
 		token := ctx.MatchGroups["secret_token"]
 		if token != "" {
 			query["secret_token"] = token
 		}
 	} else {
 		uploader := ctx.MatchGroups["uploader"]
-		resolveTitle := uploader + "/" + contentID
+		resolveTitle := uploader + "/" + ctx.ContentID
 		token := ctx.MatchGroups["token"]
 		if token != "" {
 			resolveTitle += "/" + token

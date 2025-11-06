@@ -12,10 +12,6 @@ import (
 	"github.com/govdbot/govd/internal/util"
 )
 
-const (
-	apiEndpoint = "https://www.tiktok.com/player/api/v1/items"
-)
-
 var VMExtractor = &models.Extractor{
 	ID:          "tiktok",
 	DisplayName: "TikTok VM",
