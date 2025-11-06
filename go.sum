@@ -2,6 +2,8 @@ github.com/BurntSushi/toml v1.5.0 h1:W5quZX/G/csjUnuI8SUYlsHs9M38FC7znL0lIO+DvMg
 github.com/BurntSushi/toml v1.5.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.33 h1:uyVD1QSS7ftd/DE2x5OFRx4PYyhq9n4edvFJRExVWVk=
 github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.33/go.mod h1:BSzsfjlE0wakLw2/U1FtO8rdVt+Z+4VyoGo/YcGD9QQ=
+github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.33.0.20251103214656-db4bf5200b82 h1:UWjrmBQJepqR0xJUQE/8Wm4Ct/Aw2rXGveoiaxP2Uy8=
+github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.33.0.20251103214656-db4bf5200b82/go.mod h1:BSzsfjlE0wakLw2/U1FtO8rdVt+Z+4VyoGo/YcGD9QQ=
 github.com/abema/go-mp4 v1.4.1 h1:YoS4VRqd+pAmddRPLFf8vMk74kuGl6ULSjzhsIqwr6M=
 github.com/abema/go-mp4 v1.4.1/go.mod h1:vPl9t5ZK7K0x68jh12/+ECWBCXoWuIDtNgPtU2f04ws=
 github.com/aki237/nscjar v0.0.0-20210417074043-bbb606196143 h1:PqRkQZW8lAlK2DnH9iSBfISmDxSChaoNJHwP0p7SD2Y=

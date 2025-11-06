@@ -24,8 +24,7 @@ func (b Client) RequestWithContext(
 	ctx context.Context,
 	token string,
 	method string,
-	params map[string]string,
-	data map[string]gotgbot.FileReader,
+	params map[string]any,
 	opts *gotgbot.RequestOpts,
 ) (json.RawMessage, error) {
 	var timer *prometheus.Timer
@@ -41,7 +40,7 @@ func (b Client) RequestWithContext(
 		params["parse_mode"] = gotgbot.ParseModeHTML
 	}
 
-	val, err := b.BotClient.RequestWithContext(ctx, token, method, params, data, opts)
+	val, err := b.BotClient.RequestWithContext(ctx, token, method, params, opts)
 	timer.ObserveDuration()
 	if err != nil {
 		tgErr := &gotgbot.TelegramError{}
