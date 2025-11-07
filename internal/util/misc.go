@@ -69,9 +69,6 @@ func CleanupDownloads(ignoreTime bool) {
 	}
 	for _, file := range files {
 		filePath := filepath.Join(path, file.Name())
-		if err != nil {
-			continue
-		}
 		info, err := file.Info()
 		if err != nil {
 			continue

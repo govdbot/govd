@@ -166,6 +166,14 @@ func registerHandlers(dispatcher *ext.Dispatcher) *ext.Dispatcher {
 		message.All,
 		botHandlers.OldMessagesHandler,
 	), -100)
+	dispatcher.AddHandler(handlers.NewCommand(
+		"stats",
+		botHandlers.StatsHandler,
+	))
+	dispatcher.AddHandler(handlers.NewCallback(
+		callbackquery.Prefix("stats"),
+		botHandlers.StatsCallbackHandler,
+	))
 
 	// whitelist
 	if len(config.Env.Whitelist) > 0 {

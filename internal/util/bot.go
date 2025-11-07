@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -268,4 +269,13 @@ func AsFloodWaitError(err error) (time.Duration, bool) {
 		}
 	}
 	return 0, false
+}
+
+func IsBotAdmin(ctx *ext.Context) bool {
+	chatType := ctx.EffectiveChat.Type
+	if chatType != gotgbot.ChatTypePrivate {
+		return false
+	}
+	userID := ctx.EffectiveMessage.From.Id
+	return slices.Contains(config.Env.Admins, userID)
 }
