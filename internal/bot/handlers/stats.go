@@ -83,11 +83,9 @@ func formatMessage(period string) (string, error) {
 
 	var privateChatsByLang map[string]int64
 	var groupChatsByLang map[string]int64
-	var topExtractors map[string]int64
 
 	json.Unmarshal(stats.PrivateChatsByLanguage, &privateChatsByLang)
 	json.Unmarshal(stats.GroupChatsByLanguage, &groupChatsByLang)
-	json.Unmarshal(stats.TopExtractors, &topExtractors)
 
 	sizeGB := float64(stats.TotalDownloadsSize) / (1024 * 1024 * 1024)
 
@@ -126,20 +124,6 @@ func formatMessage(period string) (string, error) {
 
 	message += fmt.Sprintf("\n<b>downloads:</b> %d\n", stats.TotalDownloads)
 	message += fmt.Sprintf("<b>total size:</b> %.2f GB\n", sizeGB)
-
-	if len(topExtractors) > 0 {
-		message += "\n<b>top extractors:</b>\n"
-		extractors := make([][2]any, 0, len(topExtractors))
-		for k, v := range topExtractors {
-			extractors = append(extractors, [2]any{k, v})
-		}
-		slices.SortFunc(extractors, func(a, b [2]any) int {
-			return int(b[1].(int64) - a[1].(int64))
-		})
-		for _, item := range extractors {
-			message += fmt.Sprintf("  • %s: %d\n", item[0], item[1])
-		}
-	}
 
 	return message, nil
 }

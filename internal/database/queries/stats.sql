@@ -29,16 +29,6 @@ downloads_stats AS (
     JOIN media_item mi ON mi.media_id = m.id
     JOIN media_format mf ON mf.item_id = mi.id
     WHERE m.created_at >= @since_date::TIMESTAMP WITH TIME ZONE
-),
-top_extractors AS (
-    SELECT 
-        m.extractor_id,
-        COUNT(*) as count
-    FROM media m
-    WHERE m.created_at >= @since_date::TIMESTAMP WITH TIME ZONE
-    GROUP BY m.extractor_id
-    ORDER BY count DESC
-    LIMIT 3
 )
 SELECT 
     COALESCE((SELECT SUM(total) FROM private_chats), 0)::BIGINT as total_private_chats,
@@ -56,10 +46,4 @@ SELECT
     )::jsonb as group_chats_by_language,
     
     COALESCE((SELECT total_downloads FROM downloads_stats), 0)::BIGINT as total_downloads,
-    COALESCE((SELECT total_size FROM downloads_stats), 0)::BIGINT as total_downloads_size,
-    
-    COALESCE(
-        (SELECT jsonb_agg(jsonb_build_object('extractor_id', extractor_id, 'count', count) ORDER BY count DESC)
-         FROM top_extractors),
-        '[]'::jsonb
-    )::jsonb as top_extractors;
+    COALESCE((SELECT total_size FROM downloads_stats), 0)::BIGINT as total_downloads_size;
