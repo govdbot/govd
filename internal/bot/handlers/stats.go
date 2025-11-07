@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -95,8 +96,15 @@ func formatMessage(period string) (string, error) {
 
 	if len(privateChatsByLang) > 0 {
 		message += "  languages:\n"
-		for lang, count := range privateChatsByLang {
-			message += fmt.Sprintf("    • %s: %d\n", lang, count)
+		langs := make([][2]any, 0, len(privateChatsByLang))
+		for k, v := range privateChatsByLang {
+			langs = append(langs, [2]any{k, v})
+		}
+		slices.SortFunc(langs, func(a, b [2]any) int {
+			return int(b[1].(int64) - a[1].(int64))
+		})
+		for _, item := range langs {
+			message += fmt.Sprintf("    • %s: %d\n", item[0], item[1])
 		}
 	}
 
@@ -104,8 +112,15 @@ func formatMessage(period string) (string, error) {
 
 	if len(groupChatsByLang) > 0 {
 		message += "  languages:\n"
-		for lang, count := range groupChatsByLang {
-			message += fmt.Sprintf("    • %s: %d\n", lang, count)
+		langs := make([][2]any, 0, len(groupChatsByLang))
+		for k, v := range groupChatsByLang {
+			langs = append(langs, [2]any{k, v})
+		}
+		slices.SortFunc(langs, func(a, b [2]any) int {
+			return int(b[1].(int64) - a[1].(int64))
+		})
+		for _, item := range langs {
+			message += fmt.Sprintf("    • %s: %d\n", item[0], item[1])
 		}
 	}
 
@@ -114,8 +129,15 @@ func formatMessage(period string) (string, error) {
 
 	if len(topExtractors) > 0 {
 		message += "\n<b>top extractors:</b>\n"
-		for extractor, count := range topExtractors {
-			message += fmt.Sprintf("  • %s: %d\n", extractor, count)
+		extractors := make([][2]any, 0, len(topExtractors))
+		for k, v := range topExtractors {
+			extractors = append(extractors, [2]any{k, v})
+		}
+		slices.SortFunc(extractors, func(a, b [2]any) int {
+			return int(b[1].(int64) - a[1].(int64))
+		})
+		for _, item := range extractors {
+			message += fmt.Sprintf("  • %s: %d\n", item[0], item[1])
 		}
 	}
 
