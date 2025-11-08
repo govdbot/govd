@@ -12,11 +12,7 @@ upsert_settings AS (
         language = CASE 
             WHEN settings.language = 'XX' THEN EXCLUDED.language 
             ELSE settings.language 
-        END,
-        captions = EXCLUDED.captions,
-        silent = EXCLUDED.silent,
-        nsfw = EXCLUDED.nsfw,
-        media_album_limit = EXCLUDED.media_album_limit
+        END
     RETURNING *
 ),
 final_chat AS (
