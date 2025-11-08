@@ -2,12 +2,13 @@ package models
 
 import (
 	"os"
+	"sync"
 
 	"github.com/govdbot/govd/internal/logger"
 )
 
-// utility to track files for cleanup
 type FilesTracker struct {
+	mu    sync.Mutex
 	Files []*string
 }
 
@@ -18,10 +19,16 @@ func NewFilesTracker() *FilesTracker {
 }
 
 func (ft *FilesTracker) Add(files ...*string) {
+	ft.mu.Lock()
+	defer ft.mu.Unlock()
+
 	ft.Files = append(ft.Files, files...)
 }
 
 func (ft *FilesTracker) Cleanup() {
+	ft.mu.Lock()
+	defer ft.mu.Unlock()
+
 	for _, filePtr := range ft.Files {
 		if filePtr == nil || *filePtr == "" {
 			continue
@@ -32,14 +39,14 @@ func (ft *FilesTracker) Cleanup() {
 			continue
 		}
 		if !info.IsDir() {
-			err = os.Remove(*filePtr)
+			err = os.Remove(fileName)
 			if err == nil {
-				logger.L.Debugf("removed temporary file: %s", *filePtr)
+				logger.L.Debugf("removed temporary file: %s", fileName)
 			}
 		} else {
-			err = os.RemoveAll(*filePtr)
+			err = os.RemoveAll(fileName)
 			if err == nil {
-				logger.L.Debugf("removed temporary directory: %s", *filePtr)
+				logger.L.Debugf("removed temporary directory: %s", fileName)
 			}
 		}
 	}

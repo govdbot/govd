@@ -42,6 +42,7 @@ func main() {
 			}
 		}()
 	}
+
 	if config.Env.MetricsPort > 0 {
 		go func() {
 			port := config.Env.MetricsPort

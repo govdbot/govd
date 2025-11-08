@@ -11,6 +11,9 @@ services:
       - ./private:/app/private
       - ./logs:/app/logs
       - ./downloads:/app/downloads
+    ports:
+      - "${METRICS_PORT-}:8080"
+      - "${PROFILER_PORT-}:6060"
     depends_on:
       db:
         condition: service_healthy
