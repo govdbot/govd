@@ -2,10 +2,6 @@
 hash = "sha1-11d91df6dbbe818cf48a5be9d16788654340d935"
 other = "aggiungi ad un gruppo"
 
-[AddedToGroupMessage]
-hash = "sha1-b101140565ce40a0b9ee026d1719feb8e8361c93"
-other = "grazie per avermi aggiunto! utilizza i bottoni sottostanti per modificare le impostazioni"
-
 [BackButton]
 hash = "sha1-61bb8d29b5be7db307cb29005bff087ebe300454"
 other = "indietro"

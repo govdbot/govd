@@ -89,20 +89,25 @@ func formatMessage(period string) (string, error) {
 
 	sizeGB := float64(stats.TotalDownloadsSize) / (1024 * 1024 * 1024)
 
+	type langStat struct {
+		lang  string
+		count int64
+	}
+
 	message := fmt.Sprintf("<b>stats - %s</b>\n\n", periodText)
 	message += fmt.Sprintf("<b>private chats:</b> %d\n", stats.TotalPrivateChats)
 
 	if len(privateChatsByLang) > 0 {
 		message += "  languages:\n"
-		langs := make([][2]any, 0, len(privateChatsByLang))
+		langs := make([]langStat, 0, len(privateChatsByLang))
 		for k, v := range privateChatsByLang {
-			langs = append(langs, [2]any{k, v})
+			langs = append(langs, langStat{lang: k, count: v})
 		}
-		slices.SortFunc(langs, func(a, b [2]any) int {
-			return int(b[1].(int64) - a[1].(int64))
+		slices.SortFunc(langs, func(a, b langStat) int {
+			return int(b.count - a.count)
 		})
 		for _, item := range langs {
-			message += fmt.Sprintf("    • %s: %d\n", item[0], item[1])
+			message += fmt.Sprintf("    • %s: %d\n", item.lang, item.count)
 		}
 	}
 
@@ -110,15 +115,15 @@ func formatMessage(period string) (string, error) {
 
 	if len(groupChatsByLang) > 0 {
 		message += "  languages:\n"
-		langs := make([][2]any, 0, len(groupChatsByLang))
+		langs := make([]langStat, 0, len(groupChatsByLang))
 		for k, v := range groupChatsByLang {
-			langs = append(langs, [2]any{k, v})
+			langs = append(langs, langStat{lang: k, count: v})
 		}
-		slices.SortFunc(langs, func(a, b [2]any) int {
-			return int(b[1].(int64) - a[1].(int64))
+		slices.SortFunc(langs, func(a, b langStat) int {
+			return int(b.count - a.count)
 		})
 		for _, item := range langs {
-			message += fmt.Sprintf("    • %s: %d\n", item[0], item[1])
+			message += fmt.Sprintf("    • %s: %d\n", item.lang, item.count)
 		}
 	}
 

@@ -9,7 +9,7 @@ import (
 )
 
 func AddedToGroupHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
-	if !isAddedUpdate(bot, ctx) {
+	if !isAddedUpdate(ctx) {
 		return ext.EndGroups
 	}
 	chat, err := util.ChatFromContext(ctx)
@@ -27,7 +27,7 @@ func AddedToGroupHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 	return ext.EndGroups
 }
 
-func isAddedUpdate(bot *gotgbot.Bot, ctx *ext.Context) bool {
+func isAddedUpdate(ctx *ext.Context) bool {
 	update := ctx.MyChatMember
 	if update == nil {
 		return false
