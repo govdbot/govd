@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"slices"
-	"time"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
@@ -99,12 +98,6 @@ func SendFormats(
 		}
 
 		sentMessages = append(sentMessages, msgs...)
-		if sentMessages[0].Chat.Type != gotgbot.ChatTypePrivate {
-			// avoid floodwait
-			if len(mediaGroupChunks) > 1 {
-				time.Sleep(3 * time.Second)
-			}
-		}
 	}
 	if len(sentMessages) == 0 {
 		return nil, fmt.Errorf("no messages sent")
