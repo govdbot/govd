@@ -17,6 +17,7 @@ func Init() {
 	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
 	mustLoad("locales/active.en.toml")
 	mustLoad("locales/active.it.toml")
+	mustLoad("locales/active.es.toml")
 }
 
 func mustLoad(file string) {
