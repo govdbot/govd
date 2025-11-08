@@ -1,0 +1,179 @@
+[AddButton]
+hash = "sha1-11d91df6dbbe818cf48a5be9d16788654340d935"
+other = "tambahkan ke grup"
+
+[AddedToGroupMessage]
+hash = "sha1-ff7109173123bb92a805dc2b3369cafa10169fc1"
+other = "terima kasih telah menambahkan saya! gunakan perintah /settings untuk mengkonfigurasi bot untuk grup ini"
+
+[BackButton]
+hash = "sha1-61bb8d29b5be7db307cb29005bff087ebe300454"
+other = "kembali"
+
+[CaptionsButton]
+hash = "sha1-7baec8f44d3c98ebffad676dfab6491a89131fe7"
+other = "teks"
+
+[CaptionsSettingsMessage]
+hash = "sha1-8edc8cfb1d11cd59048580e91e9fdefd1b393f31"
+other = "ketika diaktifkan, menambahkan deskripsi asli ke konten yang diunduh, jika tersedia"
+
+[CloseButton]
+hash = "sha1-da38860cb875cb64092e402d80d9fe29c4865b18"
+other = "tutup"
+
+[DisabledButton]
+hash = "sha1-07596f183f5e91b1778d5e47b2752b8d42aa763d"
+other = "dinonaktifkan"
+
+[DisabledExtractorsSettingsMessage]
+hash = "sha1-3420a5efefb071e48880fcf18fdc50e11c959e64"
+other = "pilih ekstraktor mana yang harus dinonaktifkan. tautan dari ekstraktor yang dinonaktifkan akan diabaikan oleh bot"
+
+[EnabledButton]
+hash = "sha1-3ea3f9802accf8817bacd6f3df46a73b93ccddec"
+other = "diaktifkan"
+
+[ErrorAgeRestricted]
+hash = "sha1-15640b61f04937afc07abffdbce1f5bc250a5997"
+other = "konten ini dibatasi usia dan tidak dapat diakses"
+
+[ErrorAuthenticationNeeded]
+hash = "sha1-62c2e1cba75e4fb31392484973781bcbe5c6b62e"
+other = "instansi ini tidak terautentikasi dengan layanan ini"
+
+[ErrorDurationTooLong]
+hash = "sha1-079cb9174494931fe6b2ae1389082893ef4fe805"
+other = "video ini terlalu panjang dan melebihi durasi maksimum yang diizinkan untuk instansi ini"
+
+[ErrorFileTooLarge]
+hash = "sha1-86f5ec4087f8c7f2311df02f5282b662bf0df086"
+other = "file ini terlalu besar dan melebihi ukuran maksimum yang diizinkan untuk instansi ini"
+
+[ErrorGeoRestrictedContent]
+hash = "sha1-e42a8ae7ae124674611112659c35ef925834bed1"
+other = "konten ini memiliki pembatasan geografis dan tidak dapat diakses dari lokasi server"
+
+[ErrorInlineMediaAlbum]
+hash = "sha1-58bbb076a3fc42c7230930392c980661a8fa91d1"
+other = "anda tidak dapat mengunduh album media dalam mode inline. gunakan bot dalam grup atau obrolan pribadi"
+
+[ErrorMediaAlbumGlobalLimitExceeded]
+hash = "sha1-1c6971f6e1596c1612c8d33cf1ac69d0e19f8ac1"
+other = "batas album media melebihi maksimum yang diizinkan untuk instansi ini"
+
+[ErrorMediaAlbumLimitExceeded]
+hash = "sha1-281844facb4347d00897dcf3ff65439f90ad84fd"
+other = "batas album media melebihi maksimum yang diizinkan untuk grup ini. ubah /settings untuk meningkatkan batas"
+
+[ErrorMessage]
+hash = "sha1-614df8086d667e71dce55d45e98a555ce8d44ae0"
+other = "terjadi kesalahan, silakan coba lagi nanti"
+
+[ErrorNSFWNotAllowed]
+hash = "sha1-0f715698a99fb506afb2427cf53c5161873003ef"
+other = "konten ini ditandai sebagai nsfw dan tidak dapat diunduh di grup ini. ubah /settings untuk mengizinkan konten nsfw atau gunakan bot secara pribadi"
+
+[ErrorPaidContent]
+hash = "sha1-af7f00e04fd6e06b3532f2658db35d69c30ce907"
+other = "konten ini berbayar dan memerlukan langganan untuk mengaksesnya"
+
+[ErrorPermissionDenied]
+hash = "sha1-d25f0560b2cda5f989fd8eeea5b2cf16de9df209"
+other = "bot tidak memiliki izin yang cukup untuk mengirim media ini. harap berikan izin yang diperlukan dan coba lagi"
+
+[ErrorTelegramFileTooLarge]
+hash = "sha1-dbc0d3806bacb7dce1cef5763045a58b4354fc52"
+other = "file ini terlalu besar untuk telegram dan melebihi ukuran maksimum yang diizinkan"
+
+[ErrorTimeout]
+hash = "sha1-8d482cea2954904064573db533e1adec448ac729"
+other = "kesalahan waktu tunggu saat mengunduh. coba lagi nanti"
+
+[ErrorUnavailable]
+hash = "sha1-219e2d9a94ab4261cde3a1bb7d225da8ff90e02b"
+other = "konten ini tidak tersedia"
+
+[ErrorUnsupportedExtractorType]
+hash = "sha1-1097c29dc269a42354359d08fa2bfd81ad03055a"
+other = "jenis ekstraktor tidak didukung"
+
+[ErrorUnsupportedImageFormat]
+hash = "sha1-94f09974c03e42aca68585668e3e613fe85192d1"
+other = "format gambar tidak didukung"
+
+[ExtractorsButton]
+hash = "sha1-90f775f104687d04dc6c10f0a6b929d9f9060a9b"
+other = "ekstraktor"
+
+[GroupSettingsMessage]
+hash = "sha1-dbc9223b568195bdd978bf68acd969c46f28b6b3"
+other = "gunakan tombol di bawah untuk mengubah pengaturan bot untuk grup ini"
+
+[InlineLoadingMessage]
+hash = "sha1-baadb84f7acdfe44efc938a3c3426ead6936ff75"
+other = "memuat... harap tunggu"
+
+[InlineProcessingMessage]
+hash = "sha1-7929aa86a1a5fc31baa300082b53beca66b701ce"
+other = "media dibagikan! memproses unduhan... harap tunggu"
+
+[InlineShareMessage]
+hash = "sha1-4a07cc5e60b3925926889d83f4da7379a2aae55b"
+other = "bagikan media ini"
+
+[Language]
+hash = "sha1-1b669334dae8ebafa433f0175b5fd418a7bc0975"
+other = "bahasa indonesia"
+
+[LanguageButton]
+hash = "sha1-e11523c5ff23fc1600aca2d8ee5adb542c5ce4b3"
+other = "bahasa"
+
+[MediaAlbumButton]
+hash = "sha1-58741fca8e31c2cef03d3cac7d51b23c55d8695c"
+other = "album media"
+
+[MediaAlbumSettingsMessage]
+hash = "sha1-8228632c4b28e007be43131b6a6086f7af8cb675"
+other = "pilih jumlah maksimum file yang diizinkan dalam satu album media"
+
+[NoPermission]
+hash = "sha1-8d32138f2eba21b8e6da3b1ff89cd24313c70733"
+other = "anda tidak memiliki izin untuk melakukan tindakan ini"
+
+[NsfwButton]
+hash = "sha1-faa5286b4d10bb71066e9d4ce41454200ca537d2"
+other = "nsfw"
+
+[NsfwSettingsMessage]
+hash = "sha1-46866dcc9ffd0291d29125641ceb676c0a7c334b"
+other = "ketika diaktifkan, memungkinkan mengunduh konten nsfw dalam obrolan ini\n\nperingatan: konten tersebut dapat melanggar ketentuan layanan telegram dan mengakibatkan pembatasan grup"
+
+[PrivateSettingsMessage]
+hash = "sha1-5b5023ae17c831ed530cb64300efe332b17df566"
+other = "gunakan tombol di bawah untuk mengubah pengaturan bot pribadi anda"
+
+[SelectLanguageMessage]
+hash = "sha1-615a6cb03028cdc8abb8b75ae47d8d9a11542587"
+other = "pilih bahasa pilihan anda"
+
+[SettingsButton]
+hash = "sha1-3cc1d5a427a45820b04fe30f78a972b784952460"
+other = "pengaturan"
+
+[SilentModeButton]
+hash = "sha1-e536a5efc012f53a6a555ae8d1b9af3f0563fe7d"
+other = "mode senyap"
+
+[SilentModeSettingsMessage]
+hash = "sha1-8eca1f33085a260053289e27e44da9ac425b3df6"
+other = "ketika diaktifkan, bot tidak akan mengirim pesan kesalahan"
+
+[StartMessage]
+hash = "sha1-40428a095863d4dc32706540458f80f76b1b1eef"
+other = "selamat datang {{.Name}} di govd, bot telegram open-source untuk mengunduh konten dari berbagai platform sosial"
+
+[SupportedExtractorsMessage]
+hash = "sha1-c16d18ef8e24a2d2df3d011dbac5282bbd8783ca"
+other = "daftar ekstraktor yang didukung oleh bot"

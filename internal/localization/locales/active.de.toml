@@ -1,0 +1,179 @@
+[AddButton]
+hash = "sha1-11d91df6dbbe818cf48a5be9d16788654340d935"
+other = "zu einer Gruppe hinzufügen"
+
+[AddedToGroupMessage]
+hash = "sha1-ff7109173123bb92a805dc2b3369cafa10169fc1"
+other = "danke, dass du mich hinzugefügt hast! verwende den Befehl /settings, um den Bot für diese Gruppe zu konfigurieren"
+
+[BackButton]
+hash = "sha1-61bb8d29b5be7db307cb29005bff087ebe300454"
+other = "zurück"
+
+[CaptionsButton]
+hash = "sha1-7baec8f44d3c98ebffad676dfab6491a89131fe7"
+other = "untertitel"
+
+[CaptionsSettingsMessage]
+hash = "sha1-8edc8cfb1d11cd59048580e91e9fdefd1b393f31"
+other = "wenn aktiviert, wird die Originalbeschreibung zum heruntergeladenen Inhalt hinzugefügt, falls verfügbar"
+
+[CloseButton]
+hash = "sha1-da38860cb875cb64092e402d80d9fe29c4865b18"
+other = "schließen"
+
+[DisabledButton]
+hash = "sha1-07596f183f5e91b1778d5e47b2752b8d42aa763d"
+other = "deaktiviert"
+
+[DisabledExtractorsSettingsMessage]
+hash = "sha1-3420a5efefb071e48880fcf18fdc50e11c959e64"
+other = "wähle aus, welche Extraktoren deaktiviert werden sollen. Links von deaktivierten Extraktoren werden vom Bot ignoriert"
+
+[EnabledButton]
+hash = "sha1-3ea3f9802accf8817bacd6f3df46a73b93ccddec"
+other = "aktiviert"
+
+[ErrorAgeRestricted]
+hash = "sha1-15640b61f04937afc07abffdbce1f5bc250a5997"
+other = "dieser Inhalt ist altersbeschränkt und kann nicht aufgerufen werden"
+
+[ErrorAuthenticationNeeded]
+hash = "sha1-62c2e1cba75e4fb31392484973781bcbe5c6b62e"
+other = "diese Instanz ist nicht mit diesem Dienst authentifiziert"
+
+[ErrorDurationTooLong]
+hash = "sha1-079cb9174494931fe6b2ae1389082893ef4fe805"
+other = "dieses Video ist zu lang und überschreitet die maximal zulässige Dauer für diese Instanz"
+
+[ErrorFileTooLarge]
+hash = "sha1-86f5ec4087f8c7f2311df02f5282b662bf0df086"
+other = "diese Datei ist zu groß und überschreitet die maximal zulässige Größe für diese Instanz"
+
+[ErrorGeoRestrictedContent]
+hash = "sha1-e42a8ae7ae124674611112659c35ef925834bed1"
+other = "dieser Inhalt hat geografische Einschränkungen und kann vom Standort des Servers nicht aufgerufen werden"
+
+[ErrorInlineMediaAlbum]
+hash = "sha1-58bbb076a3fc42c7230930392c980661a8fa91d1"
+other = "du kannst Medienalben nicht im Inline-Modus herunterladen. verwende den Bot in einer Gruppe oder einem privaten Chat"
+
+[ErrorMediaAlbumGlobalLimitExceeded]
+hash = "sha1-1c6971f6e1596c1612c8d33cf1ac69d0e19f8ac1"
+other = "das Medienalbumlimit überschreitet das für diese Instanz zulässige Maximum"
+
+[ErrorMediaAlbumLimitExceeded]
+hash = "sha1-281844facb4347d00897dcf3ff65439f90ad84fd"
+other = "das Medienalbumlimit überschreitet das für diese Gruppe zulässige Maximum. ändere /settings, um das Limit zu erhöhen"
+
+[ErrorMessage]
+hash = "sha1-614df8086d667e71dce55d45e98a555ce8d44ae0"
+other = "ein Fehler ist aufgetreten, bitte versuche es später erneut"
+
+[ErrorNSFWNotAllowed]
+hash = "sha1-0f715698a99fb506afb2427cf53c5161873003ef"
+other = "dieser Inhalt ist als nsfw gekennzeichnet und kann in dieser Gruppe nicht heruntergeladen werden. ändere /settings, um nsfw-Inhalte zuzulassen, oder verwende den Bot privat"
+
+[ErrorPaidContent]
+hash = "sha1-af7f00e04fd6e06b3532f2658db35d69c30ce907"
+other = "dieser Inhalt ist kostenpflichtig und erfordert ein Abonnement für den Zugriff"
+
+[ErrorPermissionDenied]
+hash = "sha1-d25f0560b2cda5f989fd8eeea5b2cf16de9df209"
+other = "der Bot hat nicht ausreichende Berechtigungen, um diese Medien zu senden. bitte erteile die erforderlichen Berechtigungen und versuche es erneut"
+
+[ErrorTelegramFileTooLarge]
+hash = "sha1-dbc0d3806bacb7dce1cef5763045a58b4354fc52"
+other = "diese Datei ist zu groß für Telegram und überschreitet die maximal zulässige Größe"
+
+[ErrorTimeout]
+hash = "sha1-8d482cea2954904064573db533e1adec448ac729"
+other = "Zeitüberschreitungsfehler beim Herunterladen. versuche es später erneut"
+
+[ErrorUnavailable]
+hash = "sha1-219e2d9a94ab4261cde3a1bb7d225da8ff90e02b"
+other = "dieser Inhalt ist nicht verfügbar"
+
+[ErrorUnsupportedExtractorType]
+hash = "sha1-1097c29dc269a42354359d08fa2bfd81ad03055a"
+other = "nicht unterstützter Extraktionstyp"
+
+[ErrorUnsupportedImageFormat]
+hash = "sha1-94f09974c03e42aca68585668e3e613fe85192d1"
+other = "nicht unterstütztes Bildformat"
+
+[ExtractorsButton]
+hash = "sha1-90f775f104687d04dc6c10f0a6b929d9f9060a9b"
+other = "extraktoren"
+
+[GroupSettingsMessage]
+hash = "sha1-dbc9223b568195bdd978bf68acd969c46f28b6b3"
+other = "verwende die Schaltflächen unten, um die Bot-Einstellungen für diese Gruppe zu ändern"
+
+[InlineLoadingMessage]
+hash = "sha1-baadb84f7acdfe44efc938a3c3426ead6936ff75"
+other = "lädt... bitte warten"
+
+[InlineProcessingMessage]
+hash = "sha1-7929aa86a1a5fc31baa300082b53beca66b701ce"
+other = "Medien geteilt! Download wird verarbeitet... bitte warten"
+
+[InlineShareMessage]
+hash = "sha1-4a07cc5e60b3925926889d83f4da7379a2aae55b"
+other = "diese Medien teilen"
+
+[Language]
+hash = "sha1-1b669334dae8ebafa433f0175b5fd418a7bc0975"
+other = "deutsch"
+
+[LanguageButton]
+hash = "sha1-e11523c5ff23fc1600aca2d8ee5adb542c5ce4b3"
+other = "sprache"
+
+[MediaAlbumButton]
+hash = "sha1-58741fca8e31c2cef03d3cac7d51b23c55d8695c"
+other = "medienalbum"
+
+[MediaAlbumSettingsMessage]
+hash = "sha1-8228632c4b28e007be43131b6a6086f7af8cb675"
+other = "wähle die maximale Anzahl von Dateien aus, die in einem einzelnen Medienalbum zulässig sind"
+
+[NoPermission]
+hash = "sha1-8d32138f2eba21b8e6da3b1ff89cd24313c70733"
+other = "du hast keine Berechtigung, diese Aktion auszuführen"
+
+[NsfwButton]
+hash = "sha1-faa5286b4d10bb71066e9d4ce41454200ca537d2"
+other = "nsfw"
+
+[NsfwSettingsMessage]
+hash = "sha1-46866dcc9ffd0291d29125641ceb676c0a7c334b"
+other = "wenn aktiviert, erlaubt das Herunterladen von nsfw-Inhalten in diesem Chat\n\nWarnung: solche Inhalte können gegen die Nutzungsbedingungen von Telegram verstoßen und zu Gruppenbeschränkungen führen"
+
+[PrivateSettingsMessage]
+hash = "sha1-5b5023ae17c831ed530cb64300efe332b17df566"
+other = "verwende die Schaltflächen unten, um deine persönlichen Bot-Einstellungen zu ändern"
+
+[SelectLanguageMessage]
+hash = "sha1-615a6cb03028cdc8abb8b75ae47d8d9a11542587"
+other = "wähle deine bevorzugte Sprache"
+
+[SettingsButton]
+hash = "sha1-3cc1d5a427a45820b04fe30f78a972b784952460"
+other = "einstellungen"
+
+[SilentModeButton]
+hash = "sha1-e536a5efc012f53a6a555ae8d1b9af3f0563fe7d"
+other = "stiller Modus"
+
+[SilentModeSettingsMessage]
+hash = "sha1-8eca1f33085a260053289e27e44da9ac425b3df6"
+other = "wenn aktiviert, sendet der Bot keine Fehlermeldungen"
+
+[StartMessage]
+hash = "sha1-40428a095863d4dc32706540458f80f76b1b1eef"
+other = "willkommen {{.Name}} bei govd, einem Open-Source-Telegram-Bot zum Herunterladen von Inhalten von verschiedenen sozialen Plattformen"
+
+[SupportedExtractorsMessage]
+hash = "sha1-c16d18ef8e24a2d2df3d011dbac5282bbd8783ca"
+other = "Liste der vom Bot unterstützten Extraktoren"

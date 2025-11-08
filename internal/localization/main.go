@@ -19,6 +19,14 @@ func Init() {
 	mustLoad("locales/active.it.toml")
 	mustLoad("locales/active.es.toml")
 	mustLoad("locales/active.fr.toml")
+	mustLoad("locales/active.de.toml")
+	mustLoad("locales/active.pt.toml")
+	mustLoad("locales/active.ru.toml")
+	mustLoad("locales/active.id.toml")
+	mustLoad("locales/active.tr.toml")
+	mustLoad("locales/active.uk.toml")
+	mustLoad("locales/active.ar.toml")
+
 }
 
 func mustLoad(file string) {
