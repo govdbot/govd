@@ -1,0 +1,179 @@
+[AddButton]
+hash = "sha1-11d91df6dbbe818cf48a5be9d16788654340d935"
+other = "toevoegen aan een groep"
+
+[AddedToGroupMessage]
+hash = "sha1-ff7109173123bb92a805dc2b3369cafa10169fc1"
+other = "bedankt voor het toevoegen van mij! gebruik het commando /settings om de bot voor deze groep te configureren"
+
+[BackButton]
+hash = "sha1-61bb8d29b5be7db307cb29005bff087ebe300454"
+other = "terug"
+
+[CaptionsButton]
+hash = "sha1-7baec8f44d3c98ebffad676dfab6491a89131fe7"
+other = "ondertiteling"
+
+[CaptionsSettingsMessage]
+hash = "sha1-8edc8cfb1d11cd59048580e91e9fdefd1b393f31"
+other = "wanneer ingeschakeld, voegt originele beschrijving toe aan gedownloade inhoud, indien beschikbaar"
+
+[CloseButton]
+hash = "sha1-da38860cb875cb64092e402d80d9fe29c4865b18"
+other = "sluiten"
+
+[DisabledButton]
+hash = "sha1-07596f183f5e91b1778d5e47b2752b8d42aa763d"
+other = "uitgeschakeld"
+
+[DisabledExtractorsSettingsMessage]
+hash = "sha1-3420a5efefb071e48880fcf18fdc50e11c959e64"
+other = "selecteer welke extractors moeten worden uitgeschakeld. links van uitgeschakelde extractors worden genegeerd door de bot"
+
+[EnabledButton]
+hash = "sha1-3ea3f9802accf8817bacd6f3df46a73b93ccddec"
+other = "ingeschakeld"
+
+[ErrorAgeRestricted]
+hash = "sha1-15640b61f04937afc07abffdbce1f5bc250a5997"
+other = "deze inhoud heeft een leeftijdsbeperking en kan niet worden geopend"
+
+[ErrorAuthenticationNeeded]
+hash = "sha1-62c2e1cba75e4fb31392484973781bcbe5c6b62e"
+other = "deze instantie is niet geauthenticeerd met deze dienst"
+
+[ErrorDurationTooLong]
+hash = "sha1-079cb9174494931fe6b2ae1389082893ef4fe805"
+other = "deze video is te lang en overschrijdt de maximaal toegestane duur voor deze instantie"
+
+[ErrorFileTooLarge]
+hash = "sha1-86f5ec4087f8c7f2311df02f5282b662bf0df086"
+other = "dit bestand is te groot en overschrijdt de maximaal toegestane grootte voor deze instantie"
+
+[ErrorGeoRestrictedContent]
+hash = "sha1-e42a8ae7ae124674611112659c35ef925834bed1"
+other = "deze inhoud heeft geografische beperkingen en kan niet worden geopend vanaf de locatie van de server"
+
+[ErrorInlineMediaAlbum]
+hash = "sha1-58bbb076a3fc42c7230930392c980661a8fa91d1"
+other = "je kunt geen media-albums downloaden in inline modus. gebruik de bot in een groep of privéchat"
+
+[ErrorMediaAlbumGlobalLimitExceeded]
+hash = "sha1-1c6971f6e1596c1612c8d33cf1ac69d0e19f8ac1"
+other = "media-albumlimiet overschrijdt het maximum toegestaan voor deze instantie"
+
+[ErrorMediaAlbumLimitExceeded]
+hash = "sha1-281844facb4347d00897dcf3ff65439f90ad84fd"
+other = "media-albumlimiet overschrijdt het maximum toegestaan voor deze groep. wijzig /settings om de limiet te verhogen"
+
+[ErrorMessage]
+hash = "sha1-614df8086d667e71dce55d45e98a555ce8d44ae0"
+other = "er is een fout opgetreden, probeer het later opnieuw"
+
+[ErrorNSFWNotAllowed]
+hash = "sha1-0f715698a99fb506afb2427cf53c5161873003ef"
+other = "deze inhoud is gemarkeerd als nsfw en kan niet worden gedownload in deze groep. wijzig /settings om nsfw-inhoud toe te staan of gebruik de bot privé"
+
+[ErrorPaidContent]
+hash = "sha1-af7f00e04fd6e06b3532f2658db35d69c30ce907"
+other = "deze inhoud is betaald en vereist een abonnement voor toegang"
+
+[ErrorPermissionDenied]
+hash = "sha1-d25f0560b2cda5f989fd8eeea5b2cf16de9df209"
+other = "de bot heeft onvoldoende rechten om deze media te verzenden. verleen de benodigde rechten en probeer het opnieuw"
+
+[ErrorTelegramFileTooLarge]
+hash = "sha1-dbc0d3806bacb7dce1cef5763045a58b4354fc52"
+other = "dit bestand is te groot voor telegram en overschrijdt de maximaal toegestane grootte"
+
+[ErrorTimeout]
+hash = "sha1-8d482cea2954904064573db533e1adec448ac729"
+other = "time-outfout bij het downloaden. probeer het later opnieuw"
+
+[ErrorUnavailable]
+hash = "sha1-219e2d9a94ab4261cde3a1bb7d225da8ff90e02b"
+other = "deze inhoud is niet beschikbaar"
+
+[ErrorUnsupportedExtractorType]
+hash = "sha1-1097c29dc269a42354359d08fa2bfd81ad03055a"
+other = "niet-ondersteund extractortype"
+
+[ErrorUnsupportedImageFormat]
+hash = "sha1-94f09974c03e42aca68585668e3e613fe85192d1"
+other = "niet-ondersteund afbeeldingsformaat"
+
+[ExtractorsButton]
+hash = "sha1-90f775f104687d04dc6c10f0a6b929d9f9060a9b"
+other = "extractors"
+
+[GroupSettingsMessage]
+hash = "sha1-dbc9223b568195bdd978bf68acd969c46f28b6b3"
+other = "gebruik de onderstaande knoppen om de botinstellingen voor deze groep te wijzigen"
+
+[InlineLoadingMessage]
+hash = "sha1-baadb84f7acdfe44efc938a3c3426ead6936ff75"
+other = "laden... een ogenblik geduld"
+
+[InlineProcessingMessage]
+hash = "sha1-7929aa86a1a5fc31baa300082b53beca66b701ce"
+other = "media gedeeld! download wordt verwerkt... een ogenblik geduld"
+
+[InlineShareMessage]
+hash = "sha1-4a07cc5e60b3925926889d83f4da7379a2aae55b"
+other = "deze media delen"
+
+[Language]
+hash = "sha1-1b669334dae8ebafa433f0175b5fd418a7bc0975"
+other = "nederlands"
+
+[LanguageButton]
+hash = "sha1-e11523c5ff23fc1600aca2d8ee5adb542c5ce4b3"
+other = "taal"
+
+[MediaAlbumButton]
+hash = "sha1-58741fca8e31c2cef03d3cac7d51b23c55d8695c"
+other = "media-album"
+
+[MediaAlbumSettingsMessage]
+hash = "sha1-8228632c4b28e007be43131b6a6086f7af8cb675"
+other = "selecteer het maximale aantal bestanden dat is toegestaan in één media-album"
+
+[NoPermission]
+hash = "sha1-8d32138f2eba21b8e6da3b1ff89cd24313c70733"
+other = "je hebt geen toestemming om deze actie uit te voeren"
+
+[NsfwButton]
+hash = "sha1-faa5286b4d10bb71066e9d4ce41454200ca537d2"
+other = "nsfw"
+
+[NsfwSettingsMessage]
+hash = "sha1-46866dcc9ffd0291d29125641ceb676c0a7c334b"
+other = "wanneer ingeschakeld, staat het downloaden van nsfw-inhoud in deze chat toe\n\nwaarschuwing: dergelijke inhoud kan de servicevoorwaarden van telegram schenden en leiden tot groepsbeperkingen"
+
+[PrivateSettingsMessage]
+hash = "sha1-5b5023ae17c831ed530cb64300efe332b17df566"
+other = "gebruik de onderstaande knoppen om je persoonlijke botinstellingen te wijzigen"
+
+[SelectLanguageMessage]
+hash = "sha1-615a6cb03028cdc8abb8b75ae47d8d9a11542587"
+other = "selecteer je voorkeurstaal"
+
+[SettingsButton]
+hash = "sha1-3cc1d5a427a45820b04fe30f78a972b784952460"
+other = "instellingen"
+
+[SilentModeButton]
+hash = "sha1-e536a5efc012f53a6a555ae8d1b9af3f0563fe7d"
+other = "stille modus"
+
+[SilentModeSettingsMessage]
+hash = "sha1-8eca1f33085a260053289e27e44da9ac425b3df6"
+other = "wanneer ingeschakeld, stuurt de bot geen foutmeldingen"
+
+[StartMessage]
+hash = "sha1-40428a095863d4dc32706540458f80f76b1b1eef"
+other = "welkom {{.Name}} bij govd, een open-source telegram-bot voor het downloaden van inhoud van verschillende sociale platforms"
+
+[SupportedExtractorsMessage]
+hash = "sha1-c16d18ef8e24a2d2df3d011dbac5282bbd8783ca"
+other = "lijst van extractors die door de bot worden ondersteund"

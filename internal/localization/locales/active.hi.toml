@@ -1,0 +1,179 @@
+[AddButton]
+hash = "sha1-11d91df6dbbe818cf48a5be9d16788654340d935"
+other = "एक समूह में जोड़ें"
+
+[AddedToGroupMessage]
+hash = "sha1-ff7109173123bb92a805dc2b3369cafa10169fc1"
+other = "मुझे जोड़ने के लिए धन्यवाद! इस समूह के लिए बॉट को कॉन्फ़िगर करने के लिए /settings कमांड का उपयोग करें"
+
+[BackButton]
+hash = "sha1-61bb8d29b5be7db307cb29005bff087ebe300454"
+other = "वापस"
+
+[CaptionsButton]
+hash = "sha1-7baec8f44d3c98ebffad676dfab6491a89131fe7"
+other = "कैप्शन"
+
+[CaptionsSettingsMessage]
+hash = "sha1-8edc8cfb1d11cd59048580e91e9fdefd1b393f31"
+other = "जब सक्षम हो, तो डाउनलोड की गई सामग्री में मूल विवरण जोड़ता है, यदि उपलब्ध हो"
+
+[CloseButton]
+hash = "sha1-da38860cb875cb64092e402d80d9fe29c4865b18"
+other = "बंद करें"
+
+[DisabledButton]
+hash = "sha1-07596f183f5e91b1778d5e47b2752b8d42aa763d"
+other = "अक्षम"
+
+[DisabledExtractorsSettingsMessage]
+hash = "sha1-3420a5efefb071e48880fcf18fdc50e11c959e64"
+other = "चुनें कि कौन से एक्सट्रैक्टर अक्षम होने चाहिए। अक्षम एक्सट्रैक्टर से लिंक बॉट द्वारा अनदेखा कर दिया जाएगा"
+
+[EnabledButton]
+hash = "sha1-3ea3f9802accf8817bacd6f3df46a73b93ccddec"
+other = "सक्षम"
+
+[ErrorAgeRestricted]
+hash = "sha1-15640b61f04937afc07abffdbce1f5bc250a5997"
+other = "यह सामग्री आयु-प्रतिबंधित है और इसे एक्सेस नहीं किया जा सकता"
+
+[ErrorAuthenticationNeeded]
+hash = "sha1-62c2e1cba75e4fb31392484973781bcbe5c6b62e"
+other = "यह इंस्टेंस इस सेवा के साथ प्रमाणित नहीं है"
+
+[ErrorDurationTooLong]
+hash = "sha1-079cb9174494931fe6b2ae1389082893ef4fe805"
+other = "यह वीडियो बहुत लंबा है और इस इंस्टेंस के लिए अनुमत अधिकतम अवधि से अधिक है"
+
+[ErrorFileTooLarge]
+hash = "sha1-86f5ec4087f8c7f2311df02f5282b662bf0df086"
+other = "यह फ़ाइल बहुत बड़ी है और इस इंस्टेंस के लिए अनुमत अधिकतम आकार से अधिक है"
+
+[ErrorGeoRestrictedContent]
+hash = "sha1-e42a8ae7ae124674611112659c35ef925834bed1"
+other = "इस सामग्री में भौगोलिक प्रतिबंध हैं और सर्वर के स्थान से इसे एक्सेस नहीं किया जा सकता"
+
+[ErrorInlineMediaAlbum]
+hash = "sha1-58bbb076a3fc42c7230930392c980661a8fa91d1"
+other = "आप इनलाइन मोड में मीडिया एल्बम डाउनलोड नहीं कर सकते। बॉट को किसी समूह या निजी चैट में उपयोग करें"
+
+[ErrorMediaAlbumGlobalLimitExceeded]
+hash = "sha1-1c6971f6e1596c1612c8d33cf1ac69d0e19f8ac1"
+other = "मीडिया एल्बम सीमा इस इंस्टेंस के लिए अनुमत अधिकतम से अधिक है"
+
+[ErrorMediaAlbumLimitExceeded]
+hash = "sha1-281844facb4347d00897dcf3ff65439f90ad84fd"
+other = "मीडिया एल्बम सीमा इस समूह के लिए अनुमत अधिकतम से अधिक है। सीमा बढ़ाने के लिए /settings बदलें"
+
+[ErrorMessage]
+hash = "sha1-614df8086d667e71dce55d45e98a555ce8d44ae0"
+other = "एक त्रुटि हुई, कृपया बाद में पुनः प्रयास करें"
+
+[ErrorNSFWNotAllowed]
+hash = "sha1-0f715698a99fb506afb2427cf53c5161873003ef"
+other = "यह सामग्री nsfw के रूप में चिह्नित है और इस समूह में डाउनलोड नहीं की जा सकती। nsfw सामग्री की अनुमति देने के लिए /settings बदलें या बॉट का निजी तौर पर उपयोग करें"
+
+[ErrorPaidContent]
+hash = "sha1-af7f00e04fd6e06b3532f2658db35d69c30ce907"
+other = "यह सामग्री सशुल्क है और इसे एक्सेस करने के लिए सदस्यता की आवश्यकता है"
+
+[ErrorPermissionDenied]
+hash = "sha1-d25f0560b2cda5f989fd8eeea5b2cf16de9df209"
+other = "बॉट के पास इस मीडिया को भेजने के लिए पर्याप्त अनुमतियां नहीं हैं। कृपया आवश्यक अनुमतियां प्रदान करें और पुनः प्रयास करें"
+
+[ErrorTelegramFileTooLarge]
+hash = "sha1-dbc0d3806bacb7dce1cef5763045a58b4354fc52"
+other = "यह फ़ाइल टेलीग्राम के लिए बहुत बड़ी है और अनुमत अधिकतम आकार से अधिक है"
+
+[ErrorTimeout]
+hash = "sha1-8d482cea2954904064573db533e1adec448ac729"
+other = "डाउनलोड करते समय टाइमआउट त्रुटि। बाद में पुनः प्रयास करें"
+
+[ErrorUnavailable]
+hash = "sha1-219e2d9a94ab4261cde3a1bb7d225da8ff90e02b"
+other = "यह सामग्री उपलब्ध नहीं है"
+
+[ErrorUnsupportedExtractorType]
+hash = "sha1-1097c29dc269a42354359d08fa2bfd81ad03055a"
+other = "असमर्थित एक्सट्रैक्टर प्रकार"
+
+[ErrorUnsupportedImageFormat]
+hash = "sha1-94f09974c03e42aca68585668e3e613fe85192d1"
+other = "असमर्थित छवि प्रारूप"
+
+[ExtractorsButton]
+hash = "sha1-90f775f104687d04dc6c10f0a6b929d9f9060a9b"
+other = "एक्सट्रैक्टर"
+
+[GroupSettingsMessage]
+hash = "sha1-dbc9223b568195bdd978bf68acd969c46f28b6b3"
+other = "इस समूह के लिए बॉट सेटिंग्स बदलने के लिए नीचे दिए गए बटनों का उपयोग करें"
+
+[InlineLoadingMessage]
+hash = "sha1-baadb84f7acdfe44efc938a3c3426ead6936ff75"
+other = "लोड हो रहा है... कृपया प्रतीक्षा करें"
+
+[InlineProcessingMessage]
+hash = "sha1-7929aa86a1a5fc31baa300082b53beca66b701ce"
+other = "मीडिया साझा किया गया! डाउनलोड प्रोसेस हो रहा है... कृपया प्रतीक्षा करें"
+
+[InlineShareMessage]
+hash = "sha1-4a07cc5e60b3925926889d83f4da7379a2aae55b"
+other = "इस मीडिया को साझा करें"
+
+[Language]
+hash = "sha1-1b669334dae8ebafa433f0175b5fd418a7bc0975"
+other = "हिन्दी"
+
+[LanguageButton]
+hash = "sha1-e11523c5ff23fc1600aca2d8ee5adb542c5ce4b3"
+other = "भाषा"
+
+[MediaAlbumButton]
+hash = "sha1-58741fca8e31c2cef03d3cac7d51b23c55d8695c"
+other = "मीडिया एल्बम"
+
+[MediaAlbumSettingsMessage]
+hash = "sha1-8228632c4b28e007be43131b6a6086f7af8cb675"
+other = "एक मीडिया एल्बम में अनुमत फ़ाइलों की अधिकतम संख्या चुनें"
+
+[NoPermission]
+hash = "sha1-8d32138f2eba21b8e6da3b1ff89cd24313c70733"
+other = "आपके पास इस कार्य को करने की अनुमति नहीं है"
+
+[NsfwButton]
+hash = "sha1-faa5286b4d10bb71066e9d4ce41454200ca537d2"
+other = "nsfw"
+
+[NsfwSettingsMessage]
+hash = "sha1-46866dcc9ffd0291d29125641ceb676c0a7c334b"
+other = "जब सक्षम हो, तो इस चैट में nsfw सामग्री डाउनलोड करने की अनुमति देता है\n\nचेतावनी: ऐसी सामग्री टेलीग्राम की सेवा की शर्तों का उल्लंघन कर सकती है और समूह प्रतिबंधों का कारण बन सकती है"
+
+[PrivateSettingsMessage]
+hash = "sha1-5b5023ae17c831ed530cb64300efe332b17df566"
+other = "अपनी व्यक्तिगत बॉट सेटिंग्स बदलने के लिए नीचे दिए गए बटनों का उपयोग करें"
+
+[SelectLanguageMessage]
+hash = "sha1-615a6cb03028cdc8abb8b75ae47d8d9a11542587"
+other = "अपनी पसंदीदा भाषा चुनें"
+
+[SettingsButton]
+hash = "sha1-3cc1d5a427a45820b04fe30f78a972b784952460"
+other = "सेटिंग्स"
+
+[SilentModeButton]
+hash = "sha1-e536a5efc012f53a6a555ae8d1b9af3f0563fe7d"
+other = "साइलेंट मोड"
+
+[SilentModeSettingsMessage]
+hash = "sha1-8eca1f33085a260053289e27e44da9ac425b3df6"
+other = "जब सक्षम हो, तो बॉट त्रुटि संदेश नहीं भेजेगा"
+
+[StartMessage]
+hash = "sha1-40428a095863d4dc32706540458f80f76b1b1eef"
+other = "स्वागत है {{.Name}}, govd में, विभिन्न सोशल प्लेटफ़ॉर्म से सामग्री डाउनलोड करने के लिए एक ओपन-सोर्स टेलीग्राम बॉट"
+
+[SupportedExtractorsMessage]
+hash = "sha1-c16d18ef8e24a2d2df3d011dbac5282bbd8783ca"
+other = "बॉट द्वारा समर्थित एक्सट्रैक्टर की सूची"

@@ -26,7 +26,18 @@ func Init() {
 	mustLoad("locales/active.tr.toml")
 	mustLoad("locales/active.uk.toml")
 	mustLoad("locales/active.ar.toml")
-
+	mustLoad("locales/active.hi.toml")
+	mustLoad("locales/active.fa.toml")
+	mustLoad("locales/active.zh.toml")
+	mustLoad("locales/active.ja.toml")
+	mustLoad("locales/active.ko.toml")
+	mustLoad("locales/active.pl.toml")
+	mustLoad("locales/active.nl.toml")
+	mustLoad("locales/active.vi.toml")
+	mustLoad("locales/active.th.toml")
+	mustLoad("locales/active.ms.toml")
+	mustLoad("locales/active.cs.toml")
+	mustLoad("locales/active.ro.toml")
 }
 
 func mustLoad(file string) {

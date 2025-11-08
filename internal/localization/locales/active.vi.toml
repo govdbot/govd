@@ -1,0 +1,179 @@
+[AddButton]
+hash = "sha1-11d91df6dbbe818cf48a5be9d16788654340d935"
+other = "thêm vào nhóm"
+
+[AddedToGroupMessage]
+hash = "sha1-ff7109173123bb92a805dc2b3369cafa10169fc1"
+other = "cảm ơn bạn đã thêm tôi! sử dụng lệnh /settings để cấu hình bot cho nhóm này"
+
+[BackButton]
+hash = "sha1-61bb8d29b5be7db307cb29005bff087ebe300454"
+other = "quay lại"
+
+[CaptionsButton]
+hash = "sha1-7baec8f44d3c98ebffad676dfab6491a89131fe7"
+other = "phụ đề"
+
+[CaptionsSettingsMessage]
+hash = "sha1-8edc8cfb1d11cd59048580e91e9fdefd1b393f31"
+other = "khi được bật, thêm mô tả gốc vào nội dung đã tải xuống, nếu có"
+
+[CloseButton]
+hash = "sha1-da38860cb875cb64092e402d80d9fe29c4865b18"
+other = "đóng"
+
+[DisabledButton]
+hash = "sha1-07596f183f5e91b1778d5e47b2752b8d42aa763d"
+other = "đã tắt"
+
+[DisabledExtractorsSettingsMessage]
+hash = "sha1-3420a5efefb071e48880fcf18fdc50e11c959e64"
+other = "chọn các trình trích xuất nào nên bị vô hiệu hóa. các liên kết từ trình trích xuất bị vô hiệu hóa sẽ bị bot bỏ qua"
+
+[EnabledButton]
+hash = "sha1-3ea3f9802accf8817bacd6f3df46a73b93ccddec"
+other = "đã bật"
+
+[ErrorAgeRestricted]
+hash = "sha1-15640b61f04937afc07abffdbce1f5bc250a5997"
+other = "nội dung này bị giới hạn độ tuổi và không thể truy cập"
+
+[ErrorAuthenticationNeeded]
+hash = "sha1-62c2e1cba75e4fb31392484973781bcbe5c6b62e"
+other = "phiên bản này chưa được xác thực với dịch vụ này"
+
+[ErrorDurationTooLong]
+hash = "sha1-079cb9174494931fe6b2ae1389082893ef4fe805"
+other = "video này quá dài và vượt quá thời lượng tối đa được phép cho phiên bản này"
+
+[ErrorFileTooLarge]
+hash = "sha1-86f5ec4087f8c7f2311df02f5282b662bf0df086"
+other = "tệp này quá lớn và vượt quá kích thước tối đa được phép cho phiên bản này"
+
+[ErrorGeoRestrictedContent]
+hash = "sha1-e42a8ae7ae124674611112659c35ef925834bed1"
+other = "nội dung này có hạn chế địa lý và không thể truy cập từ vị trí của máy chủ"
+
+[ErrorInlineMediaAlbum]
+hash = "sha1-58bbb076a3fc42c7230930392c980661a8fa91d1"
+other = "bạn không thể tải xuống album phương tiện ở chế độ nội tuyến. sử dụng bot trong nhóm hoặc trò chuyện riêng"
+
+[ErrorMediaAlbumGlobalLimitExceeded]
+hash = "sha1-1c6971f6e1596c1612c8d33cf1ac69d0e19f8ac1"
+other = "giới hạn album phương tiện vượt quá mức tối đa được phép cho phiên bản này"
+
+[ErrorMediaAlbumLimitExceeded]
+hash = "sha1-281844facb4347d00897dcf3ff65439f90ad84fd"
+other = "giới hạn album phương tiện vượt quá mức tối đa được phép cho nhóm này. thay đổi /settings để tăng giới hạn"
+
+[ErrorMessage]
+hash = "sha1-614df8086d667e71dce55d45e98a555ce8d44ae0"
+other = "đã xảy ra lỗi, vui lòng thử lại sau"
+
+[ErrorNSFWNotAllowed]
+hash = "sha1-0f715698a99fb506afb2427cf53c5161873003ef"
+other = "nội dung này được đánh dấu là nsfw và không thể tải xuống trong nhóm này. thay đổi /settings để cho phép nội dung nsfw hoặc sử dụng bot riêng tư"
+
+[ErrorPaidContent]
+hash = "sha1-af7f00e04fd6e06b3532f2658db35d69c30ce907"
+other = "nội dung này là trả phí và yêu cầu đăng ký để truy cập"
+
+[ErrorPermissionDenied]
+hash = "sha1-d25f0560b2cda5f989fd8eeea5b2cf16de9df209"
+other = "bot không có đủ quyền để gửi phương tiện này. vui lòng cấp các quyền cần thiết và thử lại"
+
+[ErrorTelegramFileTooLarge]
+hash = "sha1-dbc0d3806bacb7dce1cef5763045a58b4354fc52"
+other = "tệp này quá lớn đối với telegram và vượt quá kích thước tối đa được phép"
+
+[ErrorTimeout]
+hash = "sha1-8d482cea2954904064573db533e1adec448ac729"
+other = "lỗi hết thời gian chờ khi tải xuống. thử lại sau"
+
+[ErrorUnavailable]
+hash = "sha1-219e2d9a94ab4261cde3a1bb7d225da8ff90e02b"
+other = "nội dung này không khả dụng"
+
+[ErrorUnsupportedExtractorType]
+hash = "sha1-1097c29dc269a42354359d08fa2bfd81ad03055a"
+other = "loại trình trích xuất không được hỗ trợ"
+
+[ErrorUnsupportedImageFormat]
+hash = "sha1-94f09974c03e42aca68585668e3e613fe85192d1"
+other = "định dạng hình ảnh không được hỗ trợ"
+
+[ExtractorsButton]
+hash = "sha1-90f775f104687d04dc6c10f0a6b929d9f9060a9b"
+other = "trình trích xuất"
+
+[GroupSettingsMessage]
+hash = "sha1-dbc9223b568195bdd978bf68acd969c46f28b6b3"
+other = "sử dụng các nút bên dưới để thay đổi cài đặt bot cho nhóm này"
+
+[InlineLoadingMessage]
+hash = "sha1-baadb84f7acdfe44efc938a3c3426ead6936ff75"
+other = "đang tải... vui lòng đợi"
+
+[InlineProcessingMessage]
+hash = "sha1-7929aa86a1a5fc31baa300082b53beca66b701ce"
+other = "đã chia sẻ phương tiện! đang xử lý tải xuống... vui lòng đợi"
+
+[InlineShareMessage]
+hash = "sha1-4a07cc5e60b3925926889d83f4da7379a2aae55b"
+other = "chia sẻ phương tiện này"
+
+[Language]
+hash = "sha1-1b669334dae8ebafa433f0175b5fd418a7bc0975"
+other = "tiếng việt"
+
+[LanguageButton]
+hash = "sha1-e11523c5ff23fc1600aca2d8ee5adb542c5ce4b3"
+other = "ngôn ngữ"
+
+[MediaAlbumButton]
+hash = "sha1-58741fca8e31c2cef03d3cac7d51b23c55d8695c"
+other = "album phương tiện"
+
+[MediaAlbumSettingsMessage]
+hash = "sha1-8228632c4b28e007be43131b6a6086f7af8cb675"
+other = "chọn số lượng tệp tối đa được phép trong một album phương tiện"
+
+[NoPermission]
+hash = "sha1-8d32138f2eba21b8e6da3b1ff89cd24313c70733"
+other = "bạn không có quyền thực hiện hành động này"
+
+[NsfwButton]
+hash = "sha1-faa5286b4d10bb71066e9d4ce41454200ca537d2"
+other = "nsfw"
+
+[NsfwSettingsMessage]
+hash = "sha1-46866dcc9ffd0291d29125641ceb676c0a7c334b"
+other = "khi được bật, cho phép tải xuống nội dung nsfw trong cuộc trò chuyện này\n\ncảnh báo: nội dung như vậy có thể vi phạm điều khoản dịch vụ của telegram và dẫn đến hạn chế nhóm"
+
+[PrivateSettingsMessage]
+hash = "sha1-5b5023ae17c831ed530cb64300efe332b17df566"
+other = "sử dụng các nút bên dưới để thay đổi cài đặt bot cá nhân của bạn"
+
+[SelectLanguageMessage]
+hash = "sha1-615a6cb03028cdc8abb8b75ae47d8d9a11542587"
+other = "chọn ngôn ngữ ưa thích của bạn"
+
+[SettingsButton]
+hash = "sha1-3cc1d5a427a45820b04fe30f78a972b784952460"
+other = "cài đặt"
+
+[SilentModeButton]
+hash = "sha1-e536a5efc012f53a6a555ae8d1b9af3f0563fe7d"
+other = "chế độ im lặng"
+
+[SilentModeSettingsMessage]
+hash = "sha1-8eca1f33085a260053289e27e44da9ac425b3df6"
+other = "khi được bật, bot sẽ không gửi thông báo lỗi"
+
+[StartMessage]
+hash = "sha1-40428a095863d4dc32706540458f80f76b1b1eef"
+other = "chào mừng {{.Name}} đến với govd, một bot telegram mã nguồn mở để tải xuống nội dung từ nhiều nền tảng xã hội khác nhau"
+
+[SupportedExtractorsMessage]
+hash = "sha1-c16d18ef8e24a2d2df3d011dbac5282bbd8783ca"
+other = "danh sách các trình trích xuất được bot hỗ trợ"
