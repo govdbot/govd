@@ -72,7 +72,8 @@ func ChatFromContext(ctx *ext.Context) (*database.GetOrCreateChatRow, error) {
 			ChatID: id,
 			Type:   chatType,
 			Language: localization.GetLocaleFromCode(
-				languageCode, config.Env.DefaultLanguage,
+				languageCode,
+				config.Env.DefaultLanguage,
 			),
 			Captions:        config.Env.DefaultCaptions,
 			Silent:          config.Env.DefaultSilent,

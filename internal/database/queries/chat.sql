@@ -7,22 +7,25 @@ WITH upsert_chat AS (
 ),
 upsert_settings AS (
     INSERT INTO settings (chat_id, language, captions, silent, nsfw, media_album_limit)
-    SELECT chat_id, @language, @captions, @silent, @nsfw, @media_album_limit 
-    FROM upsert_chat
+    VALUES (@chat_id, @language, @captions, @silent, @nsfw, @media_album_limit)
     ON CONFLICT (chat_id) DO UPDATE SET
         language = CASE 
-            WHEN settings.language = 'XX' THEN @language 
+            WHEN settings.language = 'XX' THEN EXCLUDED.language 
             ELSE settings.language 
-        END
+        END,
+        captions = EXCLUDED.captions,
+        silent = EXCLUDED.silent,
+        nsfw = EXCLUDED.nsfw,
+        media_album_limit = EXCLUDED.media_album_limit
     RETURNING *
 ),
-chat AS (
-    SELECT * FROM chat WHERE chat_id = @chat_id
-    UNION SELECT * FROM upsert_chat
+final_chat AS (
+    SELECT * FROM upsert_chat
+    UNION ALL
+    SELECT * FROM chat WHERE chat_id = @chat_id AND NOT EXISTS (SELECT 1 FROM upsert_chat)
 ),
-settings AS (
-    SELECT * FROM settings WHERE chat_id = @chat_id
-    UNION SELECT * FROM upsert_settings
+final_settings AS (
+    SELECT * FROM upsert_settings
 )
 SELECT 
     c.chat_id,
@@ -33,5 +36,5 @@ SELECT
     s.silent,
     s.language,
     s.disabled_extractors
-FROM chat c 
-JOIN settings s ON s.chat_id = c.chat_id;
+FROM final_chat c 
+JOIN final_settings s ON s.chat_id = c.chat_id;
