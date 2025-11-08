@@ -33,8 +33,7 @@ var MergeAudio = &models.Plugin{
 			filePath,
 			filepath.Ext(filePath),
 		) + "_remuxed" + filepath.Ext(filePath)
-
-		ctx.FilesTracker.Add(&outputPath)
+		ctx.FilesTracker.Add(outputPath)
 
 		err = libav.MergeVideoWithAudio(
 			format.FilePath,

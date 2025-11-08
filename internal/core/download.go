@@ -139,10 +139,6 @@ func downloadFormat(
 	var filePath string
 	var thumbnailFilePath string
 
-	// track files for cleanup
-	ctx.FilesTracker.Add(&filePath)
-	ctx.FilesTracker.Add(&thumbnailFilePath)
-
 	// for images, download in memory and convert to jpeg
 	if format.Type == database.MediaTypePhoto {
 		file, err := download.DownloadFileInMemory(
@@ -154,6 +150,7 @@ func downloadFormat(
 		}
 
 		filePath = download.ToPath(fileName)
+		ctx.FilesTracker.Add(filePath)
 
 		if err := util.ImgToJPEG(file, filePath, 0); err != nil {
 			return nil, fmt.Errorf("failed to convert image: %w", err)

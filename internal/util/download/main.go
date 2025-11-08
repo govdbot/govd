@@ -30,10 +30,9 @@ func DownloadFile(
 	ensureDownloadDir()
 
 	client := ctx.HTTPClient.AsDownloadClient()
-	filePath := ToPath(fileName)
 
-	// track file for cleanup
-	ctx.FilesTracker.Add(&filePath)
+	filePath := ToPath(fileName)
+	ctx.FilesTracker.Add(filePath)
 
 	var lastErr error
 	for _, url := range urlList {
@@ -63,6 +62,7 @@ func DownloadFile(
 			filePath,
 			filepath.Ext(filePath),
 		) + "_remuxed" + filepath.Ext(filePath)
+		ctx.FilesTracker.Add(outputPath)
 
 		err = libav.RemuxFile(filePath, outputPath)
 		if err != nil {
@@ -93,15 +93,12 @@ func DownloadFileWithSegments(
 	ensureDownloadDir()
 
 	client := ctx.HTTPClient.AsDownloadClient()
-	filePath := ToPath(fileName)
 
-	// track file for cleanup
-	ctx.FilesTracker.Add(&filePath)
+	filePath := ToPath(fileName)
+	ctx.FilesTracker.Add(filePath)
 
 	tempDir := ToPath("segments" + uuid.NewString()[:8])
-
-	// track temp dir for cleanup
-	ctx.FilesTracker.Add(&tempDir)
+	ctx.FilesTracker.Add(tempDir)
 
 	if err := os.MkdirAll(tempDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create temporary directory: %w", err)
@@ -134,6 +131,7 @@ func DownloadFileWithSegments(
 		filePath,
 		filepath.Ext(filePath),
 	) + "_remuxed" + filepath.Ext(filePath)
+	ctx.FilesTracker.Add(outputPath)
 
 	err = libav.RemuxFile(filePath, outputPath)
 	if err != nil {
