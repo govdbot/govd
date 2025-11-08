@@ -121,6 +121,12 @@ func registerHandlers(dispatcher *ext.Dispatcher) *ext.Dispatcher {
 		botHandlers.StartHandler,
 	))
 
+	// extractors
+	dispatcher.AddHandler(handlers.NewCallback(
+		callbackquery.Equal("extractors"),
+		botHandlers.ExtractorsHandler,
+	))
+
 	// added to group
 	dispatcher.AddHandler(handlers.NewMyChatMember(
 		nil,

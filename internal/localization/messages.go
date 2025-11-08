@@ -99,13 +99,17 @@ var (
 		ID:    "NsfwButton",
 		Other: "nsfw",
 	}
-	DisabledExtractorsButton = &i18n.Message{
-		ID:    "DisabledExtractorsButton",
-		Other: "disabled extractors",
+	ExtractorsButton = &i18n.Message{
+		ID:    "ExtractorsButton",
+		Other: "extractors",
 	}
 	DisabledExtractorsSettingsMessage = &i18n.Message{
 		ID:    "DisabledExtractorsSettingsMessage",
 		Other: "select which extractors should be disabled. links from disabled extractors will be ignored by the bot.",
+	}
+	SupportedExtractorsMessage = &i18n.Message{
+		ID:    "SupportedExtractorsMessage",
+		Other: "list of supported extractors by the bot",
 	}
 	EnabledButton = &i18n.Message{
 		ID:    "EnabledButton",

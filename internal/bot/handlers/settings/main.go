@@ -140,7 +140,7 @@ var botSettings = []BotSettings{
 	},
 	{
 		ID:             "disabled_extractors",
-		ButtonKey:      localization.DisabledExtractorsButton.ID,
+		ButtonKey:      localization.ExtractorsButton.ID,
 		DescriptionKey: localization.DisabledExtractorsSettingsMessage.ID,
 
 		Type:  SettingsTypeMany,

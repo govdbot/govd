@@ -62,6 +62,9 @@ func getStartKeyboard(
 	settingsButton := localizer.T(&i18n.LocalizeConfig{
 		MessageID: localization.SettingsButton.ID,
 	})
+	extractorsButton := localizer.T(&i18n.LocalizeConfig{
+		MessageID: localization.ExtractorsButton.ID,
+	})
 	return gotgbot.InlineKeyboardMarkup{
 		InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
 			{
@@ -77,6 +80,10 @@ func getStartKeyboard(
 				{
 					Text:         settingsButton,
 					CallbackData: "settings",
+				},
+				{
+					Text:         extractorsButton,
+					CallbackData: "extractors",
 				},
 			},
 			{
