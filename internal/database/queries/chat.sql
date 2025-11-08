@@ -9,7 +9,11 @@ upsert_settings AS (
     INSERT INTO settings (chat_id, language, captions, silent, nsfw, media_album_limit)
     SELECT chat_id, @language, @captions, @silent, @nsfw, @media_album_limit 
     FROM upsert_chat
-    ON CONFLICT (chat_id) DO NOTHING
+    ON CONFLICT (chat_id) DO UPDATE SET
+        language = CASE 
+            WHEN settings.language = 'XX' THEN @language 
+            ELSE settings.language 
+        END
     RETURNING *
 ),
 chat AS (
