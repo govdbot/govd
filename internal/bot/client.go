@@ -47,7 +47,7 @@ func (b Client) RequestWithContext(
 		timer.ObserveDuration()
 
 		if err == nil {
-			return val, err
+			return val, nil
 		}
 
 		var tgErr *gotgbot.TelegramError

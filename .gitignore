@@ -9,9 +9,6 @@ tmp/
 # ides and editors
 .idea/
 
-# auto generated files
-*_gen.go
-
 # system files
 .DS_Store
 

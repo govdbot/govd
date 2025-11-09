@@ -46,7 +46,7 @@ func ExtractorsHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 }
 
 func getSupportedExtractors() []string {
-	var extractorNames []string
+	extractorNames := make([]string, 0, len(extractors.Extractors))
 	for _, e := range extractors.Extractors {
 		if e.Hidden || e.Redirect {
 			continue

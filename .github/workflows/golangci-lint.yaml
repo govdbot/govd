@@ -7,8 +7,6 @@ on:
 
 permissions:
   contents: read
-  # Optional: allow read access to pull requests. Use with `only-new-issues` option.
-  # pull-requests: read
 
 jobs:
   golangci:
@@ -23,3 +21,4 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         with:
           version: v2.1
+          args: --build-tags=lint

@@ -16,8 +16,7 @@ import (
 	_ "image/gif" // register GIF decoder
 	_ "image/png" // register PNG decoder
 
-	_ "github.com/strukturag/libheif/go/heif" // register HEIF decoder
-	_ "golang.org/x/image/webp"               // register WebP decoder
+	_ "golang.org/x/image/webp" // register WebP decoder
 )
 
 var (
