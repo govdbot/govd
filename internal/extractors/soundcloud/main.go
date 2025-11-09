@@ -92,6 +92,14 @@ func GetTrackMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 		return nil, err
 	}
 
+	if manifest.Media == nil {
+		return nil, fmt.Errorf("no media found in manifest")
+	}
+
+	if manifest.User == nil {
+		return nil, fmt.Errorf("no user info found in manifest")
+	}
+
 	title := manifest.Title
 	artist := manifest.User.Username
 	thumbnail := GetThumbnailURL(manifest.ArtworkURL)
