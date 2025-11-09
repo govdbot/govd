@@ -24,7 +24,8 @@ func (b Client) RequestWithContext(
 	ctx context.Context,
 	token string,
 	method string,
-	params map[string]any,
+	params map[string]string,
+	data map[string]gotgbot.FileReader,
 	opts *gotgbot.RequestOpts,
 ) (json.RawMessage, error) {
 	const maxRetries = 3
@@ -42,11 +43,11 @@ func (b Client) RequestWithContext(
 			"api_method": method,
 		}))
 
-		val, err = b.BotClient.RequestWithContext(ctx, token, method, params, opts)
+		val, err = b.BotClient.RequestWithContext(ctx, token, method, params, data, opts)
 		timer.ObserveDuration()
 
 		if err == nil {
-			return val, nil
+			return val, err
 		}
 
 		var tgErr *gotgbot.TelegramError
