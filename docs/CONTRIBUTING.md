@@ -15,7 +15,7 @@ docker compose -f docker-compose.dev.yaml up --build
 ## code quality
 we use `golangci-lint` to maintain code quality. before submitting a pull request, make sure to run the linter and fix any issues reported:
 ```bash
-golangci-lint run
+golangci-lint run --build-tags=lint
 ```
 
 ## localization
