@@ -2,7 +2,7 @@ name: sqlc vet
 on:
   push:
     branches:
-      - v2
+      - "main"
   pull_request:
 
 permissions:

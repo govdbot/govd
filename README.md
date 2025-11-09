@@ -45,6 +45,9 @@ refer to [this page](docs/AUTHENTICATION.md) for more information.
 contributions are welcome under some strict guidelines.
 refer to [this page](docs/CONTRIBUTING.md) for more information.
 
+## migrating from v1
+if you are migrating from govd v1 to v2, you can use the provided migration tool. refer to [this page](https://github.com/govdbot/migrate) for more information.
+
 ## community
 * [official bot](https://t.me/govd_bot)
 * [support chat](https://t.me/govdsupport)
