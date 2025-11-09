@@ -5,7 +5,7 @@ you can either host your own bot api using the official [telegram bot api source
 
 ## recommended (with docker)
 * [aiogram/telegram-bot-api](https://hub.docker.com/r/aiogram/telegram-bot-api): official telegram bot api, maintained by aiogram team.
-* [tdlight/tdlightbotapi](https://hub.docker.com/r/aiogram/telegram-bot-api): a high-performance, memory-optimized bot api, maintained by tdlight team.
+* [tdlight/tdlightbotapi](https://hub.docker.com/r/tdlight/tdlightbotapi): a high-performance, memory-optimized bot api, maintained by tdlight team.
 
 ## setup your docker compose
 since govd uses an internal network with docker, you can either:
