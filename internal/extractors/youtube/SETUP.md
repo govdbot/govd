@@ -8,20 +8,14 @@ youtube extractor is currently based on the invidious api.
 * provides a stable, simplified api for accessing video info and streams
 
 ## configuration
-you must specify the invidious instance in your `private/config.yaml` file:
-
-```yaml
-youtube:
-  instance: https://your-invidious-instance.example.com
-```
-
-you can also set a list of instances to use as fallback:
+you must specify the invidious instance in your `private/config.yaml` file as an array:
 
 ```yaml
 youtube:
   instance:
-    - https://instance1.example.com
-    - https://instance2.example.com
+    - https://your-invidious-instance.example.com
+    - https://another-invidious-instance.example.com
+    - ...
 ```
 
 for more details, see [configuration page](../../../docs/EXTRACTORS.md).
