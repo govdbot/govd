@@ -139,6 +139,21 @@ var botSettings = []BotSettings{
 		},
 	},
 	{
+		ID:             "delete_processed",
+		ButtonKey:      localization.DeleteProcessedButton.ID,
+		DescriptionKey: localization.DeleteProcessedSettingsMessage.ID,
+
+		Type:  SettingsTypeToggle,
+		Scope: SettingsScopeGroup,
+
+		ToggleFunc: func(ctx context.Context, chatID int64) error {
+			return database.Q().ToggleChatDeleteProcessed(ctx, chatID)
+		},
+		GetCurrentValueFunc: func(res *database.GetOrCreateChatRow) any {
+			return res.DeleteProcessed
+		},
+	},
+	{
 		ID:             "disabled_extractors",
 		ButtonKey:      localization.ExtractorsButton.ID,
 		DescriptionKey: localization.DisabledExtractorsSettingsMessage.ID,

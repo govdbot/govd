@@ -216,6 +216,39 @@ func URLFromMessage(msg *gotgbot.Message) string {
 	return ""
 }
 
+func ExtractCommentFromMessage(msg *gotgbot.Message) string {
+	if msg.Text == "" {
+		return ""
+	}
+
+	var urlEntity *gotgbot.MessageEntity
+	for _, entity := range msg.Entities {
+		if entity.Type == "url" {
+			urlEntity = &entity
+			break
+		}
+	}
+
+	if urlEntity == nil {
+		return ""
+	}
+
+	urlEnd := int(urlEntity.Offset + urlEntity.Length)
+	textRunes := []rune(msg.Text)
+	if urlEnd >= len(textRunes) {
+		return ""
+	}
+
+	commentRunes := textRunes[urlEnd:]
+	comment := strings.TrimSpace(string(commentRunes))
+
+	if comment == "" {
+		return ""
+	}
+
+	return comment
+}
+
 func MentionUser(user *gotgbot.User) string {
 	deepLink := "tg://user?id=" + strconv.FormatInt(user.Id, 10)
 	return "<a href='" + deepLink + "'>" + Unquote(user.FirstName) + "</a>"

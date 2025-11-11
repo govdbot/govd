@@ -85,6 +85,17 @@ func (q *Queries) ToggleChatCaptions(ctx context.Context, chatID int64) error {
 	return err
 }
 
+const toggleChatDeleteProcessed = `-- name: ToggleChatDeleteProcessed :exec
+UPDATE settings
+SET delete_processed = NOT delete_processed, updated_at = CURRENT_TIMESTAMP
+WHERE chat_id = $1
+`
+
+func (q *Queries) ToggleChatDeleteProcessed(ctx context.Context, chatID int64) error {
+	_, err := q.db.Exec(ctx, toggleChatDeleteProcessed, chatID)
+	return err
+}
+
 const toggleChatNsfw = `-- name: ToggleChatNsfw :exec
 UPDATE settings
 SET nsfw = NOT nsfw, updated_at = CURRENT_TIMESTAMP

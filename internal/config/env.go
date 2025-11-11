@@ -65,5 +65,6 @@ func GetDefaultConfig() *EnvConfig {
 		DefaultNSFW:            false,
 		DefaultMediaAlbumLimit: 10,
 		DefaultLanguage:        "en",
+		DefaultDeleteProcessed: false,
 	}
 }

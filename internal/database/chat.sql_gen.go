@@ -17,14 +17,14 @@ WITH upsert_chat AS (
     RETURNING chat_id, type, created_at, updated_at
 ),
 upsert_settings AS (
-    INSERT INTO settings (chat_id, language, captions, silent, nsfw, media_album_limit)
-    VALUES ($1, $3, $4, $5, $6, $7)
+    INSERT INTO settings (chat_id, language, captions, silent, nsfw, media_album_limit, delete_processed)
+    VALUES ($1, $3, $4, $5, $6, $7, FALSE)
     ON CONFLICT (chat_id) DO UPDATE SET
         language = CASE 
             WHEN settings.language = 'XX' THEN EXCLUDED.language 
             ELSE settings.language 
         END
-    RETURNING chat_id, nsfw, media_album_limit, captions, silent, language, created_at, updated_at, disabled_extractors
+    RETURNING chat_id, nsfw, media_album_limit, captions, silent, language, created_at, updated_at, disabled_extractors, delete_processed
 ),
 final_chat AS (
     SELECT chat_id, type, created_at, updated_at FROM upsert_chat
@@ -32,7 +32,7 @@ final_chat AS (
     SELECT chat_id, type, created_at, updated_at FROM chat WHERE chat_id = $1 AND NOT EXISTS (SELECT 1 FROM upsert_chat)
 ),
 final_settings AS (
-    SELECT chat_id, nsfw, media_album_limit, captions, silent, language, created_at, updated_at, disabled_extractors FROM upsert_settings
+    SELECT chat_id, nsfw, media_album_limit, captions, silent, language, created_at, updated_at, disabled_extractors, delete_processed FROM upsert_settings
 )
 SELECT 
     c.chat_id,
@@ -42,7 +42,8 @@ SELECT
     s.captions,
     s.silent,
     s.language,
-    s.disabled_extractors
+    s.disabled_extractors,
+    s.delete_processed
 FROM final_chat c 
 JOIN final_settings s ON s.chat_id = c.chat_id
 `
@@ -66,6 +67,7 @@ type GetOrCreateChatRow struct {
 	Silent             bool
 	Language           string
 	DisabledExtractors []string
+	DeleteProcessed    bool
 }
 
 func (q *Queries) GetOrCreateChat(ctx context.Context, arg GetOrCreateChatParams) (GetOrCreateChatRow, error) {
@@ -88,6 +90,7 @@ func (q *Queries) GetOrCreateChat(ctx context.Context, arg GetOrCreateChatParams
 		&i.Silent,
 		&i.Language,
 		&i.DisabledExtractors,
+		&i.DeleteProcessed,
 	)
 	return i, err
 }

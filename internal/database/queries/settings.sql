@@ -33,3 +33,8 @@ AND NOT (@extractor_id = ANY(disabled_extractors));
 UPDATE settings
 SET disabled_extractors = array_remove(disabled_extractors, @extractor_id), updated_at = CURRENT_TIMESTAMP
 WHERE chat_id = @chat_id;
+
+-- name: ToggleChatDeleteProcessed :exec
+UPDATE settings
+SET delete_processed = NOT delete_processed, updated_at = CURRENT_TIMESTAMP
+WHERE chat_id = @chat_id;

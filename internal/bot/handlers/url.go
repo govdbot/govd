@@ -47,6 +47,9 @@ func URLHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 	}
 	extractorCtx.SetChat(chat)
 
+	extractorCtx.User = message.From
+	extractorCtx.Comment = util.ExtractCommentFromMessage(message)
+
 	err = util.SendTypingAction(bot, chat.ChatID)
 	if err != nil {
 		core.HandleError(bot, ctx, extractorCtx, err)

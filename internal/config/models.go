@@ -39,6 +39,7 @@ type EnvConfig struct {
 	DefaultNSFW            bool
 	DefaultMediaAlbumLimit int32
 	DefaultLanguage        string
+	DefaultDeleteProcessed bool
 }
 
 type ExtractorConfig struct {

@@ -208,4 +208,5 @@ type Settings struct {
 	CreatedAt          pgtype.Timestamptz
 	UpdatedAt          pgtype.Timestamptz
 	DisabledExtractors []string
+	DeleteProcessed    bool
 }

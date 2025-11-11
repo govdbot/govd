@@ -87,6 +87,7 @@ func HandleInlineResultTask(
 	caption := formatCaption(
 		taskResult.Media,
 		extractorCtx.Chat.Captions,
+		extractorCtx,
 	)
 
 	err = SendInlineFormats(

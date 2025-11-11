@@ -83,7 +83,7 @@ func insertVideoInfo(format *models.MediaFormat, filePath string) {
 	format.Height = height
 }
 
-func formatCaption(media *models.Media, isEnabled bool) string {
+func formatCaption(media *models.Media, isEnabled bool, extractorCtx *models.ExtractorContext) string {
 	caption := media.Caption
 
 	var description string
@@ -91,6 +91,13 @@ func formatCaption(media *models.Media, isEnabled bool) string {
 		config.Env.CaptionsHeader,
 		"{{url}}", media.ContentURL,
 	)
+
+	var userComment string
+	if extractorCtx != nil && extractorCtx.Comment != "" && extractorCtx.User != nil {
+		userMention := util.MentionUser(extractorCtx.User)
+		userComment = fmt.Sprintf("%s Commented- \"%s\"", userMention, util.Unquote(extractorCtx.Comment))
+	}
+
 	if isEnabled && caption != "" {
 		if len(caption) > 600 {
 			caption = caption[:600] + "..."
@@ -100,7 +107,21 @@ func formatCaption(media *models.Media, isEnabled bool) string {
 			"{{text}}", util.Unquote(caption),
 		)
 	}
-	return header + "\n" + description
+
+	var result string
+	result = header
+	if userComment != "" {
+		result += "\n" + userComment
+	}
+	if description != "" {
+		if userComment != "" {
+			result += "\n\n" + description
+		} else {
+			result += "\n" + description
+		}
+	}
+
+	return result
 }
 
 // utility function to merge audio into video formats with no audio
