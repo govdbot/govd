@@ -83,22 +83,21 @@ func insertVideoInfo(format *models.MediaFormat, filePath string) {
 	format.Height = height
 }
 
-func formatCaption(media *models.Media, isEnabled bool) string {
+func formatCaption(media *models.Media, username string, isEnabled bool) string {
 	caption := media.Caption
-
+	if len(caption) > 600 {
+		caption = caption[:600] + "..."
+	}
+	formatText := func(s string) string {
+		s = strings.ReplaceAll(s, "{{username}}", username)
+		s = strings.ReplaceAll(s, "{{url}}", media.ContentURL)
+		s = strings.ReplaceAll(s, "{{text}}", util.Unquote(caption))
+		return s
+	}
 	var description string
-	header := strings.ReplaceAll(
-		config.Env.CaptionsHeader,
-		"{{url}}", media.ContentURL,
-	)
+	header := formatText(config.Env.CaptionsHeader)
 	if isEnabled && caption != "" {
-		if len(caption) > 600 {
-			caption = caption[:600] + "..."
-		}
-		description = strings.ReplaceAll(
-			config.Env.CaptionsDescription,
-			"{{text}}", util.Unquote(caption),
-		)
+		description = formatText(config.Env.CaptionsDescription)
 	}
 	return header + "\n" + description
 }

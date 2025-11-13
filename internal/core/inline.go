@@ -86,6 +86,7 @@ func HandleInlineResultTask(
 
 	caption := formatCaption(
 		taskResult.Media,
+		bot.Username,
 		extractorCtx.Chat.Captions,
 	)
 
