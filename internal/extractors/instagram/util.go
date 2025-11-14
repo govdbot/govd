@@ -30,8 +30,8 @@ const (
 	polarisAction   = "PolarisPostActionLoadPostQueryQuery"
 
 	igramHostname  = "api.igram.world"
-	igramKey       = "b29752c8c494efc92449507b9ff3a2c858bb1ccf27d07f4df618710bc7becfb1"
-	igramTimestamp = "1761977168628"
+	igramKey       = "36fc819c862897305f027cda96822a071a4a01b7f46bb4ffaac9b88a649d9c28"
+	igramTimestamp = "1763154775782"
 )
 
 var (
