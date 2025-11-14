@@ -7,6 +7,7 @@ toolchain go1.24.2
 require (
 	github.com/BurntSushi/toml v1.5.0
 	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.33
+	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/abema/go-mp4 v1.4.1
 	github.com/aki237/nscjar v0.0.0-20210417074043-bbb606196143
 	github.com/bogem/id3v2/v2 v2.1.4
@@ -31,6 +32,7 @@ require (
 )
 
 require (
+	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/aws/aws-sdk-go v1.38.20 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
