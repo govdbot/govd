@@ -12,7 +12,7 @@ const configPath = "private/config.yaml"
 
 var extractorConfigs map[string]*ExtractorConfig
 
-func loadExtractorConfigs() {
+func loadFromConfig() {
 	extractorConfigs = make(map[string]*ExtractorConfig)
 
 	_, err := os.Stat(configPath)

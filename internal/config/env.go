@@ -5,12 +5,14 @@ import (
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
+	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
 
 var Env = GetDefaultConfig()
 
-func loadEnv() {
+func loadFromEnv() {
+	godotenv.Load()
 	parseEnvString("DB_HOST", &Env.DBHost, false)
 	parseEnvInt("DB_PORT", &Env.DBPort, false)
 	parseEnvString("DB_NAME", &Env.DBName, false)
