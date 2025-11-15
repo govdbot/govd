@@ -108,7 +108,7 @@ func GetMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 			})
 			return media, nil
 		}
-		return nil, fmt.Errorf("no video formats found")
+		return nil, util.ErrUnavailable
 	} else {
 		images := details.ImagePost.Images
 		for _, image := range images {
