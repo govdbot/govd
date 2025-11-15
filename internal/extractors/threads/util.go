@@ -6,6 +6,7 @@ import (
 
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/models"
+	"github.com/govdbot/govd/internal/util"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -27,6 +28,10 @@ var headers = map[string]string{
 }
 
 func ParseEmbedMedia(ctx *models.ExtractorContext, body []byte) (*models.Media, error) {
+	if bytes.Contains(body, []byte("Thread not available")) {
+		return nil, util.ErrUnavailable
+	}
+
 	media := ctx.NewMedia()
 
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(body))
