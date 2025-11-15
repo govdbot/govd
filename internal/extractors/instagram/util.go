@@ -1,7 +1,6 @@
 package instagram
 
 import (
-	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -31,7 +30,7 @@ const (
 
 	igramHostname  = "api-wh.igram.world"
 	igramKey       = "36fc819c862897305f027cda96822a071a4a01b7f46bb4ffaac9b88a649d9c28"
-	igramTimestamp = "1763154775782"
+	igramTimestamp = "1763129421273"
 )
 
 var (
@@ -55,7 +54,8 @@ var (
 	}
 
 	igramHeaders = map[string]string{
-		"Content-Type": "application/json",
+		"Content-Type": "application/x-www-form-urlencoded",
+		"Referer":      "https://igram.world/",
 	}
 )
 
@@ -120,10 +120,6 @@ func ParseGQLMedia(ctx *models.ExtractorContext, data *Media) (*models.Media, er
 		}
 	}
 
-	if len(media.Items) == 0 {
-		return nil, fmt.Errorf("unknown media type: %s", data.Typename)
-	}
-
 	return media, nil
 }
 
@@ -162,6 +158,7 @@ func ParseEmbedGQL(body []byte) (*Media, error) {
 
 func BuildIGramPayload(contentURL string) (io.Reader, error) {
 	timestamp := strconv.FormatInt(time.Now().UnixMilli(), 10)
+
 	hash := sha256.New()
 	_, err := io.WriteString(
 		hash,
@@ -170,22 +167,19 @@ func BuildIGramPayload(contentURL string) (io.Reader, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error writing to SHA256 hash: %w", err)
 	}
+
 	secretBytes := hash.Sum(nil)
 	secretString := hex.EncodeToString(secretBytes)
 	secretString = strings.ToLower(secretString)
-	payload := map[string]string{
-		"sf_url": contentURL,
-		"ts":     timestamp,
-		"_ts":    igramTimestamp,
-		"_tsc":   "0", // ?
-		"_s":     secretString,
-	}
-	parsedPayload, err := sonic.ConfigFastest.Marshal(payload)
-	if err != nil {
-		return nil, fmt.Errorf("error marshalling payload: %w", err)
-	}
-	reader := bytes.NewReader(parsedPayload)
-	return reader, nil
+
+	payload := url.Values{}
+	payload.Set("sf_url", contentURL)
+	payload.Set("ts", timestamp)
+	payload.Set("_ts", igramTimestamp)
+	payload.Set("_tsc", "0") // ?
+	payload.Set("_s", secretString)
+
+	return strings.NewReader(payload.Encode()), nil
 }
 
 func ParseIGramResponse(body []byte) (*IGramResponse, error) {

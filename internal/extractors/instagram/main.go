@@ -132,6 +132,9 @@ func GetIGramMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	media := ctx.NewMedia()
 	for _, obj := range details.Items {
 		item := media.NewItem()
+		if len(obj.URL) == 0 {
+			continue
+		}
 		urlObj := obj.URL[0]
 		contentURL, err := GetCDNURL(urlObj.URL)
 		if err != nil {
@@ -165,12 +168,17 @@ func GetIGramMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 		}
 	}
 
+	if len(media.Items) == 0 {
+		return nil, fmt.Errorf("no media found")
+	}
+
 	return media, nil
 }
 
 func GetFromIGram(ctx *models.ExtractorContext) (*IGramResponse, error) {
+	contentURL := "https://www.instagram.com/p/" + ctx.ContentID + "/"
 	apiURL := fmt.Sprintf("https://%s/api/convert", igramHostname)
-	payload, err := BuildIGramPayload(ctx.ContentURL)
+	payload, err := BuildIGramPayload(contentURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build signed payload: %w", err)
 	}
