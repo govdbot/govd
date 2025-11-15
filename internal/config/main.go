@@ -1,6 +1,6 @@
 package config
 
 func Load() {
-	loadEnv()
-	loadExtractorConfigs()
+	loadFromEnv()
+	loadFromConfig()
 }
