@@ -91,7 +91,8 @@ type Context struct {
 }
 
 type IGramResponse struct {
-	Items []*IGramMedia `json:"items"`
+	Items   []*IGramMedia `json:"items"`
+	Success bool          `json:"success"`
 }
 
 type IGramMedia struct {

@@ -10,6 +10,7 @@ import (
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/networking"
+	"github.com/govdbot/govd/internal/util"
 )
 
 var instagramHost = []string{"instagram", "ddinstagram"}
@@ -129,12 +130,13 @@ func GetIGramMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 		return nil, fmt.Errorf("failed to get post: %w", err)
 	}
 
+	if !details.Success {
+		return nil, util.ErrUnavailable
+	}
+
 	media := ctx.NewMedia()
 	for _, obj := range details.Items {
 		item := media.NewItem()
-		if len(obj.URL) == 0 {
-			continue
-		}
 		urlObj := obj.URL[0]
 		contentURL, err := GetCDNURL(urlObj.URL)
 		if err != nil {
