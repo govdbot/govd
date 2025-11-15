@@ -24,21 +24,21 @@ var Extractor = &models.Extractor{
 
 	GetFunc: func(ctx *models.ExtractorContext) (*models.ExtractorResponse, error) {
 		// method 1: get media from GQL web API
-		media, err1 := GetGQLMediaList(ctx)
+		media, err1 := GetGQLMedia(ctx)
 		if err1 == nil {
 			return &models.ExtractorResponse{
 				Media: media,
 			}, nil
 		}
 		// method 2: get media from embed page
-		media, err2 := GetEmbedMediaList(ctx)
+		media, err2 := GetEmbedMedia(ctx)
 		if err2 == nil {
 			return &models.ExtractorResponse{
 				Media: media,
 			}, nil
 		}
 		// method 3: get media from 3rd party service (unlikely)
-		media, err3 := GetIGramMediaList(ctx)
+		media, err3 := GetIGramMedia(ctx)
 		if err3 == nil {
 			return &models.ExtractorResponse{
 				Media: media,
@@ -57,7 +57,7 @@ var StoriesExtractor = &models.Extractor{
 	Hidden:     true,
 
 	GetFunc: func(ctx *models.ExtractorContext) (*models.ExtractorResponse, error) {
-		media, err := GetIGramMediaList(ctx)
+		media, err := GetIGramMedia(ctx)
 		return &models.ExtractorResponse{
 			Media: media,
 		}, err
@@ -82,7 +82,7 @@ var ShareURLExtractor = &models.Extractor{
 	},
 }
 
-func GetGQLMediaList(ctx *models.ExtractorContext) (*models.Media, error) {
+func GetGQLMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	graphData, err := GetGQLData(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get graph data: %w", err)
@@ -90,7 +90,7 @@ func GetGQLMediaList(ctx *models.ExtractorContext) (*models.Media, error) {
 	return ParseGQLMedia(ctx, graphData.ShortcodeMedia)
 }
 
-func GetEmbedMediaList(ctx *models.ExtractorContext) (*models.Media, error) {
+func GetEmbedMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	embedURL := fmt.Sprintf(
 		"https://www.instagram.com/p/%s/embed/captioned",
 		ctx.ContentID,
@@ -123,7 +123,7 @@ func GetEmbedMediaList(ctx *models.ExtractorContext) (*models.Media, error) {
 	return ParseGQLMedia(ctx, graphData)
 }
 
-func GetIGramMediaList(ctx *models.ExtractorContext) (*models.Media, error) {
+func GetIGramMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	details, err := GetFromIGram(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get post: %w", err)

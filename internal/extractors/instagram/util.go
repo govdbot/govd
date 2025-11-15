@@ -29,7 +29,7 @@ const (
 	graphQLEndpoint = "https://www.instagram.com/graphql/query/"
 	polarisAction   = "PolarisPostActionLoadPostQueryQuery"
 
-	igramHostname  = "api.igram.world"
+	igramHostname  = "api-wh.igram.world"
 	igramKey       = "36fc819c862897305f027cda96822a071a4a01b7f46bb4ffaac9b88a649d9c28"
 	igramTimestamp = "1763154775782"
 )
@@ -174,11 +174,11 @@ func BuildIGramPayload(contentURL string) (io.Reader, error) {
 	secretString := hex.EncodeToString(secretBytes)
 	secretString = strings.ToLower(secretString)
 	payload := map[string]string{
-		"url":  contentURL,
-		"ts":   timestamp,
-		"_ts":  igramTimestamp,
-		"_tsc": "0", // ?
-		"_s":   secretString,
+		"sf_url": contentURL,
+		"ts":     timestamp,
+		"_ts":    igramTimestamp,
+		"_tsc":   "0", // ?
+		"_s":     secretString,
 	}
 	parsedPayload, err := sonic.ConfigFastest.Marshal(payload)
 	if err != nil {
