@@ -52,7 +52,10 @@ func HandleError(
 
 	errorID := util.HashedError(err)
 
-	logger.L.Errorf("unexpected error: [%s] %v", errorID, err)
+	logger.L.Errorf(
+		"unexpected error: [%s] [%s] %v",
+		errorID, extractorCtx.ContentURL, err,
+	)
 
 	sendErrorMessage(
 		b, ctx, errorID,
