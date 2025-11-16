@@ -130,7 +130,7 @@ func GetIGramMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 		return nil, fmt.Errorf("failed to get post: %w", err)
 	}
 
-	if !details.Success {
+	if details.Success != nil && !(*details.Success) {
 		return nil, util.ErrUnavailable
 	}
 
