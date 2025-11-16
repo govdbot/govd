@@ -137,6 +137,9 @@ func GetIGramMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	media := ctx.NewMedia()
 	for _, obj := range details.Items {
 		item := media.NewItem()
+		if len(obj.URL) == 0 {
+			return nil, fmt.Errorf("no media url found")
+		}
 		urlObj := obj.URL[0]
 		contentURL, err := GetCDNURL(urlObj.URL)
 		if err != nil {
