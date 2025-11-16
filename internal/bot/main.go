@@ -1,11 +1,13 @@
 package bot
 
 import (
+	"log/slog"
 	"runtime/debug"
 	"time"
 
 	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/logger"
+	"go.uber.org/zap/exp/zapslog"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
@@ -33,7 +35,9 @@ func Start() {
 	// prometheus monitoring
 	go monitorDispatcherBuffer(dispatcher)
 
-	updater := ext.NewUpdater(dispatcher, nil)
+	updater := ext.NewUpdater(dispatcher, &ext.UpdaterOpts{
+		Logger: slog.New(zapslog.NewHandler(logger.L.Desugar().Core())),
+	})
 
 	logger.L.Debugf("starting updates polling. allowed updates: %v", allowedUpdates)
 	err := updater.StartPolling(bot, &ext.PollingOpts{
@@ -81,11 +85,14 @@ func newDispatcher() *ext.Dispatcher {
 		Panic: func(_ *gotgbot.Bot, _ *ext.Context, r any) {
 			logger.L.Errorf(
 				"panic occurred while handling update: %v\n%s",
-				r,
-				debug.Stack(),
+				r, debug.Stack(),
 			)
 		},
+		UnhandledErrFunc: func(e error) {
+			logger.L.Errorf("unhandled error occurred: %v", e)
+		},
 		MaxRoutines: config.Env.ConcurrentUpdates,
+		Logger:      slog.New(zapslog.NewHandler(logger.L.Desugar().Core())),
 	})
 	return registerHandlers(dp)
 }

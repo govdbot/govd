@@ -6,7 +6,7 @@ toolchain go1.24.2
 
 require (
 	github.com/BurntSushi/toml v1.5.0
-	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.33
+	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.33.0.20251116120642-1f24afaba4d6
 	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/abema/go-mp4 v1.4.1
 	github.com/aki237/nscjar v0.0.0-20210417074043-bbb606196143
@@ -25,6 +25,7 @@ require (
 	github.com/titanous/json5 v1.0.0
 	github.com/u2takey/ffmpeg-go v0.5.0
 	go.uber.org/zap v1.27.0
+	go.uber.org/zap/exp v0.3.0
 	golang.org/x/image v0.30.0
 	golang.org/x/net v0.43.0
 	golang.org/x/text v0.28.0

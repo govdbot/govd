@@ -124,7 +124,7 @@ func sendErrorMessage(
 	case ctx.InlineQuery != nil:
 		ctx.InlineQuery.Answer(b, nil,
 			&gotgbot.AnswerInlineQueryOpts{
-				CacheTime: 1,
+				CacheTime: util.Ptr(int64(0)),
 				Button: &gotgbot.InlineQueryResultsButton{
 					Text:           message,
 					StartParameter: "start",
