@@ -14,20 +14,18 @@ import (
 )
 
 type SegmentedDownloader struct {
-	client        *networking.HTTPClient
-	path          string
-	initSegment   string
-	segments      []string
-	decryptionKey *models.DecryptionKey
-	retries       int
+	client           *networking.HTTPClient
+	path             string
+	initSegment      string
+	segments         []string
+	downloadSettings *models.DownloadSettings
 
 	wg sync.WaitGroup
 }
 
 type SegmentedDownloaderOptions struct {
-	InitSegment   string
-	DecryptionKey *models.DecryptionKey
-	Retries       int
+	InitSegment      string
+	DownloadSettings *models.DownloadSettings
 }
 
 type Segment struct {
@@ -36,7 +34,7 @@ type Segment struct {
 	err      error
 }
 
-func NewSegmentedDownloader(
+func New(
 	ctx context.Context,
 	client *networking.HTTPClient,
 	path string,
@@ -48,12 +46,11 @@ func NewSegmentedDownloader(
 	}
 
 	return &SegmentedDownloader{
-		client:        client,
-		path:          path,
-		initSegment:   options.InitSegment,
-		segments:      segments,
-		decryptionKey: options.DecryptionKey,
-		retries:       options.Retries,
+		client:           client,
+		path:             path,
+		initSegment:      options.InitSegment,
+		segments:         segments,
+		downloadSettings: options.DownloadSettings,
 	}
 }
 
@@ -104,7 +101,7 @@ func (sd *SegmentedDownloader) Download(
 		}
 	}
 
-	if sd.decryptionKey != nil {
+	if sd.downloadSettings.DecryptionKey != nil {
 		err := sd.decryptSegments(segments)
 		if err != nil {
 			return fmt.Errorf("failed to decrypt segments: %w", err)
@@ -148,13 +145,16 @@ func (sd *SegmentedDownloader) downloadSegmentToFile(
 	url string,
 	filePath string,
 ) error {
-	maxRetries := max(sd.retries, 1)
+	maxRetries := max(sd.downloadSettings.Retries, 1)
 	var lastErr error
 
 	for attempt := range maxRetries {
 		resp, err := sd.client.FetchWithContext(
 			ctx, http.MethodGet,
-			url, nil,
+			url, &networking.RequestParams{
+				Headers: sd.downloadSettings.Headers,
+				Cookies: sd.downloadSettings.Cookies,
+			},
 		)
 		if err != nil {
 			lastErr = fmt.Errorf("failed to fetch segment %q (attempt %d/%d): %w", url, attempt+1, maxRetries, err)

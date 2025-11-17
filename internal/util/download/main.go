@@ -35,30 +35,26 @@ func DownloadFile(
 	filePath := ToPath(fileName)
 	ctx.FilesTracker.Add(filePath)
 
+	file, err := os.Create(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
 	var lastErr error
 	for _, url := range urlList {
 		logger.L.Debugf("attempting download from: %s", url)
 
-		cd, err := chunked.NewChunkedDownloader(
-			ctx.Context, client, url, settings,
-		)
+		cd, err := chunked.New(ctx.Context, client, url, settings)
 		if err != nil {
-			logger.L.Debugf("chunked download not possible: %v, falling back to sequential download", err)
-			// Fallback to sequential download when range requests aren't supported
-			err = downloadSequential(ctx, client, url, filePath, settings)
+			// ranged requests not supported, fallback to sequential download
+			err = downloadSequential(ctx, client, url, file, settings)
 			if err != nil {
 				lastErr = err
 				continue
 			}
 		} else {
-			file, err := os.Create(filePath)
-			if err != nil {
-				return "", err
-			}
-			defer file.Close()
-
 			err = cd.Download(ctx, file, settings.NumConnections)
-
 			if err != nil {
 				lastErr = err
 				continue
@@ -113,13 +109,12 @@ func DownloadFileWithSegments(
 
 	logger.L.Debugf("attempting download from: %s", segmentURLs[0])
 
-	sd := segmented.NewSegmentedDownloader(
+	sd := segmented.New(
 		ctx.Context, client,
 		tempDir, segmentURLs,
 		&segmented.SegmentedDownloaderOptions{
-			InitSegment:   initSegmentURL,
-			DecryptionKey: settings.DecryptionKey,
-			Retries:       settings.Retries,
+			InitSegment:      initSegmentURL,
+			DownloadSettings: settings,
 		},
 	)
 
@@ -171,7 +166,10 @@ func DownloadFileInMemory(
 			resp, err := client.FetchWithContext(
 				ctx.Context,
 				http.MethodGet,
-				url, nil,
+				url, &networking.RequestParams{
+					Headers: settings.Headers,
+					Cookies: settings.Cookies,
+				},
 			)
 			if err != nil {
 				continue
@@ -196,13 +194,11 @@ func DownloadFileInMemory(
 	return nil, fmt.Errorf("all download attempts failed")
 }
 
-// downloadSequential performs a simple sequential download without chunking
-// This is used as a fallback when the server doesn't support range requests
 func downloadSequential(
 	ctx *models.ExtractorContext,
 	client *networking.HTTPClient,
 	url string,
-	filePath string,
+	writer io.Writer,
 	settings *models.DownloadSettings,
 ) error {
 	maxRetries := max(settings.Retries, 1)
@@ -223,25 +219,21 @@ func downloadSequential(
 			logger.L.Debugf("download attempt %d failed: %v", attempt+1, err)
 			continue
 		}
-		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
 			logger.L.Debugf("download attempt %d got status %d", attempt+1, resp.StatusCode)
 			continue
 		}
 
-		file, err := os.Create(filePath)
+		_, err = io.Copy(writer, resp.Body)
 		if err != nil {
-			return fmt.Errorf("failed to create file: %w", err)
-		}
-		defer file.Close()
-
-		_, err = io.Copy(file, resp.Body)
-		if err != nil {
+			resp.Body.Close()
 			logger.L.Debugf("download attempt %d copy failed: %v", attempt+1, err)
 			continue
 		}
 
+		resp.Body.Close()
 		return nil
 	}
 
