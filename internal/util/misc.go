@@ -189,7 +189,7 @@ func ParseAudioCodec(codecs string) database.MediaCodec {
 	}
 }
 
-func UnescaepURL(url string) string {
+func UnescapeURL(url string) string {
 	return strings.ReplaceAll(url, "&amp;", "&")
 }
 
