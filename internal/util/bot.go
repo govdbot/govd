@@ -66,15 +66,21 @@ func ChatFromContext(ctx *ext.Context) (*database.GetOrCreateChatRow, error) {
 		return nil, fmt.Errorf("unable to determine chat from context")
 	}
 
+	var language string
+	if config.Env.AutomaticLanguageDetection {
+		language = localization.GetLocaleFromCode(
+			languageCode,
+			config.Env.DefaultLanguage,
+		)
+	} else {
+		language = config.Env.DefaultLanguage
+	}
 	res, err := database.Q().GetOrCreateChat(
 		context.Background(),
 		database.GetOrCreateChatParams{
-			ChatID: id,
-			Type:   chatType,
-			Language: localization.GetLocaleFromCode(
-				languageCode,
-				config.Env.DefaultLanguage,
-			),
+			ChatID:          id,
+			Type:            chatType,
+			Language:        language,
 			Captions:        config.Env.DefaultCaptions,
 			Silent:          config.Env.DefaultSilent,
 			Nsfw:            config.Env.DefaultNSFW,
