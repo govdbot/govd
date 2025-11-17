@@ -63,8 +63,8 @@ COPY go.mod go.sum ./
 # download go dependencies and install air for hot reload
 RUN --mount=type=cache,target=/gomod-cache \
     go mod download && \
-    go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest && \
-    go install github.com/air-verse/air@latest
+    go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0 && \
+    go install github.com/air-verse/air@v1.63.1
 
 COPY . .
 

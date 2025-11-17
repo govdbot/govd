@@ -63,7 +63,7 @@ COPY go.mod go.sum ./
 # download go dependencies - cached between builds
 RUN --mount=type=cache,target=/gomod-cache \
     go mod download && \
-    go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+    go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
 
 # copy the rest of the source code
 COPY . .
