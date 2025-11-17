@@ -108,3 +108,38 @@ type IGramMediaURL struct {
 	Type string `json:"type"`
 	Ext  string `json:"ext"`
 }
+
+type IGramStoryResponse struct {
+	Result []*Result `json:"result"`
+}
+
+type VideoVersions struct {
+	URL             string `json:"url"`
+	Width           int    `json:"width"`
+	URLWrapped      string `json:"url_wrapped"`
+	URLDownloadable string `json:"url_downloadable"`
+	Height          int    `json:"height"`
+	Type            int    `json:"type"`
+}
+
+type Candidates struct {
+	Width           int    `json:"width"`
+	URLWrapped      string `json:"url_wrapped"`
+	URLDownloadable string `json:"url_downloadable"`
+	Height          int    `json:"height"`
+	URL             string `json:"url"`
+}
+
+type ImageVersions struct {
+	Candidates []*Candidates `json:"candidates"`
+}
+
+type Result struct {
+	TakenAt        int              `json:"taken_at"`
+	VideoVersions  []*VideoVersions `json:"video_versions"`
+	HasAudio       bool             `json:"has_audio"`
+	ImageVersions  *ImageVersions   `json:"image_versions2"`
+	OriginalHeight int              `json:"original_height"`
+	OriginalWidth  int              `json:"original_width"`
+	Pk             string           `json:"pk"`
+}
