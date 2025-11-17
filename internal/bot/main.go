@@ -92,7 +92,6 @@ func newDispatcher() *ext.Dispatcher {
 			logger.L.Errorf("unhandled error occurred: %v", e)
 		},
 		MaxRoutines: config.Env.ConcurrentUpdates,
-		Logger:      slog.New(zapslog.NewHandler(logger.L.Desugar().Core())),
 	})
 	return registerHandlers(dp)
 }
