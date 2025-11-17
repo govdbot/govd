@@ -80,7 +80,7 @@ func ParseUniversalData(body []byte) (*WebItemStruct, error) {
 
 	itemStruct := util.TraverseJSON(defaultScope, "itemStruct")
 	if itemStruct == nil {
-		return nil, fmt.Errorf("item struct not found")
+		return nil, util.ErrUnavailable
 	}
 	logger.WriteFile("tt_item_struct", itemStruct)
 
