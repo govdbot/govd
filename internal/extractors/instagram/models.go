@@ -91,8 +91,7 @@ type Context struct {
 }
 
 type IGramResponse struct {
-	Items   []*IGramMedia `json:"items"`
-	Success *bool         `json:"success"`
+	Items []*IGramMedia `json:"items"`
 }
 
 type IGramMedia struct {
@@ -100,6 +99,7 @@ type IGramMedia struct {
 	Thumb     string           `json:"thumb"`
 	Hosting   string           `json:"hosting"`
 	Timestamp int              `json:"timestamp"`
+	Success   *bool            `json:"success"`
 }
 
 type IGramMediaURL struct {

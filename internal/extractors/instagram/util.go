@@ -224,6 +224,9 @@ func ParseIGramResponse(body []byte) (*IGramResponse, error) {
 			Items: mediaList,
 		}, nil
 	}
+	if media.Success != nil && !(*media.Success) {
+		return nil, util.ErrUnavailable
+	}
 	return &IGramResponse{
 		Items: []*IGramMedia{&media},
 	}, nil

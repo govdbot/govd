@@ -132,10 +132,6 @@ func GetIGramPost(ctx *models.ExtractorContext) (*models.Media, error) {
 		return nil, fmt.Errorf("failed to get post: %w", err)
 	}
 
-	if details.Success != nil && !(*details.Success) {
-		return nil, util.ErrUnavailable
-	}
-
 	media := ctx.NewMedia()
 	for _, obj := range details.Items {
 		item := media.NewItem()
