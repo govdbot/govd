@@ -18,9 +18,10 @@ const (
 type SettingsType string
 
 const (
-	SettingsTypeSelect SettingsType = "select"
-	SettingsTypeMany   SettingsType = "many"
-	SettingsTypeToggle SettingsType = "toggle"
+	SettingsTypeSelect      SettingsType = "select"
+	SettingsTypeMany        SettingsType = "many"
+	SettingsTypeManyReverse SettingsType = "many_reverse"
+	SettingsTypeToggle      SettingsType = "toggle"
 )
 
 type BotSettings struct {
