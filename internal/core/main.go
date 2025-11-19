@@ -35,7 +35,6 @@ func HandleDownloadTask(
 		taskResult.Media,
 		bot.Username,
 		extractorCtx.Chat.Captions,
-		extractorCtx,
 	)
 
 	_, err = SendFormats(

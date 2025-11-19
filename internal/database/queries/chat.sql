@@ -6,8 +6,8 @@ WITH upsert_chat AS (
     RETURNING *
 ),
 upsert_settings AS (
-    INSERT INTO settings (chat_id, language, captions, silent, nsfw, media_album_limit, delete_processed)
-    VALUES (@chat_id, @language, @captions, @silent, @nsfw, @media_album_limit, FALSE)
+    INSERT INTO settings (chat_id, language, captions, silent, nsfw, media_album_limit, delete_links)
+    VALUES (@chat_id, @language, @captions, @silent, @nsfw, @media_album_limit, @delete_links)
     ON CONFLICT (chat_id) DO UPDATE SET
         language = CASE 
             WHEN settings.language = 'XX' THEN EXCLUDED.language 
@@ -32,6 +32,6 @@ SELECT
     s.silent,
     s.language,
     s.disabled_extractors,
-    s.delete_processed
+    s.delete_links
 FROM final_chat c 
 JOIN final_settings s ON s.chat_id = c.chat_id;

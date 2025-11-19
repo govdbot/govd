@@ -103,10 +103,9 @@ func SendFormats(
 		return nil, fmt.Errorf("no messages sent")
 	}
 
-	// delete original user message if delete_processed setting is enabled
-	if extractorCtx.Chat.DeleteProcessed && ctx.Message != nil {
-		go func(originalMessage *gotgbot.Message) {
-			originalMessage.Delete(bot, nil)
+	if extractorCtx.Chat.DeleteLinks && ctx.Message != nil {
+		go func(m *gotgbot.Message) {
+			m.Delete(bot, nil)
 		}(ctx.EffectiveMessage)
 	}
 

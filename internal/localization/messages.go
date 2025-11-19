@@ -107,11 +107,11 @@ var (
 		ID:    "DisabledExtractorsSettingsMessage",
 		Other: "select which extractors should be disabled. links from disabled extractors will be ignored by the bot",
 	}
-	DeleteProcessedButton = &i18n.Message{
+	DeleteLinksButton = &i18n.Message{
 		ID:    "DeleteProcessedButton",
-		Other: "delete link",
+		Other: "links",
 	}
-	DeleteProcessedSettingsMessage = &i18n.Message{
+	DeleteLinksSettingsMessage = &i18n.Message{
 		ID:    "DeleteProcessedSettingsMessage",
 		Other: "when enabled, deletes the user's original message after successfully processing the link",
 	}

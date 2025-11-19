@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/networking"
@@ -42,10 +41,6 @@ type ExtractorContext struct {
 
 	// allows plugins to download additional formats
 	DownloadFunc func(*ExtractorContext, int, *MediaFormat) (*DownloadedFormat, error)
-
-	// user information from original message
-	User    *gotgbot.User
-	Comment string
 }
 
 func (e *ExtractorContext) Key() string {

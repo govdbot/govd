@@ -39,6 +39,7 @@ func loadFromEnv() {
 	parseEnvBool("DEFAULT_ENABLE_NSFW", &Env.DefaultNSFW, false)
 	parseEnvInt32Range("DEFAULT_MEDIA_ALBUM_LIMIT", &Env.DefaultMediaAlbumLimit, 1, 20, false)
 	parseEnvLanguage("DEFAULT_LANGUAGE", &Env.DefaultLanguage, false)
+	parseEnvBool("DEFAULT_DELETE_LINKS", &Env.DefaultDeleteLinks, false)
 	parseEnvBool("AUTOMATIC_LANGUAGE_DETECTION", &Env.AutomaticLanguageDetection, false)
 }
 

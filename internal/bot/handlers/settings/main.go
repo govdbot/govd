@@ -139,18 +139,18 @@ var botSettings = []BotSettings{
 		},
 	},
 	{
-		ID:             "delete_processed",
-		ButtonKey:      localization.DeleteProcessedButton.ID,
-		DescriptionKey: localization.DeleteProcessedSettingsMessage.ID,
+		ID:             "delete_links",
+		ButtonKey:      localization.DeleteLinksButton.ID,
+		DescriptionKey: localization.DeleteLinksSettingsMessage.ID,
 
 		Type:  SettingsTypeToggle,
 		Scope: SettingsScopeGroup,
 
 		ToggleFunc: func(ctx context.Context, chatID int64) error {
-			return database.Q().ToggleChatDeleteProcessed(ctx, chatID)
+			return database.Q().ToggleChatDeleteLinks(ctx, chatID)
 		},
 		GetCurrentValueFunc: func(res *database.GetOrCreateChatRow) any {
-			return res.DeleteProcessed
+			return res.DeleteLinks
 		},
 	},
 	{

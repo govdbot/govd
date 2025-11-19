@@ -22,3 +22,6 @@ jobs:
         with:
           version: v2.1
           args: --build-tags=lint
+          # skip cache to avoid flakes (and avoid using gh-action storage)
+          skip-cache: true
+          skip-save-cache: true
