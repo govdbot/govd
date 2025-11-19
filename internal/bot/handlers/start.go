@@ -97,10 +97,6 @@ func getStartKeyboard(
 }
 
 func HandleGroupStart(bot *gotgbot.Bot, ctx *ext.Context) error {
-	ctx.EffectiveMessage.Reply(
-		bot,
-		"✅",
-		nil,
-	)
+	ctx.EffectiveMessage.Reply(bot, "✅", nil)
 	return nil
 }

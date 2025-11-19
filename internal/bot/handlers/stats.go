@@ -35,6 +35,9 @@ func StatsHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 func StatsCallbackHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 	data := ctx.CallbackQuery.Data
 	parts := strings.Split(data, ":")
+	if len(parts) < 2 {
+		return nil
+	}
 	period := parts[1]
 
 	text, err := formatMessage(period)
