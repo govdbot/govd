@@ -6,7 +6,7 @@ toolchain go1.24.2
 
 require (
 	github.com/BurntSushi/toml v1.5.0
-	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.33.0.20251116120642-1f24afaba4d6
+	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.33.0.20251119211017-5eef947ba530
 	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/abema/go-mp4 v1.4.1
 	github.com/aki237/nscjar v0.0.0-20210417074043-bbb606196143
