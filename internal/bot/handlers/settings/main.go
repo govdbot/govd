@@ -158,7 +158,7 @@ var botSettings = []BotSettings{
 		ButtonKey:      localization.ExtractorsButton.ID,
 		DescriptionKey: localization.DisabledExtractorsSettingsMessage.ID,
 
-		Type:  SettingsTypeMany,
+		Type:  SettingsTypeManyReverse,
 		Scope: SettingsScopeGroup,
 
 		OptionsFunc: func(l *localization.Localizer) []*BotSettingsOptions {

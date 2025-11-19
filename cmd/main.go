@@ -25,12 +25,13 @@ func main() {
 		logger.L.Fatal("ffmpeg binary not found in PATH")
 	}
 
-	if len(config.Env.Whitelist) > 0 {
-		logger.L.Infof("whitelist is enabled: %v", config.Env.Whitelist)
-	}
-
 	if len(config.Env.Admins) > 0 {
 		logger.L.Infof("admins: %v", config.Env.Admins)
+	}
+
+	if len(config.Env.Whitelist) > 0 {
+		config.Env.Whitelist = append(config.Env.Whitelist, config.Env.Admins...)
+		logger.L.Infof("whitelist is enabled: %v", config.Env.Whitelist)
 	}
 
 	if config.Env.ProfilerPort > 0 {

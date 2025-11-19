@@ -111,7 +111,7 @@ func MediaFromAPI(ctx *models.ExtractorContext) (*models.Media, error) {
 					Type:       database.MediaTypeVideo,
 					VideoCodec: database.MediaCodecAvc,
 					AudioCodec: database.MediaCodecAac,
-					URL:        []string{util.UnescaepURL(image.Variants.MP4.Source.URL)},
+					URL:        []string{util.UnescapeURL(image.Variants.MP4.Source.URL)},
 				})
 
 				return media, nil
@@ -121,7 +121,7 @@ func MediaFromAPI(ctx *models.ExtractorContext) (*models.Media, error) {
 			item.AddFormats(&models.MediaFormat{
 				FormatID: "photo",
 				Type:     database.MediaTypePhoto,
-				URL:      []string{util.UnescaepURL(image.Source.URL)},
+				URL:      []string{util.UnescapeURL(image.Source.URL)},
 			})
 
 			return media, nil
@@ -140,7 +140,7 @@ func MediaFromAPI(ctx *models.ExtractorContext) (*models.Media, error) {
 					item.AddFormats(&models.MediaFormat{
 						FormatID: "photo",
 						Type:     database.MediaTypePhoto,
-						URL:      []string{util.UnescaepURL(obj.Media.URL)},
+						URL:      []string{util.UnescapeURL(obj.Media.URL)},
 					})
 				case "AnimatedImage":
 					item.AddFormats(&models.MediaFormat{
@@ -148,7 +148,7 @@ func MediaFromAPI(ctx *models.ExtractorContext) (*models.Media, error) {
 						Type:       database.MediaTypeVideo,
 						VideoCodec: database.MediaCodecAvc,
 						AudioCodec: database.MediaCodecAac,
-						URL:        []string{util.UnescaepURL(obj.Media.MP4)},
+						URL:        []string{util.UnescapeURL(obj.Media.MP4)},
 					})
 				}
 			}

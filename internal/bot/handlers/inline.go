@@ -19,7 +19,7 @@ func InlineHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 		ctx.InlineQuery.Answer(
 			bot, []gotgbot.InlineQueryResult{},
 			&gotgbot.AnswerInlineQueryOpts{
-				CacheTime:  1,
+				CacheTime:  util.Ptr(int64(0)),
 				IsPersonal: true,
 			},
 		)
@@ -31,7 +31,7 @@ func InlineHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 		ctx.InlineQuery.Answer(
 			bot, []gotgbot.InlineQueryResult{},
 			&gotgbot.AnswerInlineQueryOpts{
-				CacheTime:  1,
+				CacheTime:  util.Ptr(int64(0)),
 				IsPersonal: true,
 			},
 		)

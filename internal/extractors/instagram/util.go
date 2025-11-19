@@ -1,12 +1,12 @@
 package instagram
 
 import (
-	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
+	"maps"
 	"math/big"
 	"net/http"
 	"net/url"
@@ -29,9 +29,9 @@ const (
 	graphQLEndpoint = "https://www.instagram.com/graphql/query/"
 	polarisAction   = "PolarisPostActionLoadPostQueryQuery"
 
-	igramHostname  = "api.igram.world"
-	igramKey       = "b29752c8c494efc92449507b9ff3a2c858bb1ccf27d07f4df618710bc7becfb1"
-	igramTimestamp = "1761977168628"
+	igramHostname  = "api-wh.igram.world"
+	igramKey       = "36fc819c862897305f027cda96822a071a4a01b7f46bb4ffaac9b88a649d9c28"
+	igramTimestamp = "1763129421273"
 )
 
 var (
@@ -55,7 +55,7 @@ var (
 	}
 
 	igramHeaders = map[string]string{
-		"Content-Type": "application/json",
+		"Referer": "https://igram.world/",
 	}
 )
 
@@ -120,10 +120,6 @@ func ParseGQLMedia(ctx *models.ExtractorContext, data *Media) (*models.Media, er
 		}
 	}
 
-	if len(media.Items) == 0 {
-		return nil, fmt.Errorf("unknown media type: %s", data.Typename)
-	}
-
 	return media, nil
 }
 
@@ -160,32 +156,58 @@ func ParseEmbedGQL(body []byte) (*Media, error) {
 	return ctxJSON.GqlData.ShortcodeMedia, nil
 }
 
-func BuildIGramPayload(contentURL string) (io.Reader, error) {
+func IGramBodyFromURL(contentURL string) (io.Reader, error) {
 	timestamp := strconv.FormatInt(time.Now().UnixMilli(), 10)
+
 	hash := sha256.New()
-	_, err := io.WriteString(
-		hash,
-		contentURL+timestamp+igramKey,
-	)
+	_, err := io.WriteString(hash, contentURL+timestamp+igramKey)
 	if err != nil {
 		return nil, fmt.Errorf("error writing to SHA256 hash: %w", err)
 	}
+
 	secretBytes := hash.Sum(nil)
 	secretString := hex.EncodeToString(secretBytes)
 	secretString = strings.ToLower(secretString)
-	payload := map[string]string{
-		"url":  contentURL,
+
+	payload := url.Values{}
+	payload.Set("sf_url", contentURL)
+	payload.Set("ts", timestamp)
+	payload.Set("_ts", igramTimestamp)
+	payload.Set("_tsc", "0") // ?
+	payload.Set("_s", secretString)
+
+	return strings.NewReader(payload.Encode()), nil
+}
+
+func IGramBodyFromParams(params map[string]string) (io.Reader, error) {
+	timestamp := strconv.FormatInt(time.Now().UnixMilli(), 10)
+
+	paramsStr, err := sonic.ConfigFastest.Marshal(params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal payload: %w", err)
+	}
+
+	hash := sha256.New()
+	_, err = io.WriteString(hash, string(paramsStr)+timestamp+igramKey)
+	if err != nil {
+		return nil, fmt.Errorf("error writing to SHA256 hash: %w", err)
+	}
+
+	secretBytes := hash.Sum(nil)
+	secretString := hex.EncodeToString(secretBytes)
+	secretString = strings.ToLower(secretString)
+
+	data := map[string]string{
 		"ts":   timestamp,
 		"_ts":  igramTimestamp,
 		"_tsc": "0", // ?
 		"_s":   secretString,
 	}
-	parsedPayload, err := sonic.ConfigFastest.Marshal(payload)
-	if err != nil {
-		return nil, fmt.Errorf("error marshalling payload: %w", err)
-	}
-	reader := bytes.NewReader(parsedPayload)
-	return reader, nil
+	maps.Copy(data, params)
+
+	parsedData, _ := sonic.ConfigFastest.Marshal(data)
+
+	return strings.NewReader(string(parsedData)), nil
 }
 
 func ParseIGramResponse(body []byte) (*IGramResponse, error) {
@@ -201,6 +223,9 @@ func ParseIGramResponse(body []byte) (*IGramResponse, error) {
 		return &IGramResponse{
 			Items: mediaList,
 		}, nil
+	}
+	if media.Success != nil && !(*media.Success) {
+		return nil, util.ErrUnavailable
 	}
 	return &IGramResponse{
 		Items: []*IGramMedia{&media},
@@ -354,4 +379,30 @@ func BuildGQLData() (map[string]string, map[string]string, error) {
 		"__spin_t":    timestamp,
 	}
 	return headers, body, nil
+}
+
+func GetBestCandidate(candidates []*Candidates) *Candidates {
+	if len(candidates) == 0 {
+		return nil
+	}
+	best := candidates[0]
+	for _, candidate := range candidates {
+		if candidate.Width > best.Width {
+			best = candidate
+		}
+	}
+	return best
+}
+
+func GetBestVideoVersion(versions []*VideoVersions) *VideoVersions {
+	if len(versions) == 0 {
+		return nil
+	}
+	best := versions[0]
+	for _, version := range versions {
+		if version.Width > best.Width {
+			best = version
+		}
+	}
+	return best
 }

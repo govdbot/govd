@@ -83,45 +83,23 @@ func insertVideoInfo(format *models.MediaFormat, filePath string) {
 	format.Height = height
 }
 
-func formatCaption(media *models.Media, isEnabled bool, extractorCtx *models.ExtractorContext) string {
+func formatCaption(media *models.Media, username string, isEnabled bool) string {
 	caption := media.Caption
-
+	if len(caption) > 600 {
+		caption = caption[:600] + "..."
+	}
+	formatText := func(s string) string {
+		s = strings.ReplaceAll(s, "{{username}}", username)
+		s = strings.ReplaceAll(s, "{{url}}", media.ContentURL)
+		s = strings.ReplaceAll(s, "{{text}}", util.Unquote(caption))
+		return s
+	}
 	var description string
-	header := strings.ReplaceAll(
-		config.Env.CaptionsHeader,
-		"{{url}}", media.ContentURL,
-	)
-
-	var userComment string
-	if extractorCtx != nil && extractorCtx.Comment != "" && extractorCtx.User != nil {
-		userMention := util.MentionUser(extractorCtx.User)
-		userComment = fmt.Sprintf("%s Commented- \"%s\"", userMention, util.Unquote(extractorCtx.Comment))
-	}
-
+	header := formatText(config.Env.CaptionsHeader)
 	if isEnabled && caption != "" {
-		if len(caption) > 600 {
-			caption = caption[:600] + "..."
-		}
-		description = strings.ReplaceAll(
-			config.Env.CaptionsDescription,
-			"{{text}}", util.Unquote(caption),
-		)
+		description = formatText(config.Env.CaptionsDescription)
 	}
-
-	var result string
-	result = header
-	if userComment != "" {
-		result += "\n" + userComment
-	}
-	if description != "" {
-		if userComment != "" {
-			result += "\n\n" + description
-		} else {
-			result += "\n" + description
-		}
-	}
-
-	return result
+	return header + "\n" + description
 }
 
 // utility function to merge audio into video formats with no audio

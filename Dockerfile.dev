@@ -1,4 +1,4 @@
-FROM golang:alpine
+FROM golang:1.25-alpine
 
 ARG LIBHEIF_VERSION=1.20.2
 
@@ -45,18 +45,15 @@ WORKDIR /bot/packages
 # download and build libheif from source
 RUN --mount=type=cache,target=/bot/downloads/libheif \
     mkdir -p /bot/downloads/libheif && \
-    cd /bot/downloads/libheif && \
-    if [ ! -f "libheif-${LIBHEIF_VERSION}.tar.gz" ]; then \
-        wget -O "libheif-${LIBHEIF_VERSION}.tar.gz" "https://github.com/strukturag/libheif/releases/download/v${LIBHEIF_VERSION}/libheif-${LIBHEIF_VERSION}.tar.gz"; \
+    if [ ! -f "/bot/downloads/libheif/libheif-${LIBHEIF_VERSION}.tar.gz" ]; then \
+        wget --progress=dot:giga -O "/bot/downloads/libheif/libheif-${LIBHEIF_VERSION}.tar.gz" "https://github.com/strukturag/libheif/releases/download/v${LIBHEIF_VERSION}/libheif-${LIBHEIF_VERSION}.tar.gz"; \
     fi && \
-    mkdir -p libheif && \
-    tar -xzf "libheif-${LIBHEIF_VERSION}.tar.gz" -C libheif --strip-components=1 && \
-    cd libheif && \
-    mkdir -p build && \
-    cd build && \
-    cmake -DCMAKE_BUILD_TYPE=Release .. && \
-    make -j"$(nproc)" && \
-    make install
+    mkdir -p /bot/downloads/libheif/libheif && \
+    tar -xzf "/bot/downloads/libheif/libheif-${LIBHEIF_VERSION}.tar.gz" -C /bot/downloads/libheif/libheif --strip-components=1 && \
+    mkdir -p /bot/downloads/libheif/libheif/build && \
+    cmake -S /bot/downloads/libheif/libheif -B /bot/downloads/libheif/libheif/build -DCMAKE_BUILD_TYPE=Release && \
+    make -C /bot/downloads/libheif/libheif/build -j"$(nproc)" && \
+    make -C /bot/downloads/libheif/libheif/build install
 
 WORKDIR /app
 
@@ -66,8 +63,8 @@ COPY go.mod go.sum ./
 # download go dependencies and install air for hot reload
 RUN --mount=type=cache,target=/gomod-cache \
     go mod download && \
-    go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest && \
-    go install github.com/air-verse/air@latest
+    go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0 && \
+    go install github.com/air-verse/air@v1.63.1
 
 COPY . .
 

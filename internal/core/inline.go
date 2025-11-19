@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/govdbot/govd/internal/localization"
 	"github.com/govdbot/govd/internal/models"
+	"github.com/govdbot/govd/internal/util"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
@@ -56,7 +57,7 @@ func HandleInlineTask(
 	ok, err := ctx.InlineQuery.Answer(
 		bot, []gotgbot.InlineQueryResult{inlineResult},
 		&gotgbot.AnswerInlineQueryOpts{
-			CacheTime:  1,
+			CacheTime:  util.Ptr(int64(0)),
 			IsPersonal: true,
 		},
 	)
@@ -86,6 +87,7 @@ func HandleInlineResultTask(
 
 	caption := formatCaption(
 		taskResult.Media,
+		bot.Username,
 		extractorCtx.Chat.Captions,
 		extractorCtx,
 	)

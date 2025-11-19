@@ -52,7 +52,10 @@ func HandleError(
 
 	errorID := util.HashedError(err)
 
-	logger.L.Errorf("unexpected error: [%s] %v", errorID, err)
+	logger.L.Errorf(
+		"unexpected error: [%s] [%s] %v",
+		errorID, extractorCtx.ContentURL, err,
+	)
 
 	sendErrorMessage(
 		b, ctx, errorID,
@@ -121,7 +124,7 @@ func sendErrorMessage(
 	case ctx.InlineQuery != nil:
 		ctx.InlineQuery.Answer(b, nil,
 			&gotgbot.AnswerInlineQueryOpts{
-				CacheTime: 1,
+				CacheTime: util.Ptr(int64(0)),
 				Button: &gotgbot.InlineQueryResultsButton{
 					Text:           message,
 					StartParameter: "start",

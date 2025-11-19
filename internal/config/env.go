@@ -5,12 +5,14 @@ import (
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
+	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
 
 var Env = GetDefaultConfig()
 
-func loadEnv() {
+func loadFromEnv() {
+	godotenv.Load()
 	parseEnvString("DB_HOST", &Env.DBHost, false)
 	parseEnvInt("DB_PORT", &Env.DBPort, false)
 	parseEnvString("DB_NAME", &Env.DBName, false)
@@ -37,6 +39,7 @@ func loadEnv() {
 	parseEnvBool("DEFAULT_ENABLE_NSFW", &Env.DefaultNSFW, false)
 	parseEnvInt32Range("DEFAULT_MEDIA_ALBUM_LIMIT", &Env.DefaultMediaAlbumLimit, 1, 20, false)
 	parseEnvLanguage("DEFAULT_LANGUAGE", &Env.DefaultLanguage, false)
+	parseEnvBool("AUTOMATIC_LANGUAGE_DETECTION", &Env.AutomaticLanguageDetection, false)
 }
 
 func GetDefaultConfig() *EnvConfig {
@@ -57,7 +60,7 @@ func GetDefaultConfig() *EnvConfig {
 		LogLevel:    zap.InfoLevel,
 		Caching:     true,
 
-		CaptionsHeader:      "<a href='{{url}}'>source</a> - @govd_bot",
+		CaptionsHeader:      "<a href='{{url}}'>source</a> - @{{username}}",
 		CaptionsDescription: "<blockquote expandable>{{text}}</blockquote>",
 
 		DefaultCaptions:        true,
@@ -65,6 +68,8 @@ func GetDefaultConfig() *EnvConfig {
 		DefaultNSFW:            false,
 		DefaultMediaAlbumLimit: 10,
 		DefaultLanguage:        "en",
-		DefaultDeleteProcessed: false,
+		DefaultDeleteLinks:     false,
+
+		AutomaticLanguageDetection: true,
 	}
 }

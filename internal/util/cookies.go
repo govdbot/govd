@@ -40,5 +40,7 @@ func ParseCookieFile(fileName string) []*http.Cookie {
 		return nil
 	}
 	cookiesCache[fileName] = cookies
+
+	logger.L.Debugf("parsed cookie file: %s", fileName)
 	return cookies
 }

@@ -97,6 +97,7 @@ func FromURL(url string) *models.ExtractorContext {
 			cancel()
 			return nil
 		}
+		logger.L.Debugf("%s: redirected to %s", extractor.ID, response.URL)
 
 		currentURL = response.URL
 		redirectCount++

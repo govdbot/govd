@@ -9,6 +9,7 @@ import (
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/networking"
+	"github.com/govdbot/govd/internal/util"
 
 	"github.com/bytedance/sonic"
 	"github.com/govdbot/govd/internal/logger"
@@ -164,6 +165,10 @@ func GetTweetAPI(ctx *models.ExtractorContext) (*Tweet, error) {
 	result := apiResponse.Data.TweetResult.Result
 	if result == nil {
 		return nil, fmt.Errorf("tweet not found")
+	}
+
+	if result.TypeName == "TweetUnavailable" {
+		return nil, util.ErrUnavailable
 	}
 
 	var tweet *Tweet

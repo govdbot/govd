@@ -85,7 +85,7 @@ func BuildSettingsOptionsButtons(
 			}
 			buttons = append(buttons, slices.Collect(slices.Chunk(optionButtons, chunkSize))...)
 		}
-	case SettingsTypeMany:
+	case SettingsTypeMany, SettingsTypeManyReverse:
 		if setting.OptionsFunc != nil {
 			options := setting.OptionsFunc(localizer)
 			currentValue := setting.GetCurrentValueFunc(chat)
@@ -106,10 +106,18 @@ func BuildSettingsOptionsButtons(
 				}
 
 				if slices.Contains(currentValues, optionValueStr) {
-					buttonText = "☑ " + option.Name
+					if setting.Type == SettingsTypeManyReverse {
+						buttonText = "☐ " + option.Name
+					} else {
+						buttonText = "☑ " + option.Name
+					}
 					action = "remove"
 				} else {
-					buttonText = "☐ " + option.Name
+					if setting.Type == SettingsTypeManyReverse {
+						buttonText = "☑ " + option.Name
+					} else {
+						buttonText = "☐ " + option.Name
+					}
 					action = "add"
 				}
 

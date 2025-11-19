@@ -8,9 +8,10 @@ import (
 )
 
 func (sd *SegmentedDownloader) decryptSegments(segments []string) error {
-	key := sd.decryptionKey.Key
-	iv := sd.decryptionKey.IV
-	mediaSequence := sd.decryptionKey.MediaSequence
+	dec := sd.downloadSettings.DecryptionKey
+	key := dec.Key
+	iv := dec.IV
+	mediaSequence := dec.MediaSequence
 
 	if !isValidAESKey(key) {
 		return fmt.Errorf("invalid key: expected 16 bytes, got %d", len(key))

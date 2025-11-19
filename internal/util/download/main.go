@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
+	"github.com/govdbot/govd/internal/networking"
 	"github.com/govdbot/govd/internal/util/download/chunked"
 	"github.com/govdbot/govd/internal/util/download/segmented"
 	"github.com/govdbot/govd/internal/util/libav"
@@ -34,28 +35,30 @@ func DownloadFile(
 	filePath := ToPath(fileName)
 	ctx.FilesTracker.Add(filePath)
 
+	file, err := os.Create(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
 	var lastErr error
 	for _, url := range urlList {
 		logger.L.Debugf("attempting download from: %s", url)
 
-		cd, err := chunked.NewChunkedDownloader(
-			ctx.Context, client, url, settings,
-		)
+		cd, err := chunked.New(ctx.Context, client, url, settings)
 		if err != nil {
-			lastErr = err
-			continue
-		}
-		file, err := os.Create(filePath)
-		if err != nil {
-			return "", err
-		}
-		defer file.Close()
-
-		err = cd.Download(ctx, file, settings.NumConnections)
-
-		if err != nil {
-			lastErr = err
-			continue
+			// ranged requests not supported, fallback to sequential download
+			err = downloadSequential(ctx, client, url, file, settings)
+			if err != nil {
+				lastErr = err
+				continue
+			}
+		} else {
+			err = cd.Download(ctx, file, settings.NumConnections)
+			if err != nil {
+				lastErr = err
+				continue
+			}
 		}
 
 		outputPath := strings.TrimSuffix(
@@ -106,13 +109,12 @@ func DownloadFileWithSegments(
 
 	logger.L.Debugf("attempting download from: %s", segmentURLs[0])
 
-	sd := segmented.NewSegmentedDownloader(
+	sd := segmented.New(
 		ctx.Context, client,
 		tempDir, segmentURLs,
 		&segmented.SegmentedDownloaderOptions{
-			InitSegment:   initSegmentURL,
-			DecryptionKey: settings.DecryptionKey,
-			Retries:       settings.Retries,
+			InitSegment:      initSegmentURL,
+			DownloadSettings: settings,
 		},
 	)
 
@@ -164,7 +166,10 @@ func DownloadFileInMemory(
 			resp, err := client.FetchWithContext(
 				ctx.Context,
 				http.MethodGet,
-				url, nil,
+				url, &networking.RequestParams{
+					Headers: settings.Headers,
+					Cookies: settings.Cookies,
+				},
 			)
 			if err != nil {
 				continue
@@ -187,4 +192,50 @@ func DownloadFileInMemory(
 	}
 
 	return nil, fmt.Errorf("all download attempts failed")
+}
+
+func downloadSequential(
+	ctx *models.ExtractorContext,
+	client *networking.HTTPClient,
+	url string,
+	writer io.Writer,
+	settings *models.DownloadSettings,
+) error {
+	maxRetries := max(settings.Retries, 1)
+
+	for attempt := range maxRetries {
+		logger.L.Debugf("sequential download attempt %d/%d", attempt+1, maxRetries)
+
+		resp, err := client.FetchWithContext(
+			ctx.Context,
+			http.MethodGet,
+			url,
+			&networking.RequestParams{
+				Headers: settings.Headers,
+				Cookies: settings.Cookies,
+			},
+		)
+		if err != nil {
+			logger.L.Debugf("download attempt %d failed: %v", attempt+1, err)
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			logger.L.Debugf("download attempt %d got status %d", attempt+1, resp.StatusCode)
+			continue
+		}
+
+		_, err = io.Copy(writer, resp.Body)
+		if err != nil {
+			resp.Body.Close()
+			logger.L.Debugf("download attempt %d copy failed: %v", attempt+1, err)
+			continue
+		}
+
+		resp.Body.Close()
+		return nil
+	}
+
+	return fmt.Errorf("all sequential download attempts failed")
 }

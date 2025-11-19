@@ -28,7 +28,7 @@ type Chunk struct {
 	err    error
 }
 
-func NewChunkedDownloader(
+func New(
 	ctx context.Context,
 	client *networking.HTTPClient,
 	url string,

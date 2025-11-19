@@ -6,6 +6,7 @@ import (
 	"github.com/govdbot/govd/internal/extractors/pinterest"
 	"github.com/govdbot/govd/internal/extractors/reddit"
 	"github.com/govdbot/govd/internal/extractors/soundcloud"
+	"github.com/govdbot/govd/internal/extractors/threads"
 	"github.com/govdbot/govd/internal/extractors/tiktok"
 	"github.com/govdbot/govd/internal/extractors/twitter"
 	"github.com/govdbot/govd/internal/extractors/youtube"
@@ -28,4 +29,5 @@ var Extractors = []*models.Extractor{
 	pinterest.Extractor,
 	reddit.Extractor,
 	reddit.ShortExtractor,
+	threads.Extractor,
 }

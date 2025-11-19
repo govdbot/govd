@@ -1,0 +1,23 @@
+name: docker-lint
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+
+jobs:
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: lint Dockerfile
+        uses: hadolint/hadolint-action@master
+        with:
+          dockerfile: "Dockerfile"
+
+      - name: lint Dockerfile.dev
+        uses: hadolint/hadolint-action@master
+        with:
+          dockerfile: "Dockerfile.dev"

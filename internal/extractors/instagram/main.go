@@ -3,13 +3,16 @@ package instagram
 import (
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"regexp"
 
+	"github.com/bytedance/sonic"
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/networking"
+	"github.com/govdbot/govd/internal/util"
 )
 
 var instagramHost = []string{"instagram", "ddinstagram"}
@@ -24,21 +27,21 @@ var Extractor = &models.Extractor{
 
 	GetFunc: func(ctx *models.ExtractorContext) (*models.ExtractorResponse, error) {
 		// method 1: get media from GQL web API
-		media, err1 := GetGQLMediaList(ctx)
+		media, err1 := GetGQLMedia(ctx)
 		if err1 == nil {
 			return &models.ExtractorResponse{
 				Media: media,
 			}, nil
 		}
 		// method 2: get media from embed page
-		media, err2 := GetEmbedMediaList(ctx)
+		media, err2 := GetEmbedMedia(ctx)
 		if err2 == nil {
 			return &models.ExtractorResponse{
 				Media: media,
 			}, nil
 		}
 		// method 3: get media from 3rd party service (unlikely)
-		media, err3 := GetIGramMediaList(ctx)
+		media, err3 := GetIGramPost(ctx)
 		if err3 == nil {
 			return &models.ExtractorResponse{
 				Media: media,
@@ -57,7 +60,7 @@ var StoriesExtractor = &models.Extractor{
 	Hidden:     true,
 
 	GetFunc: func(ctx *models.ExtractorContext) (*models.ExtractorResponse, error) {
-		media, err := GetIGramMediaList(ctx)
+		media, err := GetIGramStory(ctx)
 		return &models.ExtractorResponse{
 			Media: media,
 		}, err
@@ -82,7 +85,7 @@ var ShareURLExtractor = &models.Extractor{
 	},
 }
 
-func GetGQLMediaList(ctx *models.ExtractorContext) (*models.Media, error) {
+func GetGQLMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	graphData, err := GetGQLData(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get graph data: %w", err)
@@ -90,7 +93,7 @@ func GetGQLMediaList(ctx *models.ExtractorContext) (*models.Media, error) {
 	return ParseGQLMedia(ctx, graphData.ShortcodeMedia)
 }
 
-func GetEmbedMediaList(ctx *models.ExtractorContext) (*models.Media, error) {
+func GetEmbedMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	embedURL := fmt.Sprintf(
 		"https://www.instagram.com/p/%s/embed/captioned",
 		ctx.ContentID,
@@ -123,8 +126,8 @@ func GetEmbedMediaList(ctx *models.ExtractorContext) (*models.Media, error) {
 	return ParseGQLMedia(ctx, graphData)
 }
 
-func GetIGramMediaList(ctx *models.ExtractorContext) (*models.Media, error) {
-	details, err := GetFromIGram(ctx)
+func GetIGramPost(ctx *models.ExtractorContext) (*models.Media, error) {
+	details, err := GetPostFromIGram(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get post: %w", err)
 	}
@@ -132,6 +135,9 @@ func GetIGramMediaList(ctx *models.ExtractorContext) (*models.Media, error) {
 	media := ctx.NewMedia()
 	for _, obj := range details.Items {
 		item := media.NewItem()
+		if len(obj.URL) == 0 {
+			return nil, fmt.Errorf("no media url found")
+		}
 		urlObj := obj.URL[0]
 		contentURL, err := GetCDNURL(urlObj.URL)
 		if err != nil {
@@ -165,21 +171,71 @@ func GetIGramMediaList(ctx *models.ExtractorContext) (*models.Media, error) {
 		}
 	}
 
+	if len(media.Items) == 0 {
+		return nil, fmt.Errorf("no media found")
+	}
+
 	return media, nil
 }
 
-func GetFromIGram(ctx *models.ExtractorContext) (*IGramResponse, error) {
+func GetIGramStory(ctx *models.ExtractorContext) (*models.Media, error) {
+	details, err := GetStoryFromIGram(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get story: %w", err)
+	}
+
+	if len(details.Result) == 0 {
+		return nil, util.ErrUnavailable
+	}
+	result := details.Result[0]
+	isVideo := len(result.VideoVersions) > 0
+
+	media := ctx.NewMedia()
+	item := media.NewItem()
+	if isVideo {
+		video := GetBestVideoVersion(result.VideoVersions)
+		item.AddFormats(&models.MediaFormat{
+			FormatID:   "video",
+			Type:       database.MediaTypeVideo,
+			URL:        []string{video.URL},
+			VideoCodec: database.MediaCodecAvc,
+			AudioCodec: database.MediaCodecAac,
+		})
+	} else {
+		image := GetBestCandidate(result.ImageVersions.Candidates)
+		item.AddFormats(&models.MediaFormat{
+			Type:     database.MediaTypePhoto,
+			FormatID: "photo",
+			URL:      []string{image.URL},
+		})
+	}
+
+	if len(media.Items) == 0 {
+		return nil, fmt.Errorf("no media found")
+	}
+
+	return media, nil
+}
+
+func GetPostFromIGram(ctx *models.ExtractorContext) (*IGramResponse, error) {
+	contentURL := "https://www.instagram.com/p/" + ctx.ContentID + "/"
 	apiURL := fmt.Sprintf("https://%s/api/convert", igramHostname)
-	payload, err := BuildIGramPayload(ctx.ContentURL)
+	payload, err := IGramBodyFromURL(contentURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build signed payload: %w", err)
 	}
+
+	headers := map[string]string{
+		"Content-Type": "application/x-www-form-urlencoded",
+	}
+	maps.Copy(headers, igramHeaders)
+
 	resp, err := ctx.Fetch(
 		http.MethodPost,
 		apiURL,
 		&networking.RequestParams{
 			Body:    payload,
-			Headers: igramHeaders,
+			Headers: headers,
 		},
 	)
 	if err != nil {
@@ -201,4 +257,47 @@ func GetFromIGram(ctx *models.ExtractorContext) (*IGramResponse, error) {
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 	return response, nil
+}
+
+func GetStoryFromIGram(ctx *models.ExtractorContext) (*IGramStoryResponse, error) {
+	apiURL := fmt.Sprintf("https://%s/api/v1/instagram/story", igramHostname)
+	payload, err := IGramBodyFromParams(map[string]string{
+		"url": ctx.ContentURL,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to build signed payload: %w", err)
+	}
+
+	headers := map[string]string{
+		"Content-Type": "application/json",
+	}
+	maps.Copy(headers, igramHeaders)
+
+	resp, err := ctx.Fetch(
+		http.MethodPost,
+		apiURL,
+		&networking.RequestParams{
+			Body:    payload,
+			Headers: headers,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	logger.WriteFile("ig_story_3party_response", resp)
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get response: %s", resp.Status)
+	}
+
+	var story IGramStoryResponse
+	decoder := sonic.ConfigFastest.NewDecoder(resp.Body)
+	err = decoder.Decode(&story)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	return &story, nil
 }
