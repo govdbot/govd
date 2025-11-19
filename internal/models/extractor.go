@@ -2,11 +2,13 @@ package models
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"regexp"
 
 	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/database"
+	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/networking"
 )
 
@@ -41,6 +43,22 @@ type ExtractorContext struct {
 
 	// allows plugins to download additional formats
 	DownloadFunc func(*ExtractorContext, int, *MediaFormat) (*DownloadedFormat, error)
+}
+
+func (e *ExtractorContext) Debugf(format string, args ...interface{}) {
+	logger.L.Debugf(fmt.Sprintf("[%s] %s: %s", e.ContentURL, e.Extractor.ID, format), args...)
+}
+
+func (e *ExtractorContext) Infof(format string, args ...interface{}) {
+	logger.L.Infof(fmt.Sprintf("[%s] %s: %s", e.ContentURL, e.Extractor.ID, format), args...)
+}
+
+func (e *ExtractorContext) Warnf(format string, args ...interface{}) {
+	logger.L.Warnf(fmt.Sprintf("[%s] %s: %s", e.ContentURL, e.Extractor.ID, format), args...)
+}
+
+func (e *ExtractorContext) Errorf(format string, args ...interface{}) {
+	logger.L.Errorf(fmt.Sprintf("[%s] %s: %s", e.ContentURL, e.Extractor.ID, format), args...)
 }
 
 func (e *ExtractorContext) Key() string {

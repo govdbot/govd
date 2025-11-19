@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/govdbot/govd/internal/config"
-	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/networking"
 	"github.com/govdbot/govd/internal/util"
@@ -84,26 +83,26 @@ func FromURL(url string) *models.ExtractorContext {
 		if !extractor.Redirect {
 			return extractorCtx
 		} // extractor requires fetching the URL for redirection
-		logger.L.Debugf("following redirect for extractor: %s", extractor.ID)
+		extractorCtx.Debugf("following redirect")
 
 		response, err := extractor.GetFunc(extractorCtx)
 		if err != nil {
-			logger.L.Errorf("[%s] %s: %v", currentURL, extractor.ID, err)
+			extractorCtx.Errorf("redirect failed: %v", err)
 			cancel()
 			return nil
 		}
 		if response.URL == "" {
-			logger.L.Errorf("[%s] %s: no URL found in response", currentURL, extractor.ID)
+			extractorCtx.Errorf("redirect failed: empty URL in response")
 			cancel()
 			return nil
 		}
-		logger.L.Debugf("[%s] %s: redirected to %s", currentURL, extractor.ID, response.URL)
+		extractorCtx.Debugf("redirected to %s", response.URL)
 
 		currentURL = response.URL
 		redirectCount++
 
 		if redirectCount > maxRedirects {
-			logger.L.Errorf("%s: exceeded maximum number of redirects (%d)", extractor.ID, maxRedirects)
+			extractorCtx.Errorf("exceeded maximum number of redirects (%d)", maxRedirects)
 			cancel()
 			return nil
 		}

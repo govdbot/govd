@@ -21,7 +21,6 @@ func (ft *FilesTracker) Add(files ...string) {
 }
 
 func (ft *FilesTracker) Cleanup() {
-
 	for _, fileName := range ft.Files {
 		info, err := os.Stat(fileName)
 		if err != nil {

@@ -43,7 +43,7 @@ func DownloadFile(
 
 	var lastErr error
 	for _, url := range urlList {
-		logger.L.Debugf("attempting download from: %s", url)
+		ctx.Debugf("attempting download from: %s", url)
 
 		cd, err := chunked.New(ctx.Context, client, url, settings)
 		if err != nil {
@@ -69,7 +69,7 @@ func DownloadFile(
 
 		err = libav.RemuxFile(filePath, outputPath)
 		if err != nil {
-			logger.L.Warnf("remuxing failed, using original file: %v", err)
+			ctx.Warnf("remuxing failed, using original file: %v", err)
 			return filePath, nil
 		}
 
@@ -107,7 +107,7 @@ func DownloadFileWithSegments(
 		return "", fmt.Errorf("failed to create temporary directory: %w", err)
 	}
 
-	logger.L.Debugf("attempting download from: %s", segmentURLs[0])
+	ctx.Debugf("attempting download from: %s", segmentURLs[0])
 
 	sd := segmented.New(
 		ctx.Context, client,
@@ -137,7 +137,7 @@ func DownloadFileWithSegments(
 
 	err = libav.RemuxFile(filePath, outputPath)
 	if err != nil {
-		logger.L.Warnf("remuxing failed, using original file: %v", err)
+		ctx.Warnf("remuxing failed, using original file: %v", err)
 		return filePath, nil
 	}
 
@@ -162,7 +162,7 @@ func DownloadFileInMemory(
 
 	for _, url := range urlList {
 		for attempt := range maxRetries {
-			logger.L.Debugf("attempting download from: %s (attempt %d/%d)", url, attempt+1, maxRetries)
+			ctx.Debugf("attempting download from: %s (attempt %d/%d)", url, attempt+1, maxRetries)
 			resp, err := client.FetchWithContext(
 				ctx.Context,
 				http.MethodGet,
@@ -204,7 +204,7 @@ func downloadSequential(
 	maxRetries := max(settings.Retries, 1)
 
 	for attempt := range maxRetries {
-		logger.L.Debugf("sequential download attempt %d/%d", attempt+1, maxRetries)
+		ctx.Debugf("sequential download attempt %d/%d", attempt+1, maxRetries)
 
 		resp, err := client.FetchWithContext(
 			ctx.Context,
@@ -216,7 +216,7 @@ func downloadSequential(
 			},
 		)
 		if err != nil {
-			logger.L.Debugf("download attempt %d failed: %v", attempt+1, err)
+			ctx.Debugf("download attempt %d failed: %v", attempt+1, err)
 			continue
 		}
 

@@ -8,7 +8,6 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/localization"
-	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/util"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -52,10 +51,7 @@ func HandleError(
 
 	errorID := util.HashedError(err)
 
-	logger.L.Errorf(
-		"unexpected error: [%s] [%s] %v",
-		errorID, extractorCtx.ContentURL, err,
-	)
+	extractorCtx.Errorf("unexpected error: [%s] %v", errorID, err)
 
 	sendErrorMessage(
 		b, ctx, errorID,

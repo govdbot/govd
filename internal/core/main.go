@@ -5,7 +5,6 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/database"
-	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/util"
 )
@@ -69,11 +68,7 @@ func executeDownload(extractorCtx *models.ExtractorContext, isInline bool) (*mod
 			if err != nil {
 				return nil, err
 			}
-			logger.L.Debugf(
-				"media found in database: %s/%s",
-				extractorCtx.Extractor.ID,
-				extractorCtx.ContentID,
-			)
+			extractorCtx.Debugf("media found in database")
 			return task, nil
 		}
 	}

@@ -48,7 +48,7 @@ func GetVideoFromInv(ctx *models.ExtractorContext) (*models.Media, error) {
 		if err == nil {
 			return media, nil
 		}
-		logger.L.Debugf("invidious instance %s failed: %v", instance, err)
+		ctx.Debugf("invidious instance %s failed: %v", instance, err)
 	}
 	return nil, err
 }
@@ -60,7 +60,7 @@ func GetFromInstance(ctx *models.ExtractorContext, instance string) (*models.Med
 		videoID +
 		"?local=true" // proxied CDN
 
-	logger.L.Debugf("proxied invidious api: %s", reqURL)
+	ctx.Debugf("proxied invidious api: %s", reqURL)
 
 	resp, err := ctx.Fetch(
 		http.MethodGet,

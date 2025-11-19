@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/govdbot/govd/internal/database"
-	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/util"
 	"github.com/govdbot/govd/internal/util/download"
@@ -71,7 +70,7 @@ func downloadItem(
 		return
 	}
 
-	logger.L.Debugf("selected format: %s", format.ToString())
+	ctx.Debugf("selected format: %s", format.ToString())
 
 	// validate format before download
 	// to avoid downloading large files
@@ -111,7 +110,7 @@ func downloadItem(
 
 	for _, plugin := range format.Plugins {
 		if plugin != nil {
-			logger.L.Debugf("running plugin: %s", plugin.ID)
+			ctx.Debugf("running plugin: %s", plugin.ID)
 			err := plugin.RunFunc(ctx, item, downloadedFormat)
 			if err != nil {
 				formats <- &models.DownloadedFormat{

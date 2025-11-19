@@ -7,7 +7,6 @@ import (
 	"regexp"
 
 	"github.com/govdbot/govd/internal/database"
-	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/util"
 )
@@ -31,12 +30,11 @@ var VMExtractor = &models.Extractor{
 		}
 
 		if parsedURL.Path == "/login" {
-			logger.L.Debug("tiktok is geo restricted in your region, attemping bypass...")
+			ctx.Debugf("tiktok is geo restricted in your region, attemping bypass...")
 			realURL := parsedURL.Query().Get("redirect_url")
 			if realURL == "" {
 				return nil, util.ErrGeoRestrictedContent
 			}
-			logger.L.Debugf("found url: %s", realURL)
 			return &models.ExtractorResponse{
 				URL: realURL,
 			}, nil

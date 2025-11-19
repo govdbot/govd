@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/govdbot/govd/internal/database"
-	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/util/parser/m3u8"
 
@@ -35,7 +34,6 @@ func ParseVideoObject(ctx *models.ExtractorContext, videoObj *Videos) ([]*models
 				ThumbnailURL: []string{video.Thumbnail},
 			})
 		} else {
-			logger.L.Debugf("extracting HLS formats: %s", key)
 			hlsFormats, err := m3u8.ParseM3U8FromURL(ctx, video.URL, nil)
 			if err != nil {
 				return nil, fmt.Errorf("failed to extract hls formats: %w", err)
