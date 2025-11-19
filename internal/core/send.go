@@ -103,6 +103,12 @@ func SendFormats(
 		return nil, fmt.Errorf("no messages sent")
 	}
 
+	if extractorCtx.Chat.DeleteLinks && ctx.Message != nil {
+		go func(m *gotgbot.Message) {
+			m.Delete(bot, nil)
+		}(ctx.EffectiveMessage)
+	}
+
 	if !options.IsStored && config.Env.Caching {
 		err := StoreMedia(
 			extractorCtx.Context,

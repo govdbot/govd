@@ -34,11 +34,13 @@ type EnvConfig struct {
 	CaptionsHeader      string
 	CaptionsDescription string
 
-	DefaultCaptions            bool
-	DefaultSilent              bool
-	DefaultNSFW                bool
-	DefaultMediaAlbumLimit     int32
-	DefaultLanguage            string
+	DefaultCaptions        bool
+	DefaultSilent          bool
+	DefaultNSFW            bool
+	DefaultMediaAlbumLimit int32
+	DefaultLanguage        string
+	DefaultDeleteLinks     bool
+
 	AutomaticLanguageDetection bool
 }
 

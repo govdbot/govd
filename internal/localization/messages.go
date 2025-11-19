@@ -107,6 +107,14 @@ var (
 		ID:    "DisabledExtractorsSettingsMessage",
 		Other: "select which extractors should be disabled. links from disabled extractors will be ignored by the bot",
 	}
+	DeleteLinksButton = &i18n.Message{
+		ID:    "DeleteProcessedButton",
+		Other: "links",
+	}
+	DeleteLinksSettingsMessage = &i18n.Message{
+		ID:    "DeleteProcessedSettingsMessage",
+		Other: "when enabled, deletes the user's original message after successfully processing the link",
+	}
 	SupportedExtractorsMessage = &i18n.Message{
 		ID:    "SupportedExtractorsMessage",
 		Other: "list of supported extractors by the bot",

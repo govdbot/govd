@@ -39,6 +39,7 @@ func loadFromEnv() {
 	parseEnvBool("DEFAULT_ENABLE_NSFW", &Env.DefaultNSFW, false)
 	parseEnvInt32Range("DEFAULT_MEDIA_ALBUM_LIMIT", &Env.DefaultMediaAlbumLimit, 1, 20, false)
 	parseEnvLanguage("DEFAULT_LANGUAGE", &Env.DefaultLanguage, false)
+	parseEnvBool("DEFAULT_DELETE_LINKS", &Env.DefaultDeleteLinks, false)
 	parseEnvBool("AUTOMATIC_LANGUAGE_DETECTION", &Env.AutomaticLanguageDetection, false)
 }
 
@@ -63,11 +64,13 @@ func GetDefaultConfig() *EnvConfig {
 		CaptionsHeader:      "<a href='{{url}}'>source</a> - @{{username}}",
 		CaptionsDescription: "<blockquote expandable>{{text}}</blockquote>",
 
-		DefaultCaptions:            true,
-		DefaultSilent:              false,
-		DefaultNSFW:                false,
-		DefaultMediaAlbumLimit:     10,
-		DefaultLanguage:            "en",
+		DefaultCaptions:        true,
+		DefaultSilent:          false,
+		DefaultNSFW:            false,
+		DefaultMediaAlbumLimit: 10,
+		DefaultLanguage:        "en",
+		DefaultDeleteLinks:     false,
+
 		AutomaticLanguageDetection: true,
 	}
 }

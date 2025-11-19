@@ -85,6 +85,7 @@ func ChatFromContext(ctx *ext.Context) (*database.GetOrCreateChatRow, error) {
 			Silent:          config.Env.DefaultSilent,
 			Nsfw:            config.Env.DefaultNSFW,
 			MediaAlbumLimit: config.Env.DefaultMediaAlbumLimit,
+			DeleteLinks:     config.Env.DefaultDeleteLinks,
 		},
 	)
 	if err != nil {
@@ -220,6 +221,39 @@ func URLFromMessage(msg *gotgbot.Message) string {
 		return parsedEntity.Text
 	}
 	return ""
+}
+
+func ExtractCommentFromMessage(msg *gotgbot.Message) string {
+	if msg.Text == "" {
+		return ""
+	}
+
+	var urlEntity *gotgbot.MessageEntity
+	for _, entity := range msg.Entities {
+		if entity.Type == "url" {
+			urlEntity = &entity
+			break
+		}
+	}
+
+	if urlEntity == nil {
+		return ""
+	}
+
+	urlEnd := int(urlEntity.Offset + urlEntity.Length)
+	textRunes := []rune(msg.Text)
+	if urlEnd >= len(textRunes) {
+		return ""
+	}
+
+	commentRunes := textRunes[urlEnd:]
+	comment := strings.TrimSpace(string(commentRunes))
+
+	if comment == "" {
+		return ""
+	}
+
+	return comment
 }
 
 func MentionUser(user *gotgbot.User) string {
