@@ -164,7 +164,7 @@ func GetTweetAPI(ctx *models.ExtractorContext) (*Tweet, error) {
 
 	result := apiResponse.Data.TweetResult.Result
 	if result == nil {
-		return nil, fmt.Errorf("tweet not found")
+		return nil, util.ErrUnavailable
 	}
 
 	if result.TypeName == "TweetUnavailable" {
