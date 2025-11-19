@@ -88,16 +88,16 @@ func FromURL(url string) *models.ExtractorContext {
 
 		response, err := extractor.GetFunc(extractorCtx)
 		if err != nil {
-			logger.L.Errorf("%s: %v", extractor.ID, err)
+			logger.L.Errorf("[%s] %s: %v", currentURL, extractor.ID, err)
 			cancel()
 			return nil
 		}
 		if response.URL == "" {
-			logger.L.Errorf("%s: no URL found in response", extractor.ID)
+			logger.L.Errorf("[%s] %s: no URL found in response", currentURL, extractor.ID)
 			cancel()
 			return nil
 		}
-		logger.L.Debugf("%s: redirected to %s", extractor.ID, response.URL)
+		logger.L.Debugf("[%s] %s: redirected to %s", currentURL, extractor.ID, response.URL)
 
 		currentURL = response.URL
 		redirectCount++
