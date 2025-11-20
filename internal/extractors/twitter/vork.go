@@ -27,7 +27,7 @@ func IsVorkMuxer(inputPath string) bool {
 	}
 	boxes, err := mp4.ExtractBoxesWithPayload(r, nil, []mp4.BoxPath{path})
 	if err != nil {
-		panic(err)
+		return false
 	}
 	for _, bi := range boxes {
 		hdlr, ok := bi.Payload.(*mp4.Hdlr)
