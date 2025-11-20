@@ -91,8 +91,8 @@ func FromURL(url string) *models.ExtractorContext {
 			cancel()
 			return nil
 		}
-		if response.URL == "" {
-			extractorCtx.Errorf("redirect failed: empty URL in response")
+		if response == nil || response.URL == "" {
+			extractorCtx.Debugf("no suitable redirect URL found")
 			cancel()
 			return nil
 		}

@@ -46,7 +46,9 @@ var ShortExtractor = &models.Extractor{
 		}
 		matchedURL := Extractor.URLPattern.FindSubmatch(body)
 		if matchedURL == nil {
-			return nil, fmt.Errorf("failed to find tweet url in page")
+			// not a twitter url, most likely a
+			// t.co link to something else
+			return nil, nil
 		}
 		return &models.ExtractorResponse{
 			URL: string(matchedURL[0]),
