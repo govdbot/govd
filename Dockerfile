@@ -1,67 +1,30 @@
-FROM golang:1.25-alpine AS builder
-
-# build arguments
-ARG LIBHEIF_VERSION=1.20.2
+FROM golang:1.25-alpine
 
 # environment variables for build
-ENV CGO_CFLAGS="-I/usr/local/include"
-ENV CGO_LDFLAGS="-L/usr/local/lib"
-ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
 ENV GOCACHE=/go-cache
 ENV GOMODCACHE=/gomod-cache
 
-# install build dependencies first
+# install all dependencies
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     --mount=type=cache,target=/var/lib/apk,sharing=locked \
     apk update && \
     apk add --no-cache \
-        git \
-        pkgconf \
+        --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main \
+        --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community \
         build-base \
-        tar \
-        wget \
-        xz \
-        gcc \
-        cmake \
-        libjpeg-turbo-dev \
-        libpng-dev \
-        libde265-dev \
-        x265-dev \
-        aom-dev \
-        dav1d-dev \
-        ffmpeg-dev
+        pkgconf \
+        libheif-dev \
+        ffmpeg-dev \
+        ffmpeg
 
-# prepare directories
-RUN mkdir -p \
-    /usr/local/bin \
-    /usr/local/lib/pkgconfig \
-    /usr/local/lib \
-    /usr/local/include \
-    /bot/downloads \
-    /bot/packages
-
-WORKDIR /bot/packages
-
-# download and build libheif from source
-RUN --mount=type=cache,target=/bot/downloads/libheif \
-    mkdir -p /bot/downloads/libheif && \
-    if [ ! -f "/bot/downloads/libheif/libheif-${LIBHEIF_VERSION}.tar.gz" ]; then \
-        wget --progress=dot:giga -O "/bot/downloads/libheif/libheif-${LIBHEIF_VERSION}.tar.gz" "https://github.com/strukturag/libheif/releases/download/v${LIBHEIF_VERSION}/libheif-${LIBHEIF_VERSION}.tar.gz"; \
-    fi && \
-    mkdir -p /bot/downloads/libheif/libheif && \
-    tar -xzf "/bot/downloads/libheif/libheif-${LIBHEIF_VERSION}.tar.gz" -C /bot/downloads/libheif/libheif --strip-components=1 && \
-    mkdir -p /bot/downloads/libheif/libheif/build && \
-    cmake -S /bot/downloads/libheif/libheif -B /bot/downloads/libheif/libheif/build -DCMAKE_BUILD_TYPE=Release && \
-    make -C /bot/downloads/libheif/libheif/build -j"$(nproc)" && \
-    make -C /bot/downloads/libheif/libheif/build install
-
-WORKDIR /bot
+WORKDIR /app
 
 # copy go.mod and go.sum first for better caching
 COPY go.mod go.sum ./
 
-# download go dependencies - cached between builds
-RUN --mount=type=cache,target=/gomod-cache \
+# download go dependencies and install tools
+RUN --mount=type=cache,target=/go-cache \
+    --mount=type=cache,target=/gomod-cache \
     go mod download && \
     go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
 
@@ -71,32 +34,9 @@ COPY . .
 # generate sqlc code
 RUN sqlc generate
 
-# build the application with build cache
+# build the application
 RUN --mount=type=cache,target=/go-cache \
     --mount=type=cache,target=/gomod-cache \
-    CGO_ENABLED=1 go build -ldflags="-s -w" -o govd ./cmd/main.go
-
-# final stage - create a smaller runtime image
-FROM alpine:3.22 AS runtime
-
-# install only runtime dependencies with apk cache
-RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
-    --mount=type=cache,target=/var/lib/apk,sharing=locked \
-    apk update && \
-    apk add --no-cache \
-        libde265 \
-        ca-certificates \
-        openssl \
-        ffmpeg
-
-# copy libraries and binaries from builder stage
-COPY --from=builder /usr/local/lib/ /usr/local/lib/
-COPY --from=builder /usr/local/include/ /usr/local/include/
-COPY --from=builder /usr/local/lib/pkgconfig/libheif.pc /usr/local/lib/pkgconfig/
-
-# copy the built binary from builder stage
-COPY --from=builder /bot/govd /app/govd
-
-WORKDIR /app
+    go build -ldflags="-s -w" -o govd ./cmd/main.go
 
 ENTRYPOINT ["./govd"]

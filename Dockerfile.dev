@@ -1,59 +1,21 @@
 FROM golang:1.25-alpine
 
-ARG LIBHEIF_VERSION=1.20.2
-
 # environment variables for build
-ENV CGO_CFLAGS="-I/usr/local/include"
-ENV CGO_LDFLAGS="-L/usr/local/lib"
-ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
 ENV GOCACHE=/go-cache
 ENV GOMODCACHE=/gomod-cache
 
-# install build dependencies first
+# install all dependencies from edge for consistency
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     --mount=type=cache,target=/var/lib/apk,sharing=locked \
     apk update && \
     apk add --no-cache \
-        git \
-        pkgconf \
+        --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main \
+        --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community \
         build-base \
-        tar \
-        wget \
-        xz \
-        gcc \
-        cmake \
-        libjpeg-turbo-dev \
-        libpng-dev \
-        libde265-dev \
-        x265-dev \
-        aom-dev \
-        dav1d-dev \
+        pkgconf \
+        libheif-dev \
         ffmpeg-dev \
         ffmpeg
-
-# prepare directories
-RUN mkdir -p \
-    /usr/local/bin \
-    /usr/local/lib/pkgconfig \
-    /usr/local/lib \
-    /usr/local/include \
-    /bot/downloads \
-    /bot/packages
-
-WORKDIR /bot/packages
-
-# download and build libheif from source
-RUN --mount=type=cache,target=/bot/downloads/libheif \
-    mkdir -p /bot/downloads/libheif && \
-    if [ ! -f "/bot/downloads/libheif/libheif-${LIBHEIF_VERSION}.tar.gz" ]; then \
-        wget --progress=dot:giga -O "/bot/downloads/libheif/libheif-${LIBHEIF_VERSION}.tar.gz" "https://github.com/strukturag/libheif/releases/download/v${LIBHEIF_VERSION}/libheif-${LIBHEIF_VERSION}.tar.gz"; \
-    fi && \
-    mkdir -p /bot/downloads/libheif/libheif && \
-    tar -xzf "/bot/downloads/libheif/libheif-${LIBHEIF_VERSION}.tar.gz" -C /bot/downloads/libheif/libheif --strip-components=1 && \
-    mkdir -p /bot/downloads/libheif/libheif/build && \
-    cmake -S /bot/downloads/libheif/libheif -B /bot/downloads/libheif/libheif/build -DCMAKE_BUILD_TYPE=Release && \
-    make -C /bot/downloads/libheif/libheif/build -j"$(nproc)" && \
-    make -C /bot/downloads/libheif/libheif/build install
 
 WORKDIR /app
 
@@ -61,7 +23,8 @@ WORKDIR /app
 COPY go.mod go.sum ./
 
 # download go dependencies and install air for hot reload
-RUN --mount=type=cache,target=/gomod-cache \
+RUN --mount=type=cache,target=/go-cache \
+    --mount=type=cache,target=/gomod-cache \
     go mod download && \
     go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0 && \
     go install github.com/air-verse/air@v1.63.1
