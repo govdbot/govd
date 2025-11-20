@@ -1,9 +1,5 @@
 FROM golang:1.25-alpine
 
-# environment variables for build
-ENV GOCACHE=/go-cache
-ENV GOMODCACHE=/gomod-cache
-
 # install all dependencies
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     --mount=type=cache,target=/var/lib/apk,sharing=locked \
@@ -23,8 +19,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 
 # download go dependencies and install tools
-RUN --mount=type=cache,target=/go-cache \
-    --mount=type=cache,target=/gomod-cache \
+RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download && \
     go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
 
@@ -35,8 +30,7 @@ COPY . .
 RUN sqlc generate
 
 # build the application
-RUN --mount=type=cache,target=/go-cache \
-    --mount=type=cache,target=/gomod-cache \
-    go build -ldflags="-s -w" -o govd ./cmd/main.go
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go build -o govd ./cmd/main.go
 
 ENTRYPOINT ["./govd"]

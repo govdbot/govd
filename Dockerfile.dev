@@ -1,10 +1,6 @@
 FROM golang:1.25-alpine
 
-# environment variables for build
-ENV GOCACHE=/go-cache
-ENV GOMODCACHE=/gomod-cache
-
-# install all dependencies from edge for consistency
+# install all dependencies
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     --mount=type=cache,target=/var/lib/apk,sharing=locked \
     apk update && \
@@ -23,8 +19,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 
 # download go dependencies and install air for hot reload
-RUN --mount=type=cache,target=/go-cache \
-    --mount=type=cache,target=/gomod-cache \
+RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download && \
     go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0 && \
     go install github.com/air-verse/air@v1.63.1
