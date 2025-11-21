@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/networking"
 	"github.com/govdbot/govd/internal/util/download/chunked"
@@ -201,41 +200,29 @@ func downloadSequential(
 	writer io.Writer,
 	settings *models.DownloadSettings,
 ) error {
-	maxRetries := max(settings.Retries, 1)
+	settings = ensureDownloadSettings(settings)
 
-	for attempt := range maxRetries {
-		ctx.Debugf("sequential download attempt %d/%d", attempt+1, maxRetries)
+	resp, err := client.FetchWithContext(
+		ctx.Context,
+		http.MethodGet, url,
+		&networking.RequestParams{
+			Headers: settings.Headers,
+			Cookies: settings.Cookies,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-		resp, err := client.FetchWithContext(
-			ctx.Context,
-			http.MethodGet,
-			url,
-			&networking.RequestParams{
-				Headers: settings.Headers,
-				Cookies: settings.Cookies,
-			},
-		)
-		if err != nil {
-			ctx.Debugf("download attempt %d failed: %v", attempt+1, err)
-			continue
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
-			logger.L.Debugf("download attempt %d got status %d", attempt+1, resp.StatusCode)
-			continue
-		}
-
-		_, err = io.Copy(writer, resp.Body)
-		if err != nil {
-			resp.Body.Close()
-			logger.L.Debugf("download attempt %d copy failed: %v", attempt+1, err)
-			continue
-		}
-
-		resp.Body.Close()
-		return nil
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
-	return fmt.Errorf("all sequential download attempts failed")
+	_, err = io.Copy(writer, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
