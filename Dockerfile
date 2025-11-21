@@ -1,6 +1,5 @@
 FROM golang:1.25-alpine
 
-# install all dependencies
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     --mount=type=cache,target=/var/lib/apk,sharing=locked \
     apk update && \
@@ -8,28 +7,18 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
         --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main \
         --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community \
         build-base \
-        pkgconf \
         libheif-dev \
-        ffmpeg-dev \
         ffmpeg
 
 WORKDIR /app
 
-# copy go.mod and go.sum first for better caching
-COPY go.mod go.sum ./
-
-# download go dependencies and install tools
-RUN --mount=type=cache,target=/go/pkg/mod \
-    go mod download && \
-    go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
-
-# copy the rest of the source code
 COPY . .
 
-# generate sqlc code
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
+
 RUN sqlc generate
 
-# build the application
 RUN --mount=type=cache,target=/go/pkg/mod \
     go build -o govd ./cmd/main.go
 

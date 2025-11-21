@@ -11,9 +11,6 @@ services:
       - .env
     volumes:
       - .:/app
-      - /app/tmp
-      - go-build-cache:/go-cache
-      - go-mod-cache:/gomod-cache
     ports:
       - "${METRICS_PORT-}:8080"
       - "${PROFILER_PORT-}:6060"
