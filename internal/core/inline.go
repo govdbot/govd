@@ -77,8 +77,8 @@ func HandleInlineResultTask(
 
 	key := extractorCtx.Key()
 
-	taskQueue.Acquire(key)
-	defer taskQueue.Release(key)
+	acquireQueue(key)
+	defer releaseQueue(key)
 
 	taskResult, err := executeDownload(extractorCtx, true)
 	if err != nil {
