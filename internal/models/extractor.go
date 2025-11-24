@@ -46,18 +46,34 @@ type ExtractorContext struct {
 }
 
 func (e *ExtractorContext) Debugf(format string, args ...interface{}) {
+	if e.Chat != nil {
+		logger.L.Debugf(fmt.Sprintf("[%s] [%d] %s: %s", e.ContentURL, e.Chat.ChatID, e.Extractor.ID, format), args...)
+		return
+	}
 	logger.L.Debugf(fmt.Sprintf("[%s] %s: %s", e.ContentURL, e.Extractor.ID, format), args...)
 }
 
 func (e *ExtractorContext) Infof(format string, args ...interface{}) {
+	if e.Chat != nil {
+		logger.L.Infof(fmt.Sprintf("[%s] [%d] %s: %s", e.ContentURL, e.Chat.ChatID, e.Extractor.ID, format), args...)
+		return
+	}
 	logger.L.Infof(fmt.Sprintf("[%s] %s: %s", e.ContentURL, e.Extractor.ID, format), args...)
 }
 
 func (e *ExtractorContext) Warnf(format string, args ...interface{}) {
+	if e.Chat != nil {
+		logger.L.Warnf(fmt.Sprintf("[%s] [%d] %s: %s", e.ContentURL, e.Chat.ChatID, e.Extractor.ID, format), args...)
+		return
+	}
 	logger.L.Warnf(fmt.Sprintf("[%s] %s: %s", e.ContentURL, e.Extractor.ID, format), args...)
 }
 
 func (e *ExtractorContext) Errorf(format string, args ...interface{}) {
+	if e.Chat != nil {
+		logger.L.Errorf(fmt.Sprintf("[%s] [%d] %s: %s", e.ContentURL, e.Chat.ChatID, e.Extractor.ID, format), args...)
+		return
+	}
 	logger.L.Errorf(fmt.Sprintf("[%s] %s: %s", e.ContentURL, e.Extractor.ID, format), args...)
 }
 
