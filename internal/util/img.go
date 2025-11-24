@@ -27,75 +27,87 @@ var (
 	webpHeader = []byte{0x57, 0x45, 0x42, 0x50}
 )
 
+type imageBounds struct {
+	W int32
+	H int32
+}
+
 func ImgToJPEG(
 	file io.ReadSeeker,
 	outputPath string,
 	resize int,
-) error {
+) (*imageBounds, error) {
 	outputFile, err := os.Create(outputPath)
 	if err != nil {
-		return fmt.Errorf("failed to create output file: %w", err)
+		return nil, fmt.Errorf("failed to create output file: %w", err)
 	}
 	defer outputFile.Close()
 
-	img, err := DecodeImage(file, resize)
+	img, isJPEG, err := DecodeImage(file, resize)
 	if err != nil {
 		os.Remove(outputPath)
-		return err
+		return nil, err
 	}
-	if img == nil {
-		// already a jpeg
+	bounds := &imageBounds{
+		W: int32(img.Bounds().Dx()),
+		H: int32(img.Bounds().Dy()),
+	}
+	logger.L.Debugf("image dimensions: %dx%d", bounds.W, bounds.H)
+	if isJPEG {
 		if _, err = io.Copy(outputFile, file); err != nil {
 			os.Remove(outputPath)
-			return fmt.Errorf("failed to copy image: %w", err)
+			return nil, fmt.Errorf("failed to copy image: %w", err)
 		}
-		return nil
+		return bounds, nil
 	}
 	err = jpeg.Encode(outputFile, img, nil)
 	if err != nil {
 		os.Remove(outputPath)
-		return fmt.Errorf("failed to encode image: %w", err)
+		return nil, fmt.Errorf("failed to encode image: %w", err)
 	}
-	return nil
+
+	return bounds, nil
 }
 
 func DecodeImage(
 	file io.ReadSeeker,
 	resize int,
-) (image.Image, error) {
+) (image.Image, bool, error) {
+	defer file.Seek(0, io.SeekStart)
+
 	format, err := DetectImageFormat(file)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	logger.L.Debugf("detected image format: %s", format)
 
 	if format == "jpeg" {
-		if _, err = file.Seek(0, io.SeekStart); err != nil {
-			return nil, fmt.Errorf("failed to reset file position: %w", err)
+		img, err := jpeg.Decode(file)
+		if err != nil {
+			return nil, false, fmt.Errorf("failed to decode image: %w", err)
 		}
 		if resize > 0 {
-			img, err := jpeg.Decode(file)
-			if err != nil {
-				return nil, fmt.Errorf("failed to decode image: %w", err)
-			}
 			dst := image.NewRGBA(image.Rect(0, 0, resize, resize))
-			draw.NearestNeighbor.Scale(dst, dst.Bounds(), img, img.Bounds(), draw.Over, nil)
-			return dst, nil
+			draw.NearestNeighbor.Scale(
+				dst, dst.Bounds(),
+				img, img.Bounds(),
+				draw.Over, nil,
+			)
+			return dst, true, nil
 		}
-		// already a jpeg, no need to decode
-		return nil, nil
-	}
-	if _, err = file.Seek(0, io.SeekStart); err != nil {
-		return nil, fmt.Errorf("failed to reset file position: %w", err)
+		return img, true, nil
 	}
 	img, _, err := image.Decode(file)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode image: %w", err)
+		return nil, false, fmt.Errorf("failed to decode image: %w", err)
 	}
-	return img, nil
+	return img, false, nil
 }
 
 func DetectImageFormat(file io.ReadSeeker) (models.ImageFormat, error) {
+	// reset file position after detection
+	defer file.Seek(0, io.SeekStart)
+
 	header := make([]byte, 128)
 
 	_, err := file.Read(header)

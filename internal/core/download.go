@@ -151,9 +151,12 @@ func downloadFormat(
 		filePath = download.ToPath(fileName)
 		ctx.FilesTracker.Add(filePath)
 
-		if err := util.ImgToJPEG(file, filePath, 0); err != nil {
+		bounds, err := util.ImgToJPEG(file, filePath, 0)
+		if err != nil {
 			return nil, fmt.Errorf("failed to convert image: %w", err)
 		}
+		format.Width = bounds.W
+		format.Height = bounds.H
 
 		return &models.DownloadedFormat{
 			Format:   format,

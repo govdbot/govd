@@ -78,6 +78,18 @@ type DownloadedFormat struct {
 // returns the file extension and the InputMedia type.
 func (f *MediaFormat) GetInfo() (FileExtension, FileType) {
 	if f.Type == database.MediaTypePhoto {
+		// telegram constraints on photos:
+		// - width + height must not exceed 10000
+		// - aspect ratio must not exceed 20:1
+		if f.Width > 0 && f.Height > 0 {
+			w, h := f.Width, f.Height
+			if w+h > 10000 {
+				return FileExtensionJPEG, FileTypeDocument
+			}
+			if max(w, h) > min(w, h)*20 {
+				return FileExtensionJPEG, FileTypeDocument
+			}
+		}
 		return FileExtensionJPEG, FileTypePhoto
 	}
 
