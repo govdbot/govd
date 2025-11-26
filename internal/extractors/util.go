@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/govdbot/govd/internal/config"
+	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/networking"
 	"github.com/govdbot/govd/internal/util"
@@ -51,14 +52,24 @@ func FromURL(url string) *models.ExtractorContext {
 		}
 
 		if extractor == nil || matches == nil {
+			logger.L.Debugf("no extractor matched for URL: %s", currentURL)
 			cancel()
 			return nil
 		}
 
 		cfg := config.GetExtractorConfig(extractor.ID)
 		if cfg.IsDisabled {
+			logger.L.Debugf("[%s] extractor is disabled, skipping URL: %s", extractor.ID, currentURL)
 			cancel()
 			return nil
+		}
+
+		for _, r := range cfg.IgnoreRegex {
+			if r.MatchString(currentURL) {
+				logger.L.Debugf("[%s] URL matches ignore_regex, skipping URL: %s", extractor.ID, currentURL)
+				cancel()
+				return nil
+			}
 		}
 
 		extractorCtx := &models.ExtractorContext{
@@ -82,7 +93,8 @@ func FromURL(url string) *models.ExtractorContext {
 		}
 		if !extractor.Redirect {
 			return extractorCtx
-		} // extractor requires fetching the URL for redirection
+		}
+		// extractor requires fetching the URL for redirection
 		extractorCtx.Debugf("following redirect")
 
 		response, err := extractor.GetFunc(extractorCtx)

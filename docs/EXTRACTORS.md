@@ -23,3 +23,4 @@ reddit:
 * `impersonate`: whether to impersonate chrome. this is useful for extractors that require specific browsers' fingerprints to work.
 * `disabled`: whether to disable the extractor. this is useful for extractors that are not working or are not needed. if you want to disable an extractor, you can set it to `true` in the configuration file.
 * `instance`: the instance to use for this extractor. this is useful for extractors that support multiple instances (e.g. [invidious for youtube](../internal/extractors/youtube/SETUP.md)).
+* `ignore_regex`: a list of regex patterns to ignore URLs that match them. this is useful for extractors that you want to partially disable for specific URLs.

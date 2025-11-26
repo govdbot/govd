@@ -1,6 +1,7 @@
 package config
 
 import (
+	"regexp"
 	"time"
 
 	"go.uber.org/zap/zapcore"
@@ -45,14 +46,12 @@ type EnvConfig struct {
 }
 
 type ExtractorConfig struct {
-	Proxy         string `yaml:"proxy"`
-	DownloadProxy string `yaml:"download_proxy"`
-	EdgeProxy     string `yaml:"edge_proxy"`
-	DisableProxy  bool   `yaml:"disable_proxy"`
-
-	Impersonate bool `yaml:"impersonate"`
-
-	IsDisabled bool `yaml:"disabled"`
-
-	Instance []string `yaml:"instance"`
+	Proxy         string           `yaml:"proxy"`
+	DownloadProxy string           `yaml:"download_proxy"`
+	EdgeProxy     string           `yaml:"edge_proxy"`
+	DisableProxy  bool             `yaml:"disable_proxy"`
+	IgnoreRegex   []*regexp.Regexp `yaml:"ignore_regex"`
+	Impersonate   bool             `yaml:"impersonate"`
+	IsDisabled    bool             `yaml:"disabled"`
+	Instance      []string         `yaml:"instance"`
 }
