@@ -52,6 +52,11 @@ func validateConfig() {
 		if len(cfg.Instance) > 0 && id != "youtube" {
 			logger.L.Fatalf("[%s] invalid config: custom instance is only supported for youtube extractor", id)
 		}
+		for _, r := range cfg.IgnoreRegex {
+			if r == nil {
+				logger.L.Fatalf("[%s] invalid config: ignore_regex contains invalid regex", id)
+			}
+		}
 	}
 }
 
