@@ -29,7 +29,7 @@ RUN --mount=type=cache,target="/root/.cache/go-build" \
         -ldflags="-s -w" \
         -o govd ./cmd/main.go
 
-FROM alpine
+FROM alpine:3.22 AS runtime
 
 WORKDIR /app
 
