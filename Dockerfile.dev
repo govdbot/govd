@@ -2,7 +2,6 @@ FROM golang:1.25-alpine
 
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     --mount=type=cache,target=/var/lib/apk,sharing=locked \
-    apk update && \
     apk add --no-cache \
         --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main \
         --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community \
