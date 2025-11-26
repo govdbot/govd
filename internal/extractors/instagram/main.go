@@ -160,7 +160,7 @@ func GetIGramPost(ctx *models.ExtractorContext) (*models.Media, error) {
 				ThumbnailURL: []string{thumbnailURL},
 			},
 			)
-		case "jpg", "webp", "heic", "jpeg":
+		case "jpg", "png", "webp", "heic", "jpeg":
 			item.AddFormats(&models.MediaFormat{
 				Type:     database.MediaTypePhoto,
 				FormatID: formatID,
