@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/govdbot/govd?style=flat-square" alt="license"></a>
-  <a href="https://github.com/govdbot/govd/stargazers"><img src="https://img.shields.io/github/stars/govdbot/govd? style=flat-square" alt="stars"></a>
+  <a href="https://github.com/govdbot/govd/stargazers"><img src="https://img.shields.io/github/stars/govdbot/govd?style=flat-square" alt="stars"></a>
   <a href="https://github.com/govdbot/govd/forks"><img src="https://img.shields.io/github/forks/govdbot/govd?style=flat-square" alt="forks"></a>
   <img src="https://img.shields.io/badge/docker-ready-blue?style=flat-square" alt="docker">
   <a href="https://t.me/govd_bot"><img src="https://img.shields.io/badge/telegram-@govd__bot-2CA5E0?style=flat-square&logo=telegram" alt="telegram"></a>
@@ -19,13 +19,16 @@
 
 ## features
 
-- **vast number of extractors** — tiktok, instagram, youtube, twitter, reddit, and many more
-- **extremely lightweight** — minimal memory (~80mb) and disk (~150mb) usage
-- **easy to deploy** — get up and running in minutes with docker
-- **highly configurable** — proxies, authentication, custom instances
-- **self-hosted bot api support** — bypass telegram file size limits
-- **multiple modes** — private chats, groups, and inline mode
-- **translation ready** — i18n support
+* vast number of extractors supported
+* extremely lightweight
+    * minimal memory usage (~80MB)
+    * minimal disk usage (~150MB)
+* easy to deploy with docker
+* highly configurable and extensible
+* supports self hosted telegram bot api
+* supports authentication for extractors
+* available in private chats, groups and inline mode
+* translation ready (i18n)
 
 ## getting started
 
