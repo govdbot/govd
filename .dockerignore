@@ -11,5 +11,7 @@ Dockerfile
 docker-compose*.yaml
 .dockerignore
 private/
+logs/
+downloads/
 *_gen.go
 *.md
