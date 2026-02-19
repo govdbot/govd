@@ -130,8 +130,8 @@ github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
-github.com/strukturag/libheif v1.20.2 h1:6te1PczCHlF//Uc9E5xb/mXb5+y67vrwssKwLS0ng30=
-github.com/strukturag/libheif v1.20.2/go.mod h1:E/PNRlmVtrtj9j2AvBZlrO4dsBDu6KfwDZn7X1Ce8Ks=
+github.com/strukturag/libheif v1.21.2 h1:YFD3crf+d33cFVQh3aTkkVGwJFyWpfqVT4XhzHWU6mA=
+github.com/strukturag/libheif v1.21.2/go.mod h1:E/PNRlmVtrtj9j2AvBZlrO4dsBDu6KfwDZn7X1Ce8Ks=
 github.com/sunfish-shogi/bufseekio v0.0.0-20210207115823-a4185644b365/go.mod h1:dEzdXgvImkQ3WLI+0KQpmEx8T/C/ma9KeS3AfmU899I=
 github.com/sunfish-shogi/bufseekio v0.1.0 h1:zu38kFbv0KuuiwZQeuYeS02U9AM14j0pVA9xkHOCJ2A=
 github.com/sunfish-shogi/bufseekio v0.1.0/go.mod h1:dEzdXgvImkQ3WLI+0KQpmEx8T/C/ma9KeS3AfmU899I=
