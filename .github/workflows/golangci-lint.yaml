@@ -22,6 +22,7 @@ jobs:
         with:
           version: v2.1
           args: --build-tags=lint
+          install-mode: goinstall # apparently needed since prebuilt doesn't support go1.26 yet
           # skip cache to avoid flakes (and avoid using gh-action storage)
           skip-cache: true
           skip-save-cache: true
