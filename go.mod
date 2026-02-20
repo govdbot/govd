@@ -11,7 +11,7 @@ require (
 	github.com/abema/go-mp4 v1.4.1
 	github.com/aki237/nscjar v0.0.0-20210417074043-bbb606196143
 	github.com/bogem/id3v2/v2 v2.1.4
-	github.com/bytedance/sonic v1.14.0
+	github.com/bytedance/sonic v1.15.0
 	github.com/google/uuid v1.6.0
 	github.com/grafov/m3u8 v0.12.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
@@ -36,7 +36,8 @@ require (
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/aws/aws-sdk-go v1.38.20 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bytedance/sonic/loader v0.3.0 // indirect
+	github.com/bytedance/gopkg v0.1.3 // indirect
+	github.com/bytedance/sonic/loader v0.5.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
