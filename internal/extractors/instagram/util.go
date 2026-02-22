@@ -1,12 +1,12 @@
 package instagram
 
 import (
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
-	"maps"
 	"math/big"
 	"net/http"
 	"net/url"
@@ -29,9 +29,10 @@ const (
 	graphQLEndpoint = "https://www.instagram.com/graphql/query/"
 	polarisAction   = "PolarisPostActionLoadPostQueryQuery"
 
-	igramHostname  = "api-wh.igram.world"
-	igramKey       = "241c28282e4ce419ce73ca61555a5a0c7faf887c5ccf9305c55484f701ba883a"
-	igramTimestamp = "1766415734394"
+	igramHostname = "api-wh.igram.world"
+	igramAPIBase  = "api.igram.world"
+	igramHMACKey  = "75f2d70d3724f98e4a7d1ffd0ba9cfd907f3ae2632ee159980e2c521bff62358"
+	igramStaticTS = 1771418815381 // parseInt("mls10xp1", 36)
 )
 
 var (
@@ -157,57 +158,96 @@ func ParseEmbedGQL(body []byte) (*Media, error) {
 }
 
 func IGramBodyFromURL(contentURL string) (io.Reader, error) {
-	timestamp := strconv.FormatInt(time.Now().UnixMilli(), 10)
-
-	hash := sha256.New()
-	_, err := io.WriteString(hash, contentURL+timestamp+igramKey)
-	if err != nil {
-		return nil, fmt.Errorf("error writing to SHA256 hash: %w", err)
-	}
-
-	secretBytes := hash.Sum(nil)
-	secretString := hex.EncodeToString(secretBytes)
-	secretString = strings.ToLower(secretString)
-
-	payload := url.Values{}
-	payload.Set("sf_url", contentURL)
-	payload.Set("ts", timestamp)
-	payload.Set("_ts", igramTimestamp)
-	payload.Set("_tsc", "0") // ?
-	payload.Set("_s", secretString)
-
-	return strings.NewReader(payload.Encode()), nil
+	return igramBuildPayload(map[string]string{
+		"target_url": contentURL,
+	})
 }
 
 func IGramBodyFromParams(params map[string]string) (io.Reader, error) {
-	timestamp := strconv.FormatInt(time.Now().UnixMilli(), 10)
+	return igramBuildPayload(params)
+}
 
-	paramsStr, err := sonic.ConfigFastest.Marshal(params)
+func igramBuildPayload(urlParams map[string]string) (io.Reader, error) {
+	nowMs := time.Now().UnixMilli()
+	serverMs := getIGramServerTime()
+
+	drift := serverMs - nowMs
+	var correction int64
+	if drift >= 60000 || drift <= -60000 {
+		correction = drift
+	}
+	ts := nowMs + correction
+
+	// partial payload fields that get signed
+	partial := map[string]any{
+		"_sc": 0,
+		"_ef": 0,
+		"_df": 0,
+	}
+	for k, v := range urlParams {
+		partial[k] = v
+	}
+
+	sig, err := igramSign(partial, ts)
+	if err != nil {
+		return nil, err
+	}
+
+	// assemble final payload
+	final := make(map[string]any, len(partial)+5)
+	for k, v := range partial {
+		final[k] = v
+	}
+	final["ts"] = ts
+	final["_ts"] = igramStaticTS
+	final["_tsc"] = correction
+	final["_sv"] = 2
+	final["_s"] = sig
+
+	jsonBytes, err := sonic.ConfigFastest.Marshal(final)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal payload: %w", err)
 	}
 
-	hash := sha256.New()
-	_, err = io.WriteString(hash, string(paramsStr)+timestamp+igramKey)
+	return strings.NewReader(string(jsonBytes)), nil
+}
+
+func igramSign(partial map[string]any, ts int64) (string, error) {
+	// sonic.ConfigStd sorts map keys alphabetically, matching
+	// the signing: JSON.stringify(sorted_partial) + String(ts)
+	jsonBytes, err := sonic.ConfigStd.Marshal(partial)
 	if err != nil {
-		return nil, fmt.Errorf("error writing to SHA256 hash: %w", err)
+		return "", fmt.Errorf("failed to marshal partial payload: %w", err)
 	}
 
-	secretBytes := hash.Sum(nil)
-	secretString := hex.EncodeToString(secretBytes)
-	secretString = strings.ToLower(secretString)
+	data := string(jsonBytes) + strconv.FormatInt(ts, 10)
 
-	data := map[string]string{
-		"ts":   timestamp,
-		"_ts":  igramTimestamp,
-		"_tsc": "0", // ?
-		"_s":   secretString,
+	keyBytes, err := hex.DecodeString(igramHMACKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode HMAC key: %w", err)
 	}
-	maps.Copy(data, params)
 
-	parsedData, _ := sonic.ConfigFastest.Marshal(data)
+	mac := hmac.New(sha256.New, keyBytes)
+	mac.Write([]byte(data))
+	return hex.EncodeToString(mac.Sum(nil)), nil
+}
 
-	return strings.NewReader(string(parsedData)), nil
+func getIGramServerTime() int64 {
+	apiURL := fmt.Sprintf("https://%s/msec", igramAPIBase)
+	resp, err := http.Get(apiURL)
+	if err != nil {
+		return time.Now().UnixMilli()
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Msec float64 `json:"msec"`
+	}
+	decoder := sonic.ConfigFastest.NewDecoder(resp.Body)
+	if err := decoder.Decode(&result); err != nil {
+		return time.Now().UnixMilli()
+	}
+	return int64(result.Msec * 1000)
 }
 
 func ParseIGramResponse(body []byte) (*IGramResponse, error) {

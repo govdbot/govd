@@ -226,7 +226,7 @@ func GetPostFromIGram(ctx *models.ExtractorContext) (*IGramResponse, error) {
 	}
 
 	headers := map[string]string{
-		"Content-Type": "application/x-www-form-urlencoded",
+		"Content-Type": "application/json",
 	}
 	maps.Copy(headers, igramHeaders)
 
