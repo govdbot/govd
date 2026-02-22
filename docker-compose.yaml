@@ -1,6 +1,6 @@
 services:
   bot:
-    image: govdbot/govd:main
+    build: .
     container_name: bot
     restart: unless-stopped
     networks:
@@ -31,13 +31,14 @@ services:
     networks:
       - govd-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U govd"]
+      test: [ "CMD-SHELL", "pg_isready -U govd" ]
       interval: 3s
       timeout: 5s
       retries: 30
 
 volumes:
   db:
+
 
 networks:
   govd-network:
