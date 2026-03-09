@@ -88,6 +88,7 @@ func FromURL(url string) *models.ExtractorContext {
 					DownloadProxy: cfg.DownloadProxy,
 					Proxy:         cfg.Proxy,
 					DisableProxy:  cfg.DisableProxy,
+					Impersonate:   cfg.Impersonate,
 				},
 			),
 		}
