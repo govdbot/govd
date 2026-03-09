@@ -1,6 +1,7 @@
 package extractors
 
 import (
+	"github.com/govdbot/govd/internal/extractors/facebook"
 	"github.com/govdbot/govd/internal/extractors/instagram"
 	"github.com/govdbot/govd/internal/extractors/ninegag"
 	"github.com/govdbot/govd/internal/extractors/pinterest"
@@ -14,6 +15,8 @@ import (
 )
 
 var Extractors = []*models.Extractor{
+	facebook.ShareExtractor,
+	facebook.Extractor,
 	tiktok.Extractor,
 	tiktok.VMExtractor,
 	soundcloud.Extractor,
