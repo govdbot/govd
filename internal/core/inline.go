@@ -89,6 +89,7 @@ func HandleInlineResultTask(
 		taskResult.Media,
 		bot.Username,
 		extractorCtx.Chat.Captions,
+		ctx.EffectiveUser,
 	)
 
 	err = SendInlineFormats(
