@@ -13,6 +13,7 @@ import (
 	"github.com/govdbot/govd/internal/util"
 	"github.com/govdbot/govd/internal/util/download"
 	"github.com/govdbot/govd/internal/util/libav"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 var ErrNoMedia = errors.New("no media found")
@@ -86,21 +87,41 @@ func insertVideoInfo(format *models.MediaFormat, filePath string) {
 	format.Height = height
 }
 
-func formatCaption(media *models.Media, username string, isEnabled bool) string {
+func formatCaption(media *models.Media, botUsername string, isEnabled bool, user *gotgbot.User) string {
 	caption := media.Caption
 	if len(caption) > 600 {
 		caption = caption[:600] + "..."
 	}
+
 	formatText := func(s string) string {
-		s = strings.ReplaceAll(s, "{{username}}", username)
+		var displayName string
+		if user.Username != "" {
+			displayName = "@" + user.Username
+		} else {
+			displayName = user.FirstName
+			if user.LastName != "" {
+				displayName += " " + user.LastName
+			}
+		}
+
+		// Wrap the name/username in a permanent ID link to handle username changes
+		mention := fmt.Sprintf("<a href=\"tg://user?id=%d\">%s</a>", user.Id, displayName)
+
+		s = strings.ReplaceAll(s, "{{username}}", botUsername)
 		s = strings.ReplaceAll(s, "{{url}}", media.ContentURL)
 		s = strings.ReplaceAll(s, "{{text}}", util.Unquote(caption))
+		s = strings.ReplaceAll(s, "{{mention}}", mention)
 		return s
 	}
+
 	var description string
 	header := formatText(config.Env.CaptionsHeader)
 	if isEnabled && caption != "" {
 		description = formatText(config.Env.CaptionsDescription)
+	}
+
+	if description == "" {
+		return header
 	}
 	return header + "\n" + description
 }
