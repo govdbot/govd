@@ -15,6 +15,9 @@ import (
 )
 
 func WriteFile(name string, content any) {
+	if L == nil {
+		return
+	}
 	if L.Level() != zap.DebugLevel {
 		return
 	}

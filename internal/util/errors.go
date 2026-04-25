@@ -24,6 +24,7 @@ var (
 	ErrMediaAlbumLimitExceeded       = &Error{ID: localization.ErrorMediaAlbumLimitExceeded.ID}
 	ErrMediaAlbumGlobalLimitExceeded = &Error{ID: localization.ErrorMediaAlbumGlobalLimitExceeded.ID}
 	ErrGeoRestrictedContent          = &Error{ID: localization.ErrorGeoRestrictedContent.ID}
+	ErrTikTokIPBlocked               = &Error{ID: localization.ErrorTikTokIPBlocked.ID}
 	ErrNSFWNotAllowed                = &Error{ID: localization.ErrorNSFWNotAllowed.ID}
 	ErrInlineMediaAlbum              = &Error{ID: localization.ErrorInlineMediaAlbum.ID}
 	ErrAuthenticationNeeded          = &Error{ID: localization.ErrorAuthenticationNeeded.ID}

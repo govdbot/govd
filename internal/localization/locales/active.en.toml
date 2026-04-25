@@ -14,6 +14,7 @@ ErrorAuthenticationNeeded = "this instance is not authenticated with this servic
 ErrorDurationTooLong = "this video is too long and exceeds the maximum allowed duration for this instance"
 ErrorFileTooLarge = "this file is too large and exceeds the maximum allowed size for this instance"
 ErrorGeoRestrictedContent = "this content has geo-restrictions and cannot be accessed from the server's location"
+ErrorTikTokIPBlocked = "this TikTok post cannot be accessed because the server's IP address is blocked by TikTok"
 ErrorInlineMediaAlbum = "you can't download media albums in inline mode. use the bot in a group or private chat"
 ErrorMediaAlbumGlobalLimitExceeded = "media album limit exceeds the maximum allowed for this instance"
 ErrorMediaAlbumLimitExceeded = "media album limit exceeds the maximum allowed for this group. change /settings to increase the limit"

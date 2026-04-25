@@ -1,6 +1,7 @@
 package tiktok
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -75,13 +76,35 @@ func GetMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	for range 5 {
 		details, cookies, err = GetVideoWeb(ctx)
 		if err == nil {
+			return mediaFromWeb(ctx, details, cookies)
+		}
+		if !shouldRetryVideoWeb(err) {
 			break
 		}
 	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to get from web: %w", err)
-	}
+	return nil, err
+}
 
+func shouldRetryVideoWeb(err error) bool {
+	switch {
+	case err == nil:
+		return false
+	case errors.Is(err, util.ErrAuthenticationNeeded):
+		return false
+	case errors.Is(err, util.ErrTikTokIPBlocked):
+		return false
+	case errors.Is(err, util.ErrUnavailable):
+		return false
+	default:
+		return true
+	}
+}
+
+func mediaFromWeb(
+	ctx *models.ExtractorContext,
+	details *WebItemStruct,
+	cookies []*http.Cookie,
+) (*models.Media, error) {
 	media := ctx.NewMedia()
 	media.SetCaption(details.Desc)
 
@@ -107,16 +130,16 @@ func GetMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 			return media, nil
 		}
 		return nil, util.ErrUnavailable
-	} else {
-		images := details.ImagePost.Images
-		for _, image := range images {
-			item := media.NewItem()
-			item.AddFormats(&models.MediaFormat{
-				Type:     database.MediaTypePhoto,
-				FormatID: "image",
-				URL:      image.URL.URLList,
-			})
-		}
-		return media, nil
 	}
+
+	images := details.ImagePost.Images
+	for _, image := range images {
+		item := media.NewItem()
+		item.AddFormats(&models.MediaFormat{
+			Type:     database.MediaTypePhoto,
+			FormatID: "image",
+			URL:      image.URL.URLList,
+		})
+	}
+	return media, nil
 }
