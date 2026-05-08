@@ -209,4 +209,5 @@ type Settings struct {
 	UpdatedAt          pgtype.Timestamptz
 	DisabledExtractors []string
 	DeleteLinks        bool
+	HighQualityVideos  bool
 }

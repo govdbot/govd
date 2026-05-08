@@ -17,14 +17,14 @@ WITH upsert_chat AS (
     RETURNING chat_id, type, created_at, updated_at
 ),
 upsert_settings AS (
-    INSERT INTO settings (chat_id, language, captions, silent, nsfw, media_album_limit, delete_links)
-    VALUES ($1, $3, $4, $5, $6, $7, $8)
+    INSERT INTO settings (chat_id, language, captions, silent, nsfw, media_album_limit, delete_links, high_quality_videos)
+    VALUES ($1, $3, $4, $5, $6, $7, $8, $9)
     ON CONFLICT (chat_id) DO UPDATE SET
         language = CASE 
             WHEN settings.language = 'XX' THEN EXCLUDED.language 
             ELSE settings.language 
         END
-    RETURNING chat_id, nsfw, media_album_limit, captions, silent, language, created_at, updated_at, disabled_extractors, delete_links
+    RETURNING chat_id, nsfw, media_album_limit, captions, silent, language, created_at, updated_at, disabled_extractors, delete_links, high_quality_videos
 ),
 final_chat AS (
     SELECT chat_id, type, created_at, updated_at FROM upsert_chat
@@ -32,7 +32,7 @@ final_chat AS (
     SELECT chat_id, type, created_at, updated_at FROM chat WHERE chat_id = $1 AND NOT EXISTS (SELECT 1 FROM upsert_chat)
 ),
 final_settings AS (
-    SELECT chat_id, nsfw, media_album_limit, captions, silent, language, created_at, updated_at, disabled_extractors, delete_links FROM upsert_settings
+    SELECT chat_id, nsfw, media_album_limit, captions, silent, language, created_at, updated_at, disabled_extractors, delete_links, high_quality_videos FROM upsert_settings
 )
 SELECT 
     c.chat_id,
@@ -43,20 +43,22 @@ SELECT
     s.silent,
     s.language,
     s.disabled_extractors,
-    s.delete_links
+    s.delete_links,
+    s.high_quality_videos
 FROM final_chat c 
 JOIN final_settings s ON s.chat_id = c.chat_id
 `
 
 type GetOrCreateChatParams struct {
-	ChatID          int64
-	Type            ChatType
-	Language        string
-	Captions        bool
-	Silent          bool
-	Nsfw            bool
-	MediaAlbumLimit int32
-	DeleteLinks     bool
+	ChatID            int64
+	Type              ChatType
+	Language          string
+	Captions          bool
+	Silent            bool
+	Nsfw              bool
+	MediaAlbumLimit   int32
+	DeleteLinks       bool
+	HighQualityVideos bool
 }
 
 type GetOrCreateChatRow struct {
@@ -69,6 +71,7 @@ type GetOrCreateChatRow struct {
 	Language           string
 	DisabledExtractors []string
 	DeleteLinks        bool
+	HighQualityVideos  bool
 }
 
 func (q *Queries) GetOrCreateChat(ctx context.Context, arg GetOrCreateChatParams) (GetOrCreateChatRow, error) {
@@ -81,6 +84,7 @@ func (q *Queries) GetOrCreateChat(ctx context.Context, arg GetOrCreateChatParams
 		arg.Nsfw,
 		arg.MediaAlbumLimit,
 		arg.DeleteLinks,
+		arg.HighQualityVideos,
 	)
 	var i GetOrCreateChatRow
 	err := row.Scan(
@@ -93,6 +97,7 @@ func (q *Queries) GetOrCreateChat(ctx context.Context, arg GetOrCreateChatParams
 		&i.Language,
 		&i.DisabledExtractors,
 		&i.DeleteLinks,
+		&i.HighQualityVideos,
 	)
 	return i, err
 }

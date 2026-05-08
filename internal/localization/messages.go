@@ -115,6 +115,14 @@ var (
 		ID:    "DeleteProcessedSettingsMessage",
 		Other: "when enabled, deletes the user's original message after successfully processing the link",
 	}
+	HighQualityVideosButton = &i18n.Message{
+		ID:    "HighQualityVideosButton",
+		Other: "high quality video",
+	}
+	HighQualityVideosSettingsMessage = &i18n.Message{
+		ID:    "HighQualityVideosSettingsMessage",
+		Other: "when enabled, tiktok and instagram videos are uploaded as files to preserve quality",
+	}
 	SupportedExtractorsMessage = &i18n.Message{
 		ID:    "SupportedExtractorsMessage",
 		Other: "list of supported extractors by the bot",

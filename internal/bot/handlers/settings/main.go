@@ -154,6 +154,21 @@ var botSettings = []BotSettings{
 		},
 	},
 	{
+		ID:             "high_quality_videos",
+		ButtonKey:      localization.HighQualityVideosButton.ID,
+		DescriptionKey: localization.HighQualityVideosSettingsMessage.ID,
+
+		Type:  SettingsTypeToggle,
+		Scope: SettingsScopeGroup,
+
+		ToggleFunc: func(ctx context.Context, chatID int64) error {
+			return database.Q().ToggleChatHighQualityVideos(ctx, chatID)
+		},
+		GetCurrentValueFunc: func(res *database.GetOrCreateChatRow) any {
+			return res.HighQualityVideos
+		},
+	},
+	{
 		ID:             "disabled_extractors",
 		ButtonKey:      localization.ExtractorsButton.ID,
 		DescriptionKey: localization.DisabledExtractorsSettingsMessage.ID,

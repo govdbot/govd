@@ -275,12 +275,16 @@ func (format *MediaFormat) GetInputMedia(
 	thumbnailFilePath string,
 	messageCaption string,
 	spoiler bool,
+	forceDocument bool,
 ) (gotgbot.InputMedia, error) {
 	if format.FileID != "" {
-		return format.GetInputMediaWithFileID(messageCaption, spoiler)
+		return format.GetInputMediaWithFileID(messageCaption, spoiler, forceDocument)
 	}
 
 	_, inputMediaType := format.GetInfo()
+	if forceDocument && inputMediaType == FileTypeVideo {
+		inputMediaType = FileTypeDocument
+	}
 
 	fileObj, err := os.Open(filePath)
 	if err != nil {
@@ -349,8 +353,12 @@ func (format *MediaFormat) GetInputMedia(
 func (format *MediaFormat) GetInputMediaWithFileID(
 	messageCaption string,
 	spoiler bool,
+	forceDocument bool,
 ) (gotgbot.InputMedia, error) {
 	_, inputMediaType := format.GetInfo()
+	if forceDocument && inputMediaType == FileTypeVideo {
+		inputMediaType = FileTypeDocument
+	}
 
 	fileInputMedia := gotgbot.InputFileByID(format.FileID)
 	switch inputMediaType {

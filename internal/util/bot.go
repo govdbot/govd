@@ -78,14 +78,15 @@ func ChatFromContext(ctx *ext.Context) (*database.GetOrCreateChatRow, error) {
 	res, err := database.Q().GetOrCreateChat(
 		context.Background(),
 		database.GetOrCreateChatParams{
-			ChatID:          id,
-			Type:            chatType,
-			Language:        language,
-			Captions:        config.Env.DefaultCaptions,
-			Silent:          config.Env.DefaultSilent,
-			Nsfw:            config.Env.DefaultNSFW,
-			MediaAlbumLimit: config.Env.DefaultMediaAlbumLimit,
-			DeleteLinks:     config.Env.DefaultDeleteLinks,
+			ChatID:            id,
+			Type:              chatType,
+			Language:          language,
+			Captions:          config.Env.DefaultCaptions,
+			Silent:            config.Env.DefaultSilent,
+			Nsfw:              config.Env.DefaultNSFW,
+			MediaAlbumLimit:   config.Env.DefaultMediaAlbumLimit,
+			DeleteLinks:       config.Env.DefaultDeleteLinks,
+			HighQualityVideos: config.Env.DefaultHighQualityVideos,
 		},
 	)
 	if err != nil {

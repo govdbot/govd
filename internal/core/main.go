@@ -55,7 +55,11 @@ func HandleDownloadTask(
 // this function is wrapped by singleflight
 // to prevent duplicate downloads
 func executeDownload(extractorCtx *models.ExtractorContext, isInline bool) (*models.TaskResult, error) {
-	if config.Env.Caching {
+	shouldSkipCache := shouldUseHighQualityVideoUpload(
+		extractorCtx.Chat,
+		extractorCtx.Extractor.ID,
+	)
+	if config.Env.Caching && !shouldSkipCache {
 		task, err := taskFromDatabase(extractorCtx)
 		if err == nil {
 			if isInline && len(task.Media.Items) > 1 {
