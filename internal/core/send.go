@@ -67,7 +67,7 @@ func SendFormats(
 			if i == 0 {
 				caption = options.Caption
 			}
-			forceDocument := shouldUploadAsHighQualityVideo(
+			highQualityVideo := shouldUploadAsHighQualityVideo(
 				extractorCtx.Chat,
 				media,
 				f.Format,
@@ -75,7 +75,7 @@ func SendFormats(
 			inputMedia, err := f.Format.GetInputMedia(
 				f.FilePath, f.ThumbnailFilePath,
 				caption, options.IsSpoiler,
-				forceDocument,
+				highQualityVideo,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get input media: %w", err)
@@ -115,11 +115,7 @@ func SendFormats(
 		}(ctx.EffectiveMessage)
 	}
 
-	shouldStore := !shouldUseHighQualityVideoUpload(
-		extractorCtx.Chat,
-		media.ExtractorID,
-	)
-	if !options.IsStored && config.Env.Caching && shouldStore {
+	if !options.IsStored && config.Env.Caching {
 		err := StoreMedia(
 			extractorCtx.Context,
 			extractorCtx.Extractor,
@@ -159,7 +155,7 @@ func SendInlineFormats(
 	fileID := util.GetMessageFileID(&msg)
 	format.Format.FileID = fileID
 
-	forceDocument := shouldUploadAsHighQualityVideo(
+	highQualityVideo := shouldUploadAsHighQualityVideo(
 		extractorCtx.Chat,
 		media,
 		format.Format,
@@ -167,7 +163,7 @@ func SendInlineFormats(
 	inputMedia, err := format.Format.GetInputMedia(
 		format.FilePath, format.ThumbnailFilePath,
 		options.Caption, options.IsSpoiler,
-		forceDocument,
+		highQualityVideo,
 	)
 	if err != nil {
 		return err

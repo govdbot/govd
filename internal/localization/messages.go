@@ -121,7 +121,7 @@ var (
 	}
 	HighQualityVideosSettingsMessage = &i18n.Message{
 		ID:    "HighQualityVideosSettingsMessage",
-		Other: "when enabled, tiktok and instagram videos are uploaded as files to preserve quality",
+		Other: "when enabled, tiktok and instagram videos are sent as media with high-quality preference",
 	}
 	SupportedExtractorsMessage = &i18n.Message{
 		ID:    "SupportedExtractorsMessage",

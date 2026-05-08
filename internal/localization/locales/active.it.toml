@@ -112,7 +112,7 @@ other = "video di alta qualità"
 
 [HighQualityVideosSettingsMessage]
 hash = "sha1-59d702bff8d797a87e5e1f98db8c3f3d34e9f71d"
-other = "quando abilitato, i video TikTok e Instagram vengono inviati come file per preservare la qualità"
+other = "quando abilitato, i video TikTok e Instagram vengono inviati come media con preferenza alta qualità"
 
 [GroupSettingsMessage]
 hash = "sha1-dbc9223b568195bdd978bf68acd969c46f28b6b3"

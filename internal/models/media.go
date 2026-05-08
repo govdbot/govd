@@ -275,16 +275,13 @@ func (format *MediaFormat) GetInputMedia(
 	thumbnailFilePath string,
 	messageCaption string,
 	spoiler bool,
-	forceDocument bool,
+	highQualityVideo bool,
 ) (gotgbot.InputMedia, error) {
 	if format.FileID != "" {
-		return format.GetInputMediaWithFileID(messageCaption, spoiler, forceDocument)
+		return format.GetInputMediaWithFileID(messageCaption, spoiler, highQualityVideo)
 	}
 
 	_, inputMediaType := format.GetInfo()
-	if forceDocument && inputMediaType == FileTypeVideo {
-		inputMediaType = FileTypeDocument
-	}
 
 	fileObj, err := os.Open(filePath)
 	if err != nil {
@@ -310,6 +307,10 @@ func (format *MediaFormat) GetInputMedia(
 
 	switch inputMediaType {
 	case FileTypeVideo:
+		supportsStreaming := true
+		if highQualityVideo {
+			supportsStreaming = false
+		}
 		return &gotgbot.InputMediaVideo{
 			Media:             fileInputMedia,
 			Thumbnail:         thumbnailFileInputMedia,
@@ -317,7 +318,7 @@ func (format *MediaFormat) GetInputMedia(
 			Height:            int64(format.Height),
 			Duration:          int64(format.Duration),
 			Caption:           messageCaption,
-			SupportsStreaming: true,
+			SupportsStreaming: supportsStreaming,
 			ParseMode:         gotgbot.ParseModeHTML,
 			HasSpoiler:        spoiler,
 		}, nil
@@ -353,21 +354,23 @@ func (format *MediaFormat) GetInputMedia(
 func (format *MediaFormat) GetInputMediaWithFileID(
 	messageCaption string,
 	spoiler bool,
-	forceDocument bool,
+	highQualityVideo bool,
 ) (gotgbot.InputMedia, error) {
 	_, inputMediaType := format.GetInfo()
-	if forceDocument && inputMediaType == FileTypeVideo {
-		inputMediaType = FileTypeDocument
-	}
 
 	fileInputMedia := gotgbot.InputFileByID(format.FileID)
 	switch inputMediaType {
 	case FileTypeVideo:
+		supportsStreaming := true
+		if highQualityVideo {
+			supportsStreaming = false
+		}
 		return &gotgbot.InputMediaVideo{
-			Media:      fileInputMedia,
-			Caption:    messageCaption,
-			ParseMode:  gotgbot.ParseModeHTML,
-			HasSpoiler: spoiler,
+			Media:             fileInputMedia,
+			Caption:           messageCaption,
+			ParseMode:         gotgbot.ParseModeHTML,
+			HasSpoiler:        spoiler,
+			SupportsStreaming: supportsStreaming,
 		}, nil
 	case FileTypeAudio:
 		return &gotgbot.InputMediaAudio{
