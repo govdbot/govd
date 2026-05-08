@@ -275,9 +275,10 @@ func (format *MediaFormat) GetInputMedia(
 	thumbnailFilePath string,
 	messageCaption string,
 	spoiler bool,
+	highQualityVideo bool,
 ) (gotgbot.InputMedia, error) {
 	if format.FileID != "" {
-		return format.GetInputMediaWithFileID(messageCaption, spoiler)
+		return format.GetInputMediaWithFileID(messageCaption, spoiler, highQualityVideo)
 	}
 
 	_, inputMediaType := format.GetInfo()
@@ -306,6 +307,10 @@ func (format *MediaFormat) GetInputMedia(
 
 	switch inputMediaType {
 	case FileTypeVideo:
+		supportsStreaming := true
+		if highQualityVideo {
+			supportsStreaming = false
+		}
 		return &gotgbot.InputMediaVideo{
 			Media:             fileInputMedia,
 			Thumbnail:         thumbnailFileInputMedia,
@@ -313,7 +318,7 @@ func (format *MediaFormat) GetInputMedia(
 			Height:            int64(format.Height),
 			Duration:          int64(format.Duration),
 			Caption:           messageCaption,
-			SupportsStreaming: true,
+			SupportsStreaming: supportsStreaming,
 			ParseMode:         gotgbot.ParseModeHTML,
 			HasSpoiler:        spoiler,
 		}, nil
@@ -349,17 +354,23 @@ func (format *MediaFormat) GetInputMedia(
 func (format *MediaFormat) GetInputMediaWithFileID(
 	messageCaption string,
 	spoiler bool,
+	highQualityVideo bool,
 ) (gotgbot.InputMedia, error) {
 	_, inputMediaType := format.GetInfo()
 
 	fileInputMedia := gotgbot.InputFileByID(format.FileID)
 	switch inputMediaType {
 	case FileTypeVideo:
+		supportsStreaming := true
+		if highQualityVideo {
+			supportsStreaming = false
+		}
 		return &gotgbot.InputMediaVideo{
-			Media:      fileInputMedia,
-			Caption:    messageCaption,
-			ParseMode:  gotgbot.ParseModeHTML,
-			HasSpoiler: spoiler,
+			Media:             fileInputMedia,
+			Caption:           messageCaption,
+			ParseMode:         gotgbot.ParseModeHTML,
+			HasSpoiler:        spoiler,
+			SupportsStreaming: supportsStreaming,
 		}, nil
 	case FileTypeAudio:
 		return &gotgbot.InputMediaAudio{

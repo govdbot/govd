@@ -38,3 +38,8 @@ WHERE chat_id = @chat_id;
 UPDATE settings
 SET delete_links = NOT delete_links, updated_at = CURRENT_TIMESTAMP
 WHERE chat_id = @chat_id;
+
+-- name: ToggleChatHighQualityVideos :exec
+UPDATE settings
+SET high_quality_videos = NOT high_quality_videos, updated_at = CURRENT_TIMESTAMP
+WHERE chat_id = @chat_id;
