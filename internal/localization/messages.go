@@ -117,7 +117,7 @@ var (
 	}
 	HighQualityVideosButton = &i18n.Message{
 		ID:    "HighQualityVideosButton",
-		Other: "high quality video",
+		Other: "high-quality video",
 	}
 	HighQualityVideosSettingsMessage = &i18n.Message{
 		ID:    "HighQualityVideosSettingsMessage",
