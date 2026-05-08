@@ -106,6 +106,14 @@ other = "formato immagine non supportato"
 hash = "sha1-90f775f104687d04dc6c10f0a6b929d9f9060a9b"
 other = "estrattori"
 
+[HighQualityVideosButton]
+hash = "sha1-7f4f46c8e472f4e4354de65fa9ac9f4f95dfac28"
+other = "video di alta qualità"
+
+[HighQualityVideosSettingsMessage]
+hash = "sha1-59d702bff8d797a87e5e1f98db8c3f3d34e9f71d"
+other = "quando abilitato, i video TikTok e Instagram vengono inviati come media con preferenza di alta qualità"
+
 [GroupSettingsMessage]
 hash = "sha1-dbc9223b568195bdd978bf68acd969c46f28b6b3"
 other = "utilizza i pulsanti sottostanti per modificare le impostazioni del bot per questo gruppo"

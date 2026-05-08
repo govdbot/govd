@@ -96,6 +96,17 @@ func (q *Queries) ToggleChatDeleteLinks(ctx context.Context, chatID int64) error
 	return err
 }
 
+const toggleChatHighQualityVideos = `-- name: ToggleChatHighQualityVideos :exec
+UPDATE settings
+SET high_quality_videos = NOT high_quality_videos, updated_at = CURRENT_TIMESTAMP
+WHERE chat_id = $1
+`
+
+func (q *Queries) ToggleChatHighQualityVideos(ctx context.Context, chatID int64) error {
+	_, err := q.db.Exec(ctx, toggleChatHighQualityVideos, chatID)
+	return err
+}
+
 const toggleChatNsfw = `-- name: ToggleChatNsfw :exec
 UPDATE settings
 SET nsfw = NOT nsfw, updated_at = CURRENT_TIMESTAMP

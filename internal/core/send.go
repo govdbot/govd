@@ -67,9 +67,15 @@ func SendFormats(
 			if i == 0 {
 				caption = options.Caption
 			}
+			highQualityVideo := shouldUploadAsHighQualityVideo(
+				extractorCtx.Chat,
+				media,
+				f.Format,
+			)
 			inputMedia, err := f.Format.GetInputMedia(
 				f.FilePath, f.ThumbnailFilePath,
 				caption, options.IsSpoiler,
+				highQualityVideo,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get input media: %w", err)
@@ -149,9 +155,15 @@ func SendInlineFormats(
 	fileID := util.GetMessageFileID(&msg)
 	format.Format.FileID = fileID
 
+	highQualityVideo := shouldUploadAsHighQualityVideo(
+		extractorCtx.Chat,
+		media,
+		format.Format,
+	)
 	inputMedia, err := format.Format.GetInputMedia(
 		format.FilePath, format.ThumbnailFilePath,
 		options.Caption, options.IsSpoiler,
+		highQualityVideo,
 	)
 	if err != nil {
 		return err
