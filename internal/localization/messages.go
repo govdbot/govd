@@ -155,6 +155,10 @@ var (
 		ID:    "ErrorGeoRestrictedContent",
 		Other: "this content has geo-restrictions and cannot be accessed from the server's location",
 	}
+	ErrorTikTokIPBlocked = &i18n.Message{
+		ID:    "ErrorTikTokIPBlocked",
+		Other: "this TikTok post cannot be accessed because the server's IP address is blocked by TikTok",
+	}
 	ErrorNSFWNotAllowed = &i18n.Message{
 		ID:    "ErrorNSFWNotAllowed",
 		Other: "this content is marked as nsfw and can't be downloaded in this group. change /settings to allow nsfw content or use the bot privately",
