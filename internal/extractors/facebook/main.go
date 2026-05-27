@@ -7,6 +7,7 @@ import (
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/networking"
+	"github.com/govdbot/govd/internal/util"
 )
 
 var facebookHost = []string{"facebook"}
@@ -65,6 +66,15 @@ func GetMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	return buildMedia(ctx, videoData)
 }
 
+// Bitrate hints used to keep the format selector deterministic. The
+// Facebook page does not expose real bitrates, but we still need to
+// give the sort comparator (highest bitrate wins) a stable signal so
+// HD ranks above SD when both fit.
+const (
+	hdBitrateHint int64 = 4_500_000
+	sdBitrateHint int64 = 1_500_000
+)
+
 func buildMedia(ctx *models.ExtractorContext, data *VideoData) (*models.Media, error) {
 	media := ctx.NewMedia()
 	if data.Title != "" {
@@ -72,9 +82,22 @@ func buildMedia(ctx *models.ExtractorContext, data *VideoData) (*models.Media, e
 	}
 
 	item := media.NewItem()
+
+	hdSize := probeFormatSize(ctx, data.HDURL)
+	sdSize := probeFormatSize(ctx, data.SDURL)
+	tgLimit := util.TelegramBotAPIFileLimit()
+
+	hdFits := data.HDURL != "" && (hdSize == 0 || hdSize <= tgLimit)
+	sdFits := data.SDURL != "" && (sdSize == 0 || sdSize <= tgLimit)
+
+	ctx.Infof(
+		"facebook formats: hd=%dB(fits=%t) sd=%dB(fits=%t) tg_limit=%dB",
+		hdSize, hdFits, sdSize, sdFits, tgLimit,
+	)
+
 	var formats []*models.MediaFormat
 
-	if data.HDURL != "" {
+	if hdFits {
 		formats = append(formats, &models.MediaFormat{
 			FormatID:   "hd",
 			Type:       database.MediaTypeVideo,
@@ -83,19 +106,30 @@ func buildMedia(ctx *models.ExtractorContext, data *VideoData) (*models.Media, e
 			URL:        []string{data.HDURL},
 			Width:      data.Width,
 			Height:     data.Height,
+			Bitrate:    hdBitrateHint,
+			FileSize:   hdSize,
 		})
 	}
-	if data.SDURL != "" {
+	if sdFits {
 		formats = append(formats, &models.MediaFormat{
 			FormatID:   "sd",
 			Type:       database.MediaTypeVideo,
 			VideoCodec: database.MediaCodecAvc,
 			AudioCodec: database.MediaCodecAac,
 			URL:        []string{data.SDURL},
+			Bitrate:    sdBitrateHint,
+			FileSize:   sdSize,
 		})
 	}
 
 	if len(formats) == 0 {
+		// Both formats either failed to extract or exceed the active
+		// Bot API upload limit. Surface the friendlier "too large"
+		// error if we know at least one format was just oversized so
+		// the user understands why.
+		if (data.HDURL != "" && hdSize > tgLimit) || (data.SDURL != "" && sdSize > tgLimit) {
+			return nil, util.ErrTelegramFileTooLarge
+		}
 		return nil, fmt.Errorf("no video formats found")
 	}
 

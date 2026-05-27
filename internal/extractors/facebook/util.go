@@ -25,6 +25,15 @@ var webHeaders = map[string]string{
 	"Upgrade-Insecure-Requests": "1",
 }
 
+// videoFetchHeaders mirrors yt-dlp's behaviour: Facebook CDN
+// rate-limits browser User-Agents, so use a non-browser UA when we
+// hit the progressive video URL (HEAD or GET).
+var videoFetchHeaders = map[string]string{
+	"User-Agent": "facebookexternalhit/1.1",
+	"Accept":     "*/*",
+	"Range":      "bytes=0-0",
+}
+
 var (
 	hdURLPattern = regexp.MustCompile(
 		`"progressive_url"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*,\s*"failure_reason"\s*:\s*[^,]+\s*,\s*"metadata"\s*:\s*\{\s*"quality"\s*:\s*"HD"\s*\}`,
@@ -136,6 +145,85 @@ func unescapeFacebookURL(s string) string {
 	s = strings.ReplaceAll(s, `\/`, "/")
 	s = unescapeUnicode(s)
 	return s
+}
+
+// probeFormatSize asks the Facebook CDN for the size of a progressive
+// video URL. We send a HEAD first; some FBCDN edges reject HEAD with
+// 405, so we fall back to a single-byte ranged GET. Any unrecoverable
+// error returns 0 -- callers must treat that as "size unknown" and
+// fall back to a different format.
+func probeFormatSize(ctx *models.ExtractorContext, url string) int64 {
+	if url == "" {
+		return 0
+	}
+
+	if size := probeContentLength(ctx, http.MethodHead, url, nil); size > 0 {
+		return size
+	}
+
+	rangeHeaders := map[string]string{
+		"User-Agent": videoFetchHeaders["User-Agent"],
+		"Accept":     "*/*",
+		"Range":      "bytes=0-0",
+	}
+	return probeContentLength(ctx, http.MethodGet, url, rangeHeaders)
+}
+
+func probeContentLength(
+	ctx *models.ExtractorContext,
+	method string,
+	url string,
+	headers map[string]string,
+) int64 {
+	if headers == nil {
+		headers = map[string]string{
+			"User-Agent": videoFetchHeaders["User-Agent"],
+			"Accept":     "*/*",
+		}
+	}
+	resp, err := ctx.Fetch(
+		method,
+		url,
+		&networking.RequestParams{Headers: headers},
+	)
+	if err != nil {
+		return 0
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusPartialContent {
+		if total := parseContentRangeTotal(resp.Header.Get("Content-Range")); total > 0 {
+			return total
+		}
+	}
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 && resp.ContentLength > 0 {
+		return resp.ContentLength
+	}
+	return 0
+}
+
+func parseContentRangeTotal(header string) int64 {
+	header = strings.TrimSpace(header)
+	if header == "" {
+		return 0
+	}
+	idx := strings.LastIndex(header, "/")
+	if idx == -1 {
+		return 0
+	}
+	totalPart := strings.TrimSpace(header[idx+1:])
+	if totalPart == "" || totalPart == "*" {
+		return 0
+	}
+	var total int64
+	for _, c := range totalPart {
+		if c < '0' || c > '9' {
+			return 0
+		}
+		total = total*10 + int64(c-'0')
+	}
+	return total
 }
 
 func unescapeUnicode(s string) string {

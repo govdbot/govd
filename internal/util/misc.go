@@ -56,6 +56,43 @@ func ExceedsMaxDuration(duration int32) bool {
 	return duration > int32(config.Env.MaxDuration.Seconds())
 }
 
+// TelegramBotAPIFileLimit returns the upload size cap (in bytes)
+// imposed by the Telegram Bot API for whichever endpoint the bot is
+// configured to talk to.
+//
+//   - The public Telegram cloud Bot API (api.telegram.org) caps file
+//     uploads at 50 MiB. Anything larger fails with HTTP 413
+//     "Request Entity Too Large".
+//   - A self-hosted local Bot API server raises the limit to 2000 MiB.
+//
+// We assume any non-default endpoint is a local Bot API.
+func TelegramBotAPIFileLimit() int64 {
+	const cloud = 50 * 1024 * 1024
+	const local = 2000 * 1024 * 1024
+	if strings.HasPrefix(config.Env.BotAPIURL, "https://api.telegram.org") || config.Env.BotAPIURL == "" {
+		return cloud
+	}
+	return local
+}
+
+// EffectiveMaxFileSize returns the smaller of the configured
+// ``MAX_FILE_SIZE`` budget and the active Bot API upload cap.
+// Validators should compare against this value to fail fast before we
+// download a file Telegram is going to refuse anyway.
+func EffectiveMaxFileSize() int64 {
+	tgLimit := TelegramBotAPIFileLimit()
+	if config.Env.MaxFileSize > 0 && config.Env.MaxFileSize < tgLimit {
+		return config.Env.MaxFileSize
+	}
+	return tgLimit
+}
+
+// ExceedsTelegramFileLimit reports whether the given file size
+// exceeds the active Bot API upload limit.
+func ExceedsTelegramFileLimit(fileSize int64) bool {
+	return fileSize > TelegramBotAPIFileLimit()
+}
+
 func CleanupDownloads(ignoreTime bool) {
 	logger.L.Debug("cleaning up downloads directory")
 

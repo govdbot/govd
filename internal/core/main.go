@@ -153,6 +153,12 @@ func validateFormat(fmt *models.MediaFormat) error {
 	if util.ExceedsMaxFileSize(fmt.FileSize) {
 		return util.ErrFileTooLarge
 	}
+	// Even if the operator's configured budget is larger than what the
+	// Telegram Bot API will actually accept, refuse early so we do not
+	// waste bandwidth downloading a file that always 413s.
+	if fmt.FileSize > 0 && util.ExceedsTelegramFileLimit(fmt.FileSize) {
+		return util.ErrTelegramFileTooLarge
+	}
 	if util.ExceedsMaxDuration(fmt.Duration) {
 		return util.ErrDurationTooLong
 	}

@@ -8,7 +8,7 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
         --repository="https://dl-cdn.alpinelinux.org/alpine/edge/main" \
         --repository="https://dl-cdn.alpinelinux.org/alpine/edge/community" \
         "build-base=0.5-r4" \
-        "libheif-dev=1.21.2-r2"
+        "libheif-dev=1.21.2-r3"
 
 WORKDIR /app
 
@@ -38,8 +38,8 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     apk add --no-cache \
         --repository="https://dl-cdn.alpinelinux.org/alpine/edge/main" \
         --repository="https://dl-cdn.alpinelinux.org/alpine/edge/community" \
-        "ffmpeg=8.0.1-r3" \
-        "libheif=1.21.2-r2"
+        "ffmpeg=8.1.1-r0" \
+        "libheif=1.21.2-r3"
 
 COPY --from=builder /app/govd ./govd
 
