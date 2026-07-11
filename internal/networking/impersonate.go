@@ -4,6 +4,10 @@ import (
 	"crypto/tls"
 	"net/http"
 	"time"
+
+	"golang.org/x/net/http2"
+
+	"github.com/govdbot/govd/internal/logger"
 )
 
 func ChromeClientHelloSpec() *tls.ClientHelloInfo {
@@ -75,6 +79,12 @@ func NewChromeClient() *http.Client {
 
 	transport := NewTransport()
 	transport.TLSClientConfig = tlsConfig
+
+	// Force HTTP/2 so Instagram sees a browser-like connection
+	// (browsers negotiate h2; plain Go defaults to h1 which IG may block).
+	if err := http2.ConfigureTransport(transport); err != nil {
+		logger.L.Warnf("failed to configure http2: %v", err)
+	}
 
 	return &http.Client{
 		Transport: transport,

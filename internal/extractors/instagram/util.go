@@ -43,9 +43,9 @@ var (
 		"Accept":                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
 		"Accept-Language":           "en-GB,en;q=0.9",
 		"Cache-Control":             "max-age=0",
-		"Dnt":                       "1",
+		"DNT":                       "1",
 		"Priority":                  "u=0, i",
-		"Sec-Ch-Ua":                 `Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99`,
+		"Sec-Ch-Ua":                 `Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"`,
 		"Sec-Ch-Ua-Mobile":          "?0",
 		"Sec-Ch-Ua-Platform":        "macOS",
 		"Sec-Fetch-Dest":            "document",
@@ -53,6 +53,9 @@ var (
 		"Sec-Fetch-Site":            "none",
 		"Sec-Fetch-User":            "?1",
 		"Upgrade-Insecure-Requests": "1",
+		"X-IG-App-ID":             "936619743392459",
+		"X-IG-WWW-Claim":          "h=1",
+		"X-Requested-With":        "XMLHttpRequest",
 	}
 
 	igramHeaders = map[string]string{
@@ -491,11 +494,24 @@ var bboxVideoPattern = regexp.MustCompile(
 // via /p/<shortcode>/.
 func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	pageURL := fmt.Sprintf("https://www.instagram.com/p/%s/", ctx.ContentID)
+	// Load Instagram cookies (private/cookies/instagram.txt) so authenticated
+	// posts (albums/carousels) return media data instead of a block page.
+	cookies := util.GetExtractorCookies(ctx.Extractor.ID)
+	logger.L.Infof("IG cookie debug: extractor=%s cookies=%d", ctx.Extractor.ID, len(cookies))
+	// Inject the `rur` cookie value as X-IG-WWW-Claim (IG expects this
+	// on authenticated requests; browsers send it automatically).
+	for _, c := range cookies {
+		if c.Name == "rur" {
+			webHeaders["X-IG-WWW-Claim"] = "h=" + c.Value
+			break
+		}
+	}
 	resp, err := ctx.Fetch(
 		http.MethodGet,
 		pageURL,
 		&networking.RequestParams{
 			Headers: webHeaders,
+			Cookies: cookies,
 		},
 	)
 	if err != nil {
