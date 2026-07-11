@@ -11,7 +11,6 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -459,38 +458,6 @@ func GetBestVideoVersion(versions []*VideoVersions) *VideoVersions {
 	return best
 }
 
-// ogTitlePattern extracts the og:title caption (format: `User on Instagram: "caption"`).
-var ogTitlePattern = regexp.MustCompile(
-	`property="og:title"\s+content="([^"]+)"`,
-)
-
-// bboxPhotoPattern extracts the first image URL (and dimensions) from
-// Instagram's embedded "display_resources" array (photo / carousel posts).
-var bboxPhotoPattern = regexp.MustCompile(
-	`"display_resources":\s*\[\s*\{\s*"src":\s*"((?:\\.|[^"\\])*)",\s*"config_width":\s*(\d+),\s*"config_height":\s*(\d+)`,
-)
-
-// extractCaption pulls the caption out of an og:title value of the form
-// `User on Instagram: "caption"`.
-func extractCaption(rawTitle string) string {
-	rawTitle = strings.ReplaceAll(rawTitle, `&quot;`, `"`)
-	rawTitle = strings.ReplaceAll(rawTitle, `&#x27;`, `'`)
-	rawTitle = strings.ReplaceAll(rawTitle, `&#x2F;`, `/`)
-	if idx := strings.Index(rawTitle, ` on Instagram: "`); idx >= 0 {
-		rest := rawTitle[idx+len(` on Instagram: `):]
-		rest = strings.TrimPrefix(rest, `"`)
-		rest = strings.TrimSuffix(rest, `"`)
-		return rest
-	}
-	return rawTitle
-}
-// Instagram's embedded "video_versions" array in the post page. This avoids
-// the hardcoded GraphQL doc_id (which Instagram rotates/revokes) and is far
-// more stable.
-var bboxVideoPattern = regexp.MustCompile(
-	`"video_versions":\[\s*\{\s*"width"\s*:\s*(\d+),\s*"height"\s*:\s*(\d+),\s*"url"\s*:\s*"((?:\\.|[^"\\])*)"`,
-)
-
 // GetWebpageMedia fetches Instagram media via the public GraphQL
 // `web_info` endpoint (instaloader PR #2706 approach). This returns the full
 // media node — including carousel/album children — as JSON, so no browser /
@@ -529,14 +496,12 @@ func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 			Cookies: cookies,
 		},
 	)
-	logger.L.Errorf("IG DIAG: shortcode=%s fetchErr=%v status=%d", ctx.ContentID, err, func() int { if resp != nil { return resp.StatusCode }; return -1 }())
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		_ = os.WriteFile("/tmp/ig_debug_err.txt", []byte(fmt.Sprintf("status=%d shortcode=%s", resp.StatusCode, ctx.ContentID)), 0644)
 		return nil, fmt.Errorf("failed to get media via graphql: %s", resp.Status)
 	}
 	body, err := io.ReadAll(resp.Body)
@@ -544,28 +509,18 @@ func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	_ = os.WriteFile("/tmp/ig_debug_body.json", body, 0644)
-	logger.L.Warnf("IG graphql debug: shortcode=%s status=%d bodyBytes=%d", ctx.ContentID, resp.StatusCode, len(body))
-	if len(body) > 0 {
-		snippet := string(body)
-		if len(snippet) > 300 {
-			snippet = snippet[:300]
-		}
-		logger.L.Warnf("IG graphql body snippet: %s", snippet)
-	}
-
 	// Parse the JSON response.
 	var root struct {
 		Data struct {
-			XdtWebInfo struct {
-				Items []json.RawMessage `json:"xdt_api__v1__media__shortcode__web_info"`
-			} `json:"data"`
+			WebInfo struct {
+				Items []json.RawMessage `json:"items"`
+			} `json:"xdt_api__v1__media__shortcode__web_info"`
 		} `json:"data"`
 	}
 	if err := json.Unmarshal(body, &root); err != nil {
 		return nil, fmt.Errorf("failed to parse graphql response: %w", err)
 	}
-	items := root.Data.XdtWebInfo.Items
+	items := root.Data.WebInfo.Items
 	if len(items) == 0 {
 		return nil, fmt.Errorf("no media items returned (blocked or not found)")
 	}
