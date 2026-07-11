@@ -8,17 +8,18 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
         --repository="https://dl-cdn.alpinelinux.org/alpine/edge/main" \
         --repository="https://dl-cdn.alpinelinux.org/alpine/edge/community" \
         build-base \
+        git \
         libheif-dev
 
 WORKDIR /app
+
+ENV GOPROXY=https://goproxy.io,direct
+ENV GOFLAGS=-mod=mod
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
 
 COPY go.mod go.sum ./
-
-RUN --mount=type=cache,target=/go/pkg/mod \
-    go mod download
 
 COPY . .
 
