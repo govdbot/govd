@@ -22,8 +22,6 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 COPY . .
 
-RUN go mod tidy
-
 RUN sqlc generate
 
 RUN --mount=type=cache,target="/root/.cache/go-build" \

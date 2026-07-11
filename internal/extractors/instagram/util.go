@@ -72,16 +72,21 @@ func ParseGQLMedia(ctx *models.ExtractorContext, data *Media) (*models.Media, er
 	switch data.Typename {
 	case "GraphVideo", "XDTGraphVideo":
 		item := media.NewItem()
-		item.AddFormats(&models.MediaFormat{
+		formats := &models.MediaFormat{
 			FormatID:     "video",
 			Type:         database.MediaTypeVideo,
 			VideoCodec:   database.MediaCodecAvc,
 			AudioCodec:   database.MediaCodecAac,
 			URL:          []string{data.VideoURL},
-			ThumbnailURL: []string{data.DisplayURL},
 			Width:        data.Dimensions.Width,
 			Height:       data.Dimensions.Height,
-		})
+		}
+		// Only attach a thumbnail when we have a real image URL
+		// (not the video URL itself, which Telegram rejects).
+		if data.DisplayURL != "" && data.DisplayURL != data.VideoURL {
+			formats.ThumbnailURL = []string{data.DisplayURL}
+		}
+		item.AddFormats(formats)
 	case "GraphImage", "XDTGraphImage":
 		item := media.NewItem()
 		item.AddFormats(&models.MediaFormat{
@@ -447,11 +452,12 @@ func GetBestVideoVersion(versions []*VideoVersions) *VideoVersions {
 	return best
 }
 
-// bboxVideoPattern extracts the first video URL from Instagram's embedded
-// "video_versions" array in the post page. This avoids the hardcoded
-// GraphQL doc_id (which Instagram rotates/revokes) and is far more stable.
+// bboxVideoPattern extracts the first video URL (and its dimensions) from
+// Instagram's embedded "video_versions" array in the post page. This avoids
+// the hardcoded GraphQL doc_id (which Instagram rotates/revokes) and is far
+// more stable.
 var bboxVideoPattern = regexp.MustCompile(
-	`"video_versions":\[\s*\{\s*"width"\s*:\s*\d+,\s*"height"\s*:\s*\d+,\s*"url"\s*:\s*"((?:\\.|[^"\\])*)"`,
+	`"video_versions":\[\s*\{\s*"width"\s*:\s*(\d+),\s*"height"\s*:\s*(\d+),\s*"url"\s*:\s*"((?:\\.|[^"\\])*)"`,
 )
 
 // GetWebpageMedia fetches the public post page (/p/<shortcode>/) and extracts
@@ -482,25 +488,34 @@ func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	}
 
 	m := bboxVideoPattern.FindSubmatch(body)
-	if len(m) < 2 {
+	if len(m) < 4 {
 		return nil, fmt.Errorf("video_versions url not found in page")
 	}
-	// The captured string is a JSON-quoted value with escaped slashes/unicode.
-	raw := string(m[1])
+	// The captured URL string is a JSON-quoted value with escaped slashes/unicode.
+	raw := string(m[3])
 	raw = strings.ReplaceAll(raw, `\/`, "/")
 	raw = strings.ReplaceAll(raw, `\u0026`, "&")
 	raw = strings.ReplaceAll(raw, `\u003d`, "=")
-	// Unquote any remaining JSON escapes safely.
 	if unquoted, qerr := strconv.Unquote(`"` + raw + `"`); qerr == nil {
 		raw = unquoted
 	}
 
+	width, height := int64(720), int64(1280)
+	if w, perr := strconv.ParseInt(string(m[1]), 10, 32); perr == nil {
+		width = w
+	}
+	if h, perr := strconv.ParseInt(string(m[2]), 10, 32); perr == nil {
+		height = h
+	}
+
 	media := &Media{
-		Typename: "XDTGraphVideo",
-		IsVideo:  true,
-		VideoURL: raw,
-		ID:       ctx.ContentID,
-		Shortcode: ctx.ContentID,
+		Typename:   "XDTGraphVideo",
+		IsVideo:    true,
+		VideoURL:   raw,
+		DisplayURL:  "", // no separate thumbnail; Telegram uses the video frame
+		ID:         ctx.ContentID,
+		Shortcode:  ctx.ContentID,
+		Dimensions: &Dimensions{Width: int32(width), Height: int32(height)},
 	}
 	return ParseGQLMedia(ctx, media)
 }
