@@ -459,7 +459,26 @@ var ogTitlePattern = regexp.MustCompile(
 	`property="og:title"\s+content="([^"]+)"`,
 )
 
-// bboxVideoPattern extracts the first video URL (and its dimensions) from
+// bboxPhotoPattern extracts the first image URL (and dimensions) from
+// Instagram's embedded "display_resources" array (photo / carousel posts).
+var bboxPhotoPattern = regexp.MustCompile(
+	`"display_resources":\s*\[\s*\{\s*"src":\s*"((?:\\.|[^"\\])*)",\s*"config_width":\s*(\d+),\s*"config_height":\s*(\d+)`,
+)
+
+// extractCaption pulls the caption out of an og:title value of the form
+// `User on Instagram: "caption"`.
+func extractCaption(rawTitle string) string {
+	rawTitle = strings.ReplaceAll(rawTitle, `&quot;`, `"`)
+	rawTitle = strings.ReplaceAll(rawTitle, `&#x27;`, `'`)
+	rawTitle = strings.ReplaceAll(rawTitle, `&#x2F;`, `/`)
+	if idx := strings.Index(rawTitle, ` on Instagram: "`); idx >= 0 {
+		rest := rawTitle[idx+len(` on Instagram: `):]
+		rest = strings.TrimPrefix(rest, `"`)
+		rest = strings.TrimSuffix(rest, `"`)
+		return rest
+	}
+	return rawTitle
+}
 // Instagram's embedded "video_versions" array in the post page. This avoids
 // the hardcoded GraphQL doc_id (which Instagram rotates/revokes) and is far
 // more stable.
@@ -494,18 +513,52 @@ func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
+	// Instagram embeds the media JSON inside __bbox as *escaped* JSON
+	// (e.g. `\"video_versions\":[{\"url\":\"https:\/\/...\u0026...\")`).
+	// Unescape the JSON-style escapes so our plain-quote regexes match.
+	body = []byte(strings.ReplaceAll(string(body), `\"`, `"`))
+	body = []byte(strings.ReplaceAll(string(body), `\/`, `/`))
+	body = []byte(strings.ReplaceAll(string(body), `\u0026`, `&`))
+	body = []byte(strings.ReplaceAll(string(body), `\u003d`, `=`))
+	body = []byte(strings.ReplaceAll(string(body), `\u0027`, `'`))
+
 	m := bboxVideoPattern.FindSubmatch(body)
 	if len(m) < 4 {
-		return nil, fmt.Errorf("video_versions url not found in page")
+		// Photo post (no video_versions): try display_resources.
+		if pm := bboxPhotoPattern.FindSubmatch(body); len(pm) >= 4 {
+			praw := string(pm[3])
+			praw = strings.ReplaceAll(praw, `\/`, `/`)
+			praw = strings.ReplaceAll(praw, `\u0026`, `&`)
+			praw = strings.ReplaceAll(praw, `\u003d`, `=`)
+			if unq, qerr := strconv.Unquote(`"` + praw + `"`); qerr == nil {
+				praw = unq
+			}
+			width, height := int64(1080), int64(1080)
+			if w, perr := strconv.ParseInt(string(pm[1]), 10, 32); perr == nil {
+				width = w
+			}
+			if h, perr := strconv.ParseInt(string(pm[2]), 10, 32); perr == nil {
+				height = h
+			}
+			var caption string
+			if tm := ogTitlePattern.FindSubmatch(body); len(tm) >= 2 {
+				caption = extractCaption(string(tm[1]))
+			}
+			media := &Media{
+				Typename:   "XDTGraphImage",
+				IsVideo:    false,
+				DisplayURL: praw,
+				Caption:     caption,
+				ID:         ctx.ContentID,
+				Shortcode:  ctx.ContentID,
+				Dimensions: &Dimensions{Width: int32(width), Height: int32(height)},
+			}
+			return ParseGQLMedia(ctx, media)
+		}
+		return nil, fmt.Errorf("video_versions/display_resources not found in page")
 	}
-	// The captured URL string is a JSON-quoted value with escaped slashes/unicode.
+	// The captured URL string is a plain (already unescaped) value now.
 	raw := string(m[3])
-	raw = strings.ReplaceAll(raw, `\/`, "/")
-	raw = strings.ReplaceAll(raw, `\u0026`, "&")
-	raw = strings.ReplaceAll(raw, `\u003d`, "=")
-	if unquoted, qerr := strconv.Unquote(`"` + raw + `"`); qerr == nil {
-		raw = unquoted
-	}
 
 	// Thumbnail: none (Telegram uses the video frame).
 		thumb := ""
@@ -513,20 +566,7 @@ func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 		// Caption: IG exposes it in og:title as `User on Instagram: "caption"`.
 		var caption string
 		if tm := ogTitlePattern.FindSubmatch(body); len(tm) >= 2 {
-			rawTitle := string(tm[1])
-			rawTitle = strings.ReplaceAll(rawTitle, `&quot;`, `"`)
-			rawTitle = strings.ReplaceAll(rawTitle, `&#x27;`, `'`)
-			rawTitle = strings.ReplaceAll(rawTitle, `&#x2F;`, `/`)
-			rawTitle = strings.ReplaceAll(rawTitle, `&#x27;`, `'`)
-			// strip leading `<user> on Instagram: ` prefix
-			if idx := strings.Index(rawTitle, ` on Instagram: "`); idx >= 0 {
-				rest := rawTitle[idx+len(` on Instagram: `):]
-				rest = strings.TrimPrefix(rest, `"`)
-				rest = strings.TrimSuffix(rest, `"`)
-				caption = rest
-			} else {
-				caption = rawTitle
-			}
+			caption = extractCaption(string(tm[1]))
 		}
 
 		width, height := int64(720), int64(1280)
