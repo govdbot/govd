@@ -63,6 +63,7 @@ type Media struct {
 	TakenAtTimestamp      int                    `json:"taken_at_timestamp"`
 	Title                 string                 `json:"title"`
 	VideoURL              string                 `json:"video_url"`
+	Caption              string                 `json:"caption"`
 	VideoViewCount        int                    `json:"video_view_count"`
 }
 

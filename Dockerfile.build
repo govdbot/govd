@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
 
 WORKDIR /app
 
-ENV GOPROXY=https://goproxy.io,https://proxy.golang.org,direct
+ENV GOPROXY=https://goproxy.cn,https://goproxy.io
 ENV GOFLAGS=-mod=mod
 ENV GOVCS=off
 

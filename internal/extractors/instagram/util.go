@@ -64,6 +64,8 @@ func ParseGQLMedia(ctx *models.ExtractorContext, data *Media) (*models.Media, er
 	var caption string
 	if data.EdgeMediaToCaption != nil && len(data.EdgeMediaToCaption.Edges) > 0 {
 		caption = data.EdgeMediaToCaption.Edges[0].Node.Text
+	} else if data.Caption != "" {
+		caption = data.Caption
 	}
 
 	media := ctx.NewMedia()
@@ -452,6 +454,11 @@ func GetBestVideoVersion(versions []*VideoVersions) *VideoVersions {
 	return best
 }
 
+// ogTitlePattern extracts the og:title caption (format: `User on Instagram: "caption"`).
+var ogTitlePattern = regexp.MustCompile(
+	`property="og:title"\s+content="([^"]+)"`,
+)
+
 // bboxVideoPattern extracts the first video URL (and its dimensions) from
 // Instagram's embedded "video_versions" array in the post page. This avoids
 // the hardcoded GraphQL doc_id (which Instagram rotates/revokes) and is far
@@ -500,22 +507,45 @@ func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 		raw = unquoted
 	}
 
-	width, height := int64(720), int64(1280)
-	if w, perr := strconv.ParseInt(string(m[1]), 10, 32); perr == nil {
-		width = w
-	}
-	if h, perr := strconv.ParseInt(string(m[2]), 10, 32); perr == nil {
-		height = h
-	}
+	// Thumbnail: none (Telegram uses the video frame).
+		thumb := ""
 
-	media := &Media{
-		Typename:   "XDTGraphVideo",
-		IsVideo:    true,
-		VideoURL:   raw,
-		DisplayURL:  "", // no separate thumbnail; Telegram uses the video frame
-		ID:         ctx.ContentID,
-		Shortcode:  ctx.ContentID,
-		Dimensions: &Dimensions{Width: int32(width), Height: int32(height)},
-	}
-	return ParseGQLMedia(ctx, media)
-}
+		// Caption: IG exposes it in og:title as `User on Instagram: "caption"`.
+		var caption string
+		if tm := ogTitlePattern.FindSubmatch(body); len(tm) >= 2 {
+			rawTitle := string(tm[1])
+			rawTitle = strings.ReplaceAll(rawTitle, `&quot;`, `"`)
+			rawTitle = strings.ReplaceAll(rawTitle, `&#x27;`, `'`)
+			rawTitle = strings.ReplaceAll(rawTitle, `&#x2F;`, `/`)
+			rawTitle = strings.ReplaceAll(rawTitle, `&#x27;`, `'`)
+			// strip leading `<user> on Instagram: ` prefix
+			if idx := strings.Index(rawTitle, ` on Instagram: "`); idx >= 0 {
+				rest := rawTitle[idx+len(` on Instagram: `):]
+				rest = strings.TrimPrefix(rest, `"`)
+				rest = strings.TrimSuffix(rest, `"`)
+				caption = rest
+			} else {
+				caption = rawTitle
+			}
+		}
+
+		width, height := int64(720), int64(1280)
+		if w, perr := strconv.ParseInt(string(m[1]), 10, 32); perr == nil {
+			width = w
+		}
+		if h, perr := strconv.ParseInt(string(m[2]), 10, 32); perr == nil {
+			height = h
+		}
+
+		media := &Media{
+			Typename:   "XDTGraphVideo",
+			IsVideo:    true,
+			VideoURL:   raw,
+			DisplayURL:  thumb, // no separate thumbnail; Telegram uses the video frame
+			Caption:     caption,
+			ID:         ctx.ContentID,
+			Shortcode:  ctx.ContentID,
+			Dimensions: &Dimensions{Width: int32(width), Height: int32(height)},
+		}
+		return ParseGQLMedia(ctx, media)
+		}
