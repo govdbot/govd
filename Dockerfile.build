@@ -8,13 +8,13 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
         --repository="https://dl-cdn.alpinelinux.org/alpine/edge/main" \
         --repository="https://dl-cdn.alpinelinux.org/alpine/edge/community" \
         build-base \
-        git \
         libheif-dev
 
 WORKDIR /app
 
-ENV GOPROXY=https://goproxy.io,direct
+ENV GOPROXY=https://goproxy.io,https://proxy.golang.org,direct
 ENV GOFLAGS=-mod=mod
+ENV GOVCS=off
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
