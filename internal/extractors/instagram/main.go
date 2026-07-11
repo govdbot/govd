@@ -26,6 +26,14 @@ var Extractor = &models.Extractor{
 	Redirect:   false,
 
 	GetFunc: func(ctx *models.ExtractorContext) (*models.ExtractorResponse, error) {
+		// method 0: extract media directly from the post page (__bbox JSON).
+		// Avoids the hardcoded GraphQL doc_id that Instagram revokes.
+		media, err0 := GetWebpageMedia(ctx)
+		if err0 == nil {
+			return &models.ExtractorResponse{
+				Media: media,
+			}, nil
+		}
 		// method 1: get media from GQL web API
 		media, err1 := GetGQLMedia(ctx)
 		if err1 == nil {
