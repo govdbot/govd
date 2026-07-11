@@ -26,36 +26,17 @@ var Extractor = &models.Extractor{
 	Redirect:   false,
 
 	GetFunc: func(ctx *models.ExtractorContext) (*models.ExtractorResponse, error) {
-		// method 0: extract media directly from the post page (__bbox JSON).
-		// Avoids the hardcoded GraphQL doc_id that Instagram revokes.
-		media, err0 := GetWebpageMedia(ctx)
-		if err0 == nil {
-			return &models.ExtractorResponse{
-				Media: media,
-			}, nil
+		// Primary (and only) method: GraphQL web_info endpoint (instaloader
+		// PR #2706). This returns carousel/album children as JSON with no
+		// browser required. Fallbacks removed — the other methods rely on
+		// revoked doc_ids / 3rd-party services that no longer work.
+		media, err := GetWebpageMedia(ctx)
+		if err != nil {
+			return nil, err
 		}
-		// method 1: get media from GQL web API
-		media, err1 := GetGQLMedia(ctx)
-		if err1 == nil {
-			return &models.ExtractorResponse{
-				Media: media,
-			}, nil
-		}
-		// method 2: get media from embed page
-		media, err2 := GetEmbedMedia(ctx)
-		if err2 == nil {
-			return &models.ExtractorResponse{
-				Media: media,
-			}, nil
-		}
-		// method 3: get media from 3rd party service (unlikely)
-		media, err3 := GetIGramPost(ctx)
-		if err3 == nil {
-			return &models.ExtractorResponse{
-				Media: media,
-			}, nil
-		}
-		return nil, fmt.Errorf("all methods failed: %w; %w; %w", err1, err2, err3)
+		return &models.ExtractorResponse{
+			Media: media,
+		}, nil
 	},
 }
 

@@ -5,11 +5,13 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math/big"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -489,119 +491,188 @@ var bboxVideoPattern = regexp.MustCompile(
 	`"video_versions":\[\s*\{\s*"width"\s*:\s*(\d+),\s*"height"\s*:\s*(\d+),\s*"url"\s*:\s*"((?:\\.|[^"\\])*)"`,
 )
 
-// GetWebpageMedia fetches the public post page (/p/<shortcode>/) and extracts
-// the video URL directly from the embedded JSON. Reels and posts both resolve
-// via /p/<shortcode>/.
+// GetWebpageMedia fetches Instagram media via the public GraphQL
+// `web_info` endpoint (instaloader PR #2706 approach). This returns the full
+// media node — including carousel/album children — as JSON, so no browser /
+// JS execution is required. Works with a normal authenticated cookie.
 func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
-	pageURL := fmt.Sprintf("https://www.instagram.com/p/%s/", ctx.ContentID)
 	// Load Instagram cookies (private/cookies/instagram.txt) so authenticated
 	// posts (albums/carousels) return media data instead of a block page.
 	cookies := util.GetExtractorCookies(ctx.Extractor.ID)
-	logger.L.Infof("IG cookie debug: extractor=%s cookies=%d", ctx.Extractor.ID, len(cookies))
-	// Inject the `rur` cookie value as X-IG-WWW-Claim (IG expects this
-	// on authenticated requests; browsers send it automatically).
-	for _, c := range cookies {
-		if c.Name == "rur" {
-			webHeaders["X-IG-WWW-Claim"] = "h=" + c.Value
-			break
-		}
+
+	// Build the GraphQL query URL. We use the doc_id that returns
+	// `xdt_api__v1__media__shortcode__web_info` (instaloader PR #2706).
+	variables := fmt.Sprintf(
+		`{"shortcode":%q,"__relay_internal__pv__PolarisAIGMMediaWebLabelEnabledrelayprovider":false}`,
+		ctx.ContentID,
+	)
+	apiURL := fmt.Sprintf(
+		"https://www.instagram.com/graphql/query/?doc_id=27128499623469141&variables=%s",
+		url.QueryEscape(variables),
+	)
+
+	// Minimal headers — matches what works via curl. The full webHeaders
+	// (Sec-Fetch-*, Upgrade-Insecure-Requests) makes IG reject the GraphQL
+	// request from the bot's client, so we keep it lean here.
+	gqlHeaders := map[string]string{
+		"Accept":          "*/*",
+		"X-IG-App-ID":     "936619743392459",
+		"X-Requested-With": "XMLHttpRequest",
+		"Referer":         "https://www.instagram.com/",
 	}
+
 	resp, err := ctx.Fetch(
 		http.MethodGet,
-		pageURL,
+		apiURL,
 		&networking.RequestParams{
-			Headers: webHeaders,
+			Headers: gqlHeaders,
 			Cookies: cookies,
 		},
 	)
+	logger.L.Errorf("IG DIAG: shortcode=%s fetchErr=%v status=%d", ctx.ContentID, err, func() int { if resp != nil { return resp.StatusCode }; return -1 }())
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	logger.WriteFile("ig_web_response", resp)
-
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get post page: %s", resp.Status)
+		_ = os.WriteFile("/tmp/ig_debug_err.txt", []byte(fmt.Sprintf("status=%d shortcode=%s", resp.StatusCode, ctx.ContentID)), 0644)
+		return nil, fmt.Errorf("failed to get media via graphql: %s", resp.Status)
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	// Instagram embeds the media JSON inside __bbox as *escaped* JSON
-	// (e.g. `\"video_versions\":[{\"url\":\"https:\/\/...\u0026...\")`).
-	// Unescape the JSON-style escapes so our plain-quote regexes match.
-	body = []byte(strings.ReplaceAll(string(body), `\"`, `"`))
-	body = []byte(strings.ReplaceAll(string(body), `\/`, `/`))
-	body = []byte(strings.ReplaceAll(string(body), `\u0026`, `&`))
-	body = []byte(strings.ReplaceAll(string(body), `\u003d`, `=`))
-	body = []byte(strings.ReplaceAll(string(body), `\u0027`, `'`))
-
-	m := bboxVideoPattern.FindSubmatch(body)
-	if len(m) < 4 {
-		// Photo post (no video_versions): try display_resources.
-		if pm := bboxPhotoPattern.FindSubmatch(body); len(pm) >= 4 {
-			praw := string(pm[3])
-			praw = strings.ReplaceAll(praw, `\/`, `/`)
-			praw = strings.ReplaceAll(praw, `\u0026`, `&`)
-			praw = strings.ReplaceAll(praw, `\u003d`, `=`)
-			if unq, qerr := strconv.Unquote(`"` + praw + `"`); qerr == nil {
-				praw = unq
-			}
-			width, height := int64(1080), int64(1080)
-			if w, perr := strconv.ParseInt(string(pm[1]), 10, 32); perr == nil {
-				width = w
-			}
-			if h, perr := strconv.ParseInt(string(pm[2]), 10, 32); perr == nil {
-				height = h
-			}
-			var caption string
-			if tm := ogTitlePattern.FindSubmatch(body); len(tm) >= 2 {
-				caption = extractCaption(string(tm[1]))
-			}
-			media := &Media{
-				Typename:   "XDTGraphImage",
-				IsVideo:    false,
-				DisplayURL: praw,
-				Caption:     caption,
-				ID:         ctx.ContentID,
-				Shortcode:  ctx.ContentID,
-				Dimensions: &Dimensions{Width: int32(width), Height: int32(height)},
-			}
-			return ParseGQLMedia(ctx, media)
+	_ = os.WriteFile("/tmp/ig_debug_body.json", body, 0644)
+	logger.L.Warnf("IG graphql debug: shortcode=%s status=%d bodyBytes=%d", ctx.ContentID, resp.StatusCode, len(body))
+	if len(body) > 0 {
+		snippet := string(body)
+		if len(snippet) > 300 {
+			snippet = snippet[:300]
 		}
-		return nil, fmt.Errorf("video_versions/display_resources not found in page")
+		logger.L.Warnf("IG graphql body snippet: %s", snippet)
 	}
-	// The captured URL string is a plain (already unescaped) value now.
-	raw := string(m[3])
 
-	// Thumbnail: none (Telegram uses the video frame).
-		thumb := ""
+	// Parse the JSON response.
+	var root struct {
+		Data struct {
+			XdtWebInfo struct {
+				Items []json.RawMessage `json:"xdt_api__v1__media__shortcode__web_info"`
+			} `json:"data"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(body, &root); err != nil {
+		return nil, fmt.Errorf("failed to parse graphql response: %w", err)
+	}
+	items := root.Data.XdtWebInfo.Items
+	if len(items) == 0 {
+		return nil, fmt.Errorf("no media items returned (blocked or not found)")
+	}
 
-		// Caption: IG exposes it in og:title as `User on Instagram: "caption"`.
-		var caption string
-		if tm := ogTitlePattern.FindSubmatch(body); len(tm) >= 2 {
-			caption = extractCaption(string(tm[1]))
+	// Use the first item (posts are single items).
+	item := items[0]
+
+	var node struct {
+		Typename        string `json:"__typename"`
+		ID              string `json:"id"`
+		Shortcode       string `json:"code"`
+		IsVideo         bool   `json:"is_video"`
+		Caption         *struct {
+			Text string `json:"text"`
+		} `json:"caption"`
+		VideoVersions   []struct {
+			URL    string `json:"url"`
+			Type   int    `json:"type"`
+			Width  int    `json:"width"`
+			Height int    `json:"height"`
+		} `json:"video_versions"`
+		ImageVersions2 struct {
+			Candidates []struct {
+				URL    string `json:"url"`
+				Width  int    `json:"width"`
+				Height int    `json:"height"`
+			} `json:"candidates"`
+		} `json:"image_versions2"`
+		CarouselMedia []struct {
+			IsVideo       bool `json:"is_video"`
+			VideoVersions []struct {
+				URL string `json:"url"`
+			} `json:"video_versions"`
+			ImageVersions2 struct {
+				Candidates []struct {
+					URL string `json:"url"`
+				} `json:"candidates"`
+			} `json:"image_versions2"`
+		} `json:"carousel_media"`
+	}
+	if err := json.Unmarshal(item, &node); err != nil {
+		return nil, fmt.Errorf("failed to parse media item: %w", err)
+	}
+
+	var caption string
+	if node.Caption != nil {
+		caption = node.Caption.Text
+	}
+
+	// Carousel / album: build child medias using EdgeSidecarToChildren
+	// (the structure ParseGQLMedia already understands).
+	if len(node.CarouselMedia) > 0 {
+		edges := make([]*EdgeNode, 0, len(node.CarouselMedia))
+		for _, child := range node.CarouselMedia {
+			childMedia := &Media{}
+			if child.IsVideo && len(child.VideoVersions) > 0 {
+				childMedia.Typename = "XDTGraphVideo"
+				childMedia.IsVideo = true
+				childMedia.VideoURL = child.VideoVersions[0].URL
+			} else if len(child.ImageVersions2.Candidates) > 0 {
+				childMedia.Typename = "XDTGraphImage"
+				childMedia.DisplayURL = child.ImageVersions2.Candidates[0].URL
+			} else {
+				continue
+			}
+			edges = append(edges, &EdgeNode{Node: childMedia})
 		}
-
-		width, height := int64(720), int64(1280)
-		if w, perr := strconv.ParseInt(string(m[1]), 10, 32); perr == nil {
-			width = w
+		if len(edges) == 0 {
+			return nil, fmt.Errorf("carousel returned no usable media")
 		}
-		if h, perr := strconv.ParseInt(string(m[2]), 10, 32); perr == nil {
-			height = h
+		album := &Media{
+			Typename:              "XDTGraphSidecar",
+			Caption:               caption,
+			ID:                    ctx.ContentID,
+			Shortcode:             ctx.ContentID,
+			EdgeSidecarToChildren: &EdgeSidecarToChildren{Edges: edges},
 		}
+		return ParseGQLMedia(ctx, album)
+	}
 
+	// Single video.
+	if node.IsVideo && len(node.VideoVersions) > 0 {
 		media := &Media{
 			Typename:   "XDTGraphVideo",
 			IsVideo:    true,
-			VideoURL:   raw,
-			DisplayURL:  thumb, // no separate thumbnail; Telegram uses the video frame
-			Caption:     caption,
+			VideoURL:   node.VideoVersions[0].URL,
+			DisplayURL: "",
+			Caption:    caption,
 			ID:         ctx.ContentID,
 			Shortcode:  ctx.ContentID,
-			Dimensions: &Dimensions{Width: int32(width), Height: int32(height)},
 		}
 		return ParseGQLMedia(ctx, media)
+	}
+
+	// Single photo.
+	if len(node.ImageVersions2.Candidates) > 0 {
+		praw := node.ImageVersions2.Candidates[0].URL
+		media := &Media{
+			Typename:   "XDTGraphImage",
+			IsVideo:    false,
+			DisplayURL: praw,
+			Caption:    caption,
+			ID:         ctx.ContentID,
+			Shortcode:  ctx.ContentID,
 		}
+		return ParseGQLMedia(ctx, media)
+	}
+
+	return nil, fmt.Errorf("no formats found for media item")
+}
