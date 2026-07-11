@@ -21,3 +21,8 @@ translate.*.toml
 
 # Agents
 CLAUDE.md
+
+# secret / backup protection (auto-added)
+.env.bak*
+*.backup
+fix_cdn.sh
