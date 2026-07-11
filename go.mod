@@ -1,8 +1,6 @@
 module github.com/govdbot/govd
 
-go 1.26
-
-toolchain go1.26.0
+go 1.24
 
 require (
 	github.com/BurntSushi/toml v1.5.0
@@ -20,7 +18,7 @@ require (
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/prometheus/client_golang v1.23.2
-	github.com/strukturag/libheif v1.21.2
+	github.com/strukturag/libheif v1.22.0
 	github.com/sunfish-shogi/bufseekio v0.1.0
 	github.com/titanous/json5 v1.0.0
 	github.com/u2takey/ffmpeg-go v0.5.0

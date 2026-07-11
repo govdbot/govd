@@ -447,16 +447,17 @@ func GetBestVideoVersion(versions []*VideoVersions) *VideoVersions {
 	return best
 }
 
-// bboxPattern extracts the JSON payloads embedded in Instagram's
-// ServerJS "__bbox" blocks (the modern page format). We walk every
-// "{"__bbox":{...}}" block and parse the inner JSON.
-var bboxPattern = regexp.MustCompile(`\{"__bbox":(\{.*?\})\}`)
+// bboxVideoPattern extracts the first video URL from Instagram's embedded
+// "video_versions" array in the post page. This avoids the hardcoded
+// GraphQL doc_id (which Instagram rotates/revokes) and is far more stable.
+var bboxVideoPattern = regexp.MustCompile(
+	`"video_versions":\[\s*\{\s*"width"\s*:\s*\d+,\s*"height"\s*:\s*\d+,\s*"url"\s*:\s*"((?:\\.|[^"\\])*)"`,
+)
 
 // GetWebpageMedia fetches the public post page (/p/<shortcode>/) and extracts
-// the media from the embedded "__bbox" JSON. This avoids the hardcoded GraphQL
-// doc_id (which Instagram rotates/revokes) and is therefore far more stable.
+// the video URL directly from the embedded JSON. Reels and posts both resolve
+// via /p/<shortcode>/.
 func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
-	// Reels and posts both resolve via /p/<shortcode>/.
 	pageURL := fmt.Sprintf("https://www.instagram.com/p/%s/", ctx.ContentID)
 	resp, err := ctx.Fetch(
 		http.MethodGet,
@@ -480,86 +481,26 @@ func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	// Collect every __bbox JSON payload and look for a media node.
-	for _, m := range bboxPattern.FindAllSubmatch(body, -1) {
-		if len(m) < 2 {
-			continue
-		}
-		var data any
-		if err := sonic.ConfigFastest.Unmarshal(m[1], &data); err != nil {
-			continue
-		}
-		if media := findMediaNode(data); media != nil {
-			return ParseGQLMedia(ctx, media)
-		}
+	m := bboxVideoPattern.FindSubmatch(body)
+	if len(m) < 2 {
+		return nil, fmt.Errorf("video_versions url not found in page")
+	}
+	// The captured string is a JSON-quoted value with escaped slashes/unicode.
+	raw := string(m[1])
+	raw = strings.ReplaceAll(raw, `\/`, "/")
+	raw = strings.ReplaceAll(raw, `\u0026`, "&")
+	raw = strings.ReplaceAll(raw, `\u003d`, "=")
+	// Unquote any remaining JSON escapes safely.
+	if unquoted, qerr := strconv.Unquote(`"` + raw + `"`); qerr == nil {
+		raw = unquoted
 	}
 
-	return nil, fmt.Errorf("no media node found in __bbox payloads")
-}
-
-// findMediaNode recursively walks a parsed JSON value looking for a node that
-// carries a video URL (either via "video_versions" or a direct "video_url").
-// It returns an *instagram.Media ready for ParseGQLMedia.
-func findMediaNode(v any) *Media {
-	switch node := v.(type) {
-	case map[string]any:
-		// Direct video url (legacy/GraphQL shape).
-		if raw, ok := node["video_url"].(string); ok && raw != "" {
-			return &Media{
-				Typename:  "XDTGraphVideo",
-				IsVideo:   true,
-				VideoURL:  raw,
-				DisplayURL: strOr(node["display_url"]),
-				ID:        strOr(node["id"]),
-				Shortcode: strOr(node["shortcode"]),
-			}
-		}
-		// Modern shape: video_versions array of {url,...}.
-		if vers, ok := node["video_versions"].([]any); ok && len(vers) > 0 {
-			if first, ok := vers[0].(map[string]any); ok {
-				if url, ok := first["url"].(string); ok && url != "" {
-					return &Media{
-						Typename:   "XDTGraphVideo",
-						IsVideo:    true,
-						VideoURL:   url,
-						DisplayURL: strOr(node["display_url"]),
-						ID:         strOr(node["id"]),
-						Shortcode:  strOr(node["shortcode"]),
-					}
-				}
-			}
-		}
-		// Image post: display_url / display_resources.
-		if raw, ok := node["display_url"].(string); ok && raw != "" {
-			if _, isVid := node["is_video"].(bool); isVid {
-				// handled above via video_url normally; fallback
-			}
-			return &Media{
-				Typename:   "XDTGraphImage",
-				DisplayURL: raw,
-				ID:         strOr(node["id"]),
-				Shortcode:  strOr(node["shortcode"]),
-			}
-		}
-		// Recurse into child maps (Relay flattens keys, so inspect all values).
-		for _, child := range node {
-			if m := findMediaNode(child); m != nil {
-				return m
-			}
-		}
-	case []any:
-		for _, child := range node {
-			if m := findMediaNode(child); m != nil {
-				return m
-			}
-		}
+	media := &Media{
+		Typename: "XDTGraphVideo",
+		IsVideo:  true,
+		VideoURL: raw,
+		ID:       ctx.ContentID,
+		Shortcode: ctx.ContentID,
 	}
-	return nil
-}
-
-func strOr(v any) string {
-	if s, ok := v.(string); ok {
-		return s
-	}
-	return ""
+	return ParseGQLMedia(ctx, media)
 }

@@ -1,6 +1,6 @@
 services:
   bot:
-    image: govdbot/govd:main
+    image: govd-ignah:patched
     container_name: bot
     restart: unless-stopped
     networks:
