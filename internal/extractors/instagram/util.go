@@ -565,6 +565,17 @@ func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 		return nil, fmt.Errorf("failed to parse media item: %w", err)
 	}
 
+	// DEBUG (temporary): log what the web_info endpoint actually returned
+	// for this shortcode so we can see why a reel is sent as a photo.
+	logger.L.Infow("IG WEBPAGE DEBUG",
+		"shortcode", ctx.ContentID,
+		"typename", node.Typename,
+		"is_video", node.IsVideo,
+		"video_versions_len", len(node.VideoVersions),
+		"image_candidates_len", len(node.ImageVersions2.Candidates),
+		"carousel_len", len(node.CarouselMedia),
+	)
+
 	var caption string
 	if node.Caption != nil {
 		caption = node.Caption.Text
@@ -576,7 +587,9 @@ func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 		edges := make([]*EdgeNode, 0, len(node.CarouselMedia))
 		for _, child := range node.CarouselMedia {
 			childMedia := &Media{}
-			if child.IsVideo && len(child.VideoVersions) > 0 {
+			// NOTE: the web_info endpoint can return is_video:null even for
+			// real videos, so rely on the presence of video_versions instead.
+			if len(child.VideoVersions) > 0 {
 				childMedia.Typename = "XDTGraphVideo"
 				childMedia.IsVideo = true
 				childMedia.VideoURL = child.VideoVersions[0].URL
@@ -602,12 +615,21 @@ func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	}
 
 	// Single video.
-	if node.IsVideo && len(node.VideoVersions) > 0 {
+	// NOTE: the web_info endpoint can return is_video:null even for real
+	// videos (e.g. some reels), so detect video by the presence of
+	// video_versions rather than the is_video boolean.
+	if len(node.VideoVersions) > 0 {
+		// Attach the still frame as a thumbnail preview (Telegram shows it
+		// before playback). image_versions2[0] is the poster frame.
+		thumb := ""
+		if len(node.ImageVersions2.Candidates) > 0 {
+			thumb = node.ImageVersions2.Candidates[0].URL
+		}
 		media := &Media{
 			Typename:   "XDTGraphVideo",
 			IsVideo:    true,
 			VideoURL:   node.VideoVersions[0].URL,
-			DisplayURL: "",
+			DisplayURL: thumb,
 			Caption:    caption,
 			ID:         ctx.ContentID,
 			Shortcode:  ctx.ContentID,
