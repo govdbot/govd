@@ -84,8 +84,8 @@ func ParseGQLMedia(ctx *models.ExtractorContext, data *Media) (*models.Media, er
 			VideoCodec:   database.MediaCodecAvc,
 			AudioCodec:   database.MediaCodecAac,
 			URL:          []string{data.VideoURL},
-			Width:        data.Dimensions.Width,
-			Height:       data.Dimensions.Height,
+			Width:        dimsWidth(data.Dimensions),
+			Height:       dimsHeight(data.Dimensions),
 		}
 		// Only attach a thumbnail when we have a real image URL
 		// (not the video URL itself, which Telegram rejects).
@@ -117,9 +117,9 @@ func ParseGQLMedia(ctx *models.ExtractorContext, data *Media) (*models.Media, er
 						AudioCodec:   database.MediaCodecAac,
 						URL:          []string{node.VideoURL},
 						ThumbnailURL: []string{node.DisplayURL},
-						Width:        node.Dimensions.Width,
-						Height:       node.Dimensions.Height,
-					})
+						Width:        dimsWidth(node.Dimensions),
+						Height:       dimsHeight(node.Dimensions),
+						})
 
 				case "GraphImage", "XDTGraphImage":
 					item.AddFormats(&models.MediaFormat{
@@ -533,6 +533,8 @@ func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 		ID              string `json:"id"`
 		Shortcode       string `json:"code"`
 		IsVideo         bool   `json:"is_video"`
+		OriginalWidth   int    `json:"original_width"`
+		OriginalHeight  int    `json:"original_height"`
 		Caption         *struct {
 			Text string `json:"text"`
 		} `json:"caption"`
@@ -551,6 +553,8 @@ func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 		} `json:"image_versions2"`
 		CarouselMedia []struct {
 			IsVideo       bool `json:"is_video"`
+			OriginalWidth  int `json:"original_width"`
+			OriginalHeight int `json:"original_height"`
 			VideoVersions []struct {
 				URL string `json:"url"`
 			} `json:"video_versions"`
@@ -593,6 +597,10 @@ func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 				childMedia.Typename = "XDTGraphVideo"
 				childMedia.IsVideo = true
 				childMedia.VideoURL = child.VideoVersions[0].URL
+				// web_info exposes original_width/height, not a dimensions object
+				if child.OriginalWidth > 0 || child.OriginalHeight > 0 {
+					childMedia.Dimensions = &Dimensions{Width: int32(child.OriginalWidth), Height: int32(child.OriginalHeight)}
+				}
 			} else if len(child.ImageVersions2.Candidates) > 0 {
 				childMedia.Typename = "XDTGraphImage"
 				childMedia.DisplayURL = child.ImageVersions2.Candidates[0].URL
@@ -625,6 +633,13 @@ func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 		if len(node.ImageVersions2.Candidates) > 0 {
 			thumb = node.ImageVersions2.Candidates[0].URL
 		}
+		// The web_info endpoint does not include a `dimensions` object for
+		// reels/videos; it exposes original_width/original_height instead.
+		// Build Dimensions so ParseGQLMedia does not dereference a nil pointer.
+		var dims *Dimensions
+		if node.OriginalWidth > 0 || node.OriginalHeight > 0 {
+			dims = &Dimensions{Width: int32(node.OriginalWidth), Height: int32(node.OriginalHeight)}
+		}
 		media := &Media{
 			Typename:   "XDTGraphVideo",
 			IsVideo:    true,
@@ -633,6 +648,7 @@ func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 			Caption:    caption,
 			ID:         ctx.ContentID,
 			Shortcode:  ctx.ContentID,
+			Dimensions: dims,
 		}
 		return ParseGQLMedia(ctx, media)
 	}
@@ -652,4 +668,21 @@ func GetWebpageMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	}
 
 	return nil, fmt.Errorf("no formats found for media item")
+}
+
+// dimsWidth / dimsHeight safely read a possibly-nil *Dimensions so callers
+// don't panic on reels/videos whose web_info response omits the dimensions
+// object (it exposes original_width/original_height instead).
+func dimsWidth(d *Dimensions) int32 {
+	if d == nil {
+		return 0
+	}
+	return d.Width
+}
+
+func dimsHeight(d *Dimensions) int32 {
+	if d == nil {
+		return 0
+	}
+	return d.Height
 }
