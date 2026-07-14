@@ -32,6 +32,7 @@ func loadFromEnv() {
 	parseEnvInt64Slice("WHITELIST", &Env.Whitelist, false)
 	parseEnvInt64Slice("ADMINS", &Env.Admins, false)
 	parseEnvBool("CACHING", &Env.Caching, false)
+	parseEnvString("CACHE_VERSION", &Env.CacheVersion, false)
 	parseEnvString("CAPTIONS_HEADER", &Env.CaptionsHeader, false)
 	parseEnvString("CAPTIONS_DESCRIPTION", &Env.CaptionsDescription, false)
 	parseEnvBool("DEFAULT_ENABLE_CAPTIONS", &Env.DefaultCaptions, false)

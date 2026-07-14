@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"regexp"
 	"strings"
 	"unicode"
@@ -145,11 +144,6 @@ func parseVideoFromBody(body []byte, videoID string) (*VideoData, error) {
 		}
 	}
 	data.Title = best
-
-	// DEBUG: dump the exact raw caption bytes Facebook returned so we can
-	// see how emoji are encoded. Writes directly (bypasses logger level).
-	_ = os.WriteFile("/app/logs/fb_caption_debug.txt",
-		[]byte(fmt.Sprintf("raw=%q\nunescaped=%q", best, unescapeUnicode(best))), 0644)
 
 	if data.HDURL == "" && data.SDURL == "" {
 		return nil, fmt.Errorf("no video URLs found in page")

@@ -1,6 +1,9 @@
 package core
 
 import (
+	"fmt"
+	"regexp"
+
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/govdbot/govd/internal/config"
@@ -8,6 +11,18 @@ import (
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/util"
 )
+
+// staleCaptionPattern matches raw, un-decoded JSON unicode escapes such as
+// "\uD83E\uDD40". These indicate the stored caption was cached before a
+// caption-decoding bug was fixed and must be re-extracted rather than served
+// stale from the database forever.
+var staleCaptionPattern = regexp.MustCompile(`\\u[0-9a-fA-F]{4}`)
+
+// isStaleCaption reports whether a cached caption still contains encoded
+// surrogate/escape sequences that should have been decoded into real text.
+func isStaleCaption(caption string) bool {
+	return staleCaptionPattern.MatchString(caption)
+}
 
 func HandleDownloadTask(
 	bot *gotgbot.Bot,
@@ -113,6 +128,25 @@ func taskFromDatabase(ctx *models.ExtractorContext) (*models.TaskResult, error) 
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	// A previously-cached caption may have been stored with an encoding
+	// bug (raw "\uXXXX" surrogate escapes). Treat such rows as stale so the
+	// caller falls through to a fresh extraction instead of serving the
+	// broken caption forever. See isStaleCaption.
+	if mediaRow.Caption.Valid && isStaleCaption(mediaRow.Caption.String) {
+		ctx.Debugf("cached caption for %s is stale (encoded escape leak), re-extracting", ctx.ContentID)
+		return nil, fmt.Errorf("stale cached caption")
+	}
+
+	// Global cache-version gate: when CACHE_VERSION is bumped (e.g. after an
+	// extractor bug fix) every older cached row is treated as stale and
+	// re-extracted. This applies to ALL extractors, not just one, so a fix
+	// never gets stuck behind a cached (broken) result.
+	if config.Env.CacheVersion != "" && mediaRow.CacheVersion != config.Env.CacheVersion {
+		ctx.Debugf("cached media for %s has cache_version %q (want %q), re-extracting",
+			ctx.ContentID, mediaRow.CacheVersion, config.Env.CacheVersion)
+		return nil, fmt.Errorf("cache version mismatch")
 	}
 
 	media, err := ParseStoredMedia(ctx.Context, ctx.Extractor, &mediaRow)

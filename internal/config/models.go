@@ -30,6 +30,11 @@ type EnvConfig struct {
 	LogLevel     zapcore.Level
 	Whitelist    []int64
 	Caching      bool
+	// CacheVersion invalidates all previously cached media rows when
+	// bumped, forcing a fresh extraction. Bump it after fixing an
+	// extractor bug so stale (possibly broken) cache entries are not
+	// served. Applies to every extractor, not just one.
+	CacheVersion string
 	Admins       []int64
 
 	CaptionsHeader      string

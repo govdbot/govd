@@ -17,22 +17,25 @@ INSERT INTO media (
     content_url,
     extractor_id,
     caption,
-    nsfw
+    nsfw,
+    cache_version
 ) VALUES (
     $1,
     $2,
     $3,
     $4,
-    $5
+    $5,
+    $6
 ) RETURNING id
 `
 
 type CreateMediaParams struct {
-	ContentID   string
-	ContentUrl  string
-	ExtractorID string
-	Caption     pgtype.Text
-	Nsfw        bool
+	ContentID     string
+	ContentUrl    string
+	ExtractorID   string
+	Caption       pgtype.Text
+	Nsfw          bool
+	CacheVersion  string
 }
 
 func (q *Queries) CreateMedia(ctx context.Context, arg CreateMediaParams) (int64, error) {
@@ -42,6 +45,7 @@ func (q *Queries) CreateMedia(ctx context.Context, arg CreateMediaParams) (int64
 		arg.ExtractorID,
 		arg.Caption,
 		arg.Nsfw,
+		arg.CacheVersion,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -171,7 +175,8 @@ SELECT
     content_url,
     extractor_id,
     caption,
-    nsfw
+    nsfw,
+    cache_version
 FROM media WHERE content_id = $1
 AND extractor_id = $2
 `
@@ -182,12 +187,13 @@ type GetMediaByContentIDParams struct {
 }
 
 type GetMediaByContentIDRow struct {
-	ID          int64
-	ContentID   string
-	ContentUrl  string
-	ExtractorID string
-	Caption     pgtype.Text
-	Nsfw        bool
+	ID           int64
+	ContentID    string
+	ContentUrl   string
+	ExtractorID  string
+	Caption      pgtype.Text
+	Nsfw         bool
+	CacheVersion string
 }
 
 func (q *Queries) GetMediaByContentID(ctx context.Context, arg GetMediaByContentIDParams) (GetMediaByContentIDRow, error) {
@@ -200,6 +206,7 @@ func (q *Queries) GetMediaByContentID(ctx context.Context, arg GetMediaByContent
 		&i.ExtractorID,
 		&i.Caption,
 		&i.Nsfw,
+		&i.CacheVersion,
 	)
 	return i, err
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
+	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
@@ -49,7 +50,8 @@ func StoreMedia(
 			String: media.Caption,
 			Valid:  media.Caption != "",
 		},
-		Nsfw: media.NSFW,
+		Nsfw:        media.NSFW,
+		CacheVersion: config.Env.CacheVersion,
 	})
 	if err != nil {
 		var pgErr *pgconn.PgError
