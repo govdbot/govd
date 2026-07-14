@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
+	"unicode"
+	"unicode/utf16"
 	"unicode/utf8"
 
 	"github.com/govdbot/govd/internal/logger"
@@ -43,6 +46,17 @@ var (
 	)
 	titlePattern = regexp.MustCompile(
 		`"title"\s*:\s*\{\s*"text"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"`,
+	)
+	// FB modern pages embed the post caption in several places.
+	// These are tried in order; the first non-empty, longest match wins.
+	ogDescPattern = regexp.MustCompile(
+		`<meta\s+property="og:description"\s+content="([^"]*)"\s*/?>`,
+	)
+	messagePattern = regexp.MustCompile(
+		`"(?:message|attached_story)"\s*:\s*\{\s*"text"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"`,
+	)
+	storyPattern = regexp.MustCompile(
+		`"story"\s*:\s*\{\s*"comet_sections"\s*:\s*\{[^}]*"message"\s*:\s*\{\s*"text"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"`,
 	)
 )
 
@@ -102,6 +116,40 @@ func parseVideoFromBody(body []byte, videoID string) (*VideoData, error) {
 	if match := titlePattern.FindSubmatch(body); len(match) >= 2 {
 		data.Title = unescapeUnicode(string(match[1]))
 	}
+
+	// Facebook stores the post caption / description in several places
+	// depending on page variant. Collect all candidates and keep the
+	// longest one that actually looks like a caption (not a short token).
+	candidates := []string{}
+	if match := ogDescPattern.FindSubmatch(body); len(match) >= 2 {
+		if c := strings.TrimSpace(unescapeUnicode(string(match[1]))); c != "" {
+			candidates = append(candidates, c)
+		}
+	}
+	if match := messagePattern.FindSubmatch(body); len(match) >= 2 {
+		if c := strings.TrimSpace(unescapeUnicode(string(match[1]))); c != "" {
+			candidates = append(candidates, c)
+		}
+	}
+	if match := storyPattern.FindSubmatch(body); len(match) >= 2 {
+		if c := strings.TrimSpace(unescapeUnicode(string(match[1]))); c != "" {
+			candidates = append(candidates, c)
+		}
+	}
+
+	best := data.Title
+	for _, c := range candidates {
+		// prefer the longest non-trivial caption
+		if len(c) > len(best) {
+			best = c
+		}
+	}
+	data.Title = best
+
+	// DEBUG: dump the exact raw caption bytes Facebook returned so we can
+	// see how emoji are encoded. Writes directly (bypasses logger level).
+	_ = os.WriteFile("/app/logs/fb_caption_debug.txt",
+		[]byte(fmt.Sprintf("raw=%q\nunescaped=%q", best, unescapeUnicode(best))), 0644)
 
 	if data.HDURL == "" && data.SDURL == "" {
 		return nil, fmt.Errorf("no video URLs found in page")
@@ -227,35 +275,59 @@ func parseContentRangeTotal(header string) int64 {
 }
 
 func unescapeUnicode(s string) string {
+	// Facebook embeds JSON inside HTML, so backslashes are themselves
+	// escaped: "\uD83E\uDD40" arrives as "\\uD83E\\uDD40". Normalise the
+	// double backslash form back to a single one before decoding.
+	s = strings.ReplaceAll(s, `\\u`, `\u`)
+	s = strings.ReplaceAll(s, `\\/`, `/`)
+
 	var b strings.Builder
 	b.Grow(len(s))
 
 	for i := 0; i < len(s); {
 		if i+5 < len(s) && s[i] == '\\' && s[i+1] == 'u' {
-			var r rune
-			valid := true
-			for j := 2; j < 6; j++ {
-				r <<= 4
-				c := s[i+j]
-				switch {
-				case c >= '0' && c <= '9':
-					r |= rune(c - '0')
-				case c >= 'a' && c <= 'f':
-					r |= rune(c - 'a' + 10)
-				case c >= 'A' && c <= 'F':
-					r |= rune(c - 'A' + 10)
-				default:
-					valid = false
+			r, ok := decodeHex4(s[i+2 : i+6])
+			if ok {
+				// High surrogate? Look ahead for a following \uXXXX low surrogate.
+				if utf16.IsSurrogate(r) && i+11 < len(s) &&
+					s[i+6] == '\\' && s[i+7] == 'u' {
+					if r2, ok2 := decodeHex4(s[i+8 : i+12]); ok2 {
+						if dec := utf16.DecodeRune(r, r2); dec != unicode.ReplacementChar {
+							b.WriteRune(dec)
+							i += 12
+							continue
+						}
+					}
 				}
-			}
-			if valid && utf8.ValidRune(r) {
-				b.WriteRune(r)
-				i += 6
-				continue
+				if utf8.ValidRune(r) {
+					b.WriteRune(r)
+					i += 6
+					continue
+				}
 			}
 		}
 		b.WriteByte(s[i])
 		i++
 	}
 	return b.String()
+}
+
+// decodeHex4 parses a 4-char hex sequence (e.g. "D83E") into a rune.
+func decodeHex4(h string) (rune, bool) {
+	var r rune
+	for j := 0; j < 4; j++ {
+		r <<= 4
+		c := h[j]
+		switch {
+		case c >= '0' && c <= '9':
+			r |= rune(c - '0')
+		case c >= 'a' && c <= 'f':
+			r |= rune(c - 'a' + 10)
+		case c >= 'A' && c <= 'F':
+			r |= rune(c - 'A' + 10)
+		default:
+			return 0, false
+		}
+	}
+	return r, true
 }
