@@ -14,7 +14,7 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
-var tasks = expirable.NewLRU[string, *models.ExtractorContext](0, nil, 5*time.Minute)
+var tasks = expirable.NewLRU[string, *models.ExtractorContext](500, nil, 5*time.Minute)
 
 func HandleInlineTask(
 	bot *gotgbot.Bot,

@@ -39,7 +39,48 @@ func NewHTTPClient(options *NewHTTPClientOptions) *HTTPClient {
 		client.DisableProxy = true
 	}
 	if options.Impersonate {
-		client.Client = NewChromeClient()
+		// Preserve proxy setting when impersonating
+		var proxyURL *url.URL
+		var useEdge, disableProxy bool
+		var edgeURL string
+		if options.Proxy != "" {
+			if u, err := url.Parse(options.Proxy); err == nil {
+				proxyURL = u
+			}
+		}
+		if options.EdgeProxy != "" {
+			useEdge = true
+			edgeURL = options.EdgeProxy
+		}
+		if options.DisableProxy {
+			disableProxy = true
+		}
+		chromeClient := NewChromeClient()
+		// apply proxy onto chrome transport
+		if t, ok := chromeClient.Transport.(*http.Transport); ok {
+			if proxyURL != nil {
+				t.Proxy = http.ProxyURL(proxyURL)
+			} else if useEdge {
+				// edge proxy client already handles it, keep chrome for non-edge
+			} else if disableProxy {
+				t.Proxy = func(_ *http.Request) (*url.URL, error) { return nil, nil }
+			}
+		}
+		if useEdge && options.Proxy == "" {
+			// edge proxy case: keep edge client but with chrome TLS would need custom
+			// for simplicity, use chrome client (edge proxy is not compatible with chrome impersonate currently)
+			// log warning
+			logger.L.Debugf("impersonate + edge proxy both set, using impersonate")
+		}
+		client.Client = chromeClient
+		// restore proxy fields for AsDownloadClient to use
+		if proxyURL != nil {
+			client.Proxy = options.Proxy
+		}
+		if useEdge {
+			client.EdgeProxy = edgeURL
+		}
+		client.DisableProxy = disableProxy
 	}
 
 	client.DownloadProxy = options.DownloadProxy

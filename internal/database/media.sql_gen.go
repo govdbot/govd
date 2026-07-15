@@ -320,3 +320,77 @@ func (q *Queries) DeleteMediaItemsByMediaID(ctx context.Context, mediaID int64) 
 	_, err := q.db.Exec(ctx, deleteMediaItemsByMediaID, mediaID)
 	return err
 }
+
+const getMediaItemsWithFormats = `-- name: GetMediaItemsWithFormats :many
+SELECT
+    mi.id as item_id,
+    mf.format_id,
+    mf.item_id,
+    mf.file_id,
+    mf.type,
+    mf.audio_codec,
+    mf.video_codec,
+    mf.duration,
+    mf.file_size,
+    mf.title,
+    mf.artist,
+    mf.width,
+    mf.height,
+    mf.bitrate
+FROM media_item mi
+JOIN media_format mf ON mf.item_id = mi.id
+WHERE mi.media_id = $1
+ORDER BY mi.id
+`
+
+type GetMediaItemsWithFormatsRow struct {
+	ItemID     int64
+	FormatID   string
+	ItemID_2   int64
+	FileID     string
+	Type       MediaType
+	AudioCodec NullMediaCodec
+	VideoCodec NullMediaCodec
+	Duration   pgtype.Int4
+	FileSize   pgtype.Int8
+	Title      pgtype.Text
+	Artist     pgtype.Text
+	Width      pgtype.Int4
+	Height     pgtype.Int4
+	Bitrate    pgtype.Int8
+}
+
+func (q *Queries) GetMediaItemsWithFormats(ctx context.Context, mediaID int64) ([]GetMediaItemsWithFormatsRow, error) {
+	rows, err := q.db.Query(ctx, getMediaItemsWithFormats, mediaID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetMediaItemsWithFormatsRow
+	for rows.Next() {
+		var i GetMediaItemsWithFormatsRow
+		if err := rows.Scan(
+			&i.ItemID,
+			&i.FormatID,
+			&i.ItemID_2,
+			&i.FileID,
+			&i.Type,
+			&i.AudioCodec,
+			&i.VideoCodec,
+			&i.Duration,
+			&i.FileSize,
+			&i.Title,
+			&i.Artist,
+			&i.Width,
+			&i.Height,
+			&i.Bitrate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

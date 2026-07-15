@@ -139,22 +139,35 @@ func ParseStoredMedia(
 	extractor *models.Extractor,
 	mediaRow *database.GetMediaByContentIDRow,
 ) (*models.Media, error) {
-	itemRows, err := database.Q().GetMediaItems(ctx, mediaRow.ID)
+	// Optimized: single JOIN query fetches items+formats in one roundtrip (fixes N+1)
+	rows, err := database.Q().GetMediaItemsWithFormats(ctx, mediaRow.ID)
 	if err != nil {
 		return nil, err
 	}
-	if len(itemRows) == 0 {
+	if len(rows) == 0 {
 		return nil, fmt.Errorf("no media items found")
 	}
 
-	items := make([]*models.MediaItem, 0, len(itemRows))
-	for _, row := range itemRows {
-		format, err := database.Q().GetMediaFormat(ctx, row.ID)
-		if err != nil {
-			return nil, err
+	items := make([]*models.MediaItem, 0, len(rows))
+	for _, r := range rows {
+		// Reconstruct GetMediaFormatRow from joined row
+		fRow := database.GetMediaFormatRow{
+			FormatID:   r.FormatID,
+			ItemID:     r.ItemID_2,
+			FileID:     r.FileID,
+			Type:       r.Type,
+			AudioCodec: r.AudioCodec,
+			VideoCodec: r.VideoCodec,
+			Duration:   r.Duration,
+			FileSize:   r.FileSize,
+			Title:      r.Title,
+			Artist:     r.Artist,
+			Width:      r.Width,
+			Height:     r.Height,
+			Bitrate:    r.Bitrate,
 		}
 		items = append(items, &models.MediaItem{
-			Formats: []*models.MediaFormat{parseFormatFromDB(&format)},
+			Formats: []*models.MediaFormat{parseFormatFromDB(&fRow)},
 		})
 	}
 
