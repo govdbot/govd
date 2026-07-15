@@ -16,7 +16,7 @@ var ShareExtractor = &models.Extractor{
 	ID:          "facebook",
 	DisplayName: "Facebook (Share)",
 
-	URLPattern: regexp.MustCompile(`https?://(?:(?:www|m)\.)?facebook\.com/share/(?:r|v|p)/(?P<id>[a-zA-Z0-9]+)`),
+	URLPattern: regexp.MustCompile(`https?://(?:(?:www|m)\.)?facebook\.com/share/(?:(?:r|v|p)/)?(?P<id>[a-zA-Z0-9]+)`),
 	Host:       facebookHost,
 
 	Redirect: true,
