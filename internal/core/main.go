@@ -144,6 +144,17 @@ func taskFromDatabase(ctx *models.ExtractorContext) (*models.TaskResult, error) 
 		return nil, err
 	}
 
+	// Fresh caption: try to re-fetch caption from the extractor (light HTTP page fetch,
+	// no video download). This keeps file_id cache for instant send, but caption is always fresh.
+	// If fresh fetch fails (anti-bot 400, network, etc), fallback to cached caption.
+	if freshMedia := tryFetchFreshCaption(ctx); freshMedia != nil && freshMedia.Caption != "" {
+		media.Caption = freshMedia.Caption
+		// Also update content_url in case it changed (e.g. short link -> canonical)
+		if freshMedia.ContentURL != "" {
+			media.ContentURL = freshMedia.ContentURL
+		}
+	}
+
 	formats := make([]*models.DownloadedFormat, 0, len(media.Items))
 	for i, item := range media.Items {
 		formats = append(formats, &models.DownloadedFormat{
@@ -157,6 +168,19 @@ func taskFromDatabase(ctx *models.ExtractorContext) (*models.TaskResult, error) 
 		Formats:  formats,
 		IsStored: true,
 	}, nil
+}
+
+// tryFetchFreshCaption does a light extraction (no download) to get fresh caption.
+// Returns nil on any error so caller can fallback to cached caption.
+func tryFetchFreshCaption(ctx *models.ExtractorContext) *models.Media {
+	resp, err := ctx.Extractor.GetFunc(ctx)
+	if err != nil {
+		return nil
+	}
+	if resp == nil || resp.Media == nil {
+		return nil
+	}
+	return resp.Media
 }
 
 func checkAlbumLimit(n int, chat *database.GetOrCreateChatRow) error {
