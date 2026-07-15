@@ -144,7 +144,6 @@ func GetVideoData(ctx *models.ExtractorContext) (*VideoData, error) {
 				strings.Contains(lb, "temporarily blocked") ||
 				strings.Contains(lb, "you have been temporarily blocked") {
 				lastErr = fmt.Errorf("no video URLs found in page (blocked/login page, len=%d)", len(body))
-				fmt.Printf("facebook: attempt %d/%d got blocked page (%d bytes), retrying\n", attempt, maxAttempts, len(body))
 				continue
 			}
 		}
@@ -154,19 +153,14 @@ func GetVideoData(ctx *models.ExtractorContext) (*VideoData, error) {
 			// Only retry on the "no video URLs" variant (light/blocked
 			// page). Other errors (real parse failures) should surface.
 			if strings.Contains(err.Error(), "no video URLs found") {
-				fmt.Printf("facebook: attempt %d/%d returned a light page, retrying\n", attempt, maxAttempts)
 				lastErr = err
 				continue
 			}
 			return nil, err
 		}
-		// Even if video URLs found but caption is empty, log for diagnostics;
-		// do NOT fail — caption may still be present on a different edge, but
-		// video itself is valid, so return it. The caption multi-source below
-		// is best-effort and already tries 6 patterns.
-		if data.Title == "" {
-			fmt.Printf("facebook: attempt %d/%d video found but caption empty (len body=%d)\n", attempt, maxAttempts, len(body))
-		}
+		// Even if video URLs found but caption is empty, do NOT fail —
+		// video itself is valid, caption is best-effort.
+		_ = body
 		return data, nil
 	}
 
