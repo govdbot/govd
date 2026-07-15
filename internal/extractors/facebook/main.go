@@ -86,18 +86,27 @@ func buildMedia(ctx *models.ExtractorContext, data *VideoData) (*models.Media, e
 	hdSize := probeFormatSize(ctx, data.HDURL)
 	sdSize := probeFormatSize(ctx, data.SDURL)
 	tgLimit := util.TelegramBotAPIFileLimit()
+	// Telegram's 50 MiB limit is strict; the multipart overhead + slight
+	// size variance between HEAD probe and actual download often makes a
+	// file that probes as 52.3 MiB (just under 50 MiB) still get rejected
+	// with 413 Request Entity Too Large (FD4902CC). Use 95% as safe limit
+	// so near-limit files fall back to SD automatically.
+	safeLimit := tgLimit * 95 / 100
 
+	hdFitsSafe := data.HDURL != "" && (hdSize == 0 || hdSize <= safeLimit)
+	sdFitsSafe := data.SDURL != "" && (sdSize == 0 || sdSize <= safeLimit)
 	hdFits := data.HDURL != "" && (hdSize == 0 || hdSize <= tgLimit)
 	sdFits := data.SDURL != "" && (sdSize == 0 || sdSize <= tgLimit)
-
 	ctx.Infof(
-		"facebook formats: hd=%dB(fits=%t) sd=%dB(fits=%t) tg_limit=%dB",
-		hdSize, hdFits, sdSize, sdFits, tgLimit,
+		"facebook formats: hd=%dB(fits=%t safe=%t) sd=%dB(fits=%t safe=%t) tg_limit=%dB safe_limit=%dB",
+		hdSize, hdFits, hdFitsSafe, sdSize, sdFits, sdFitsSafe, tgLimit, safeLimit,
 	)
 
 	var formats []*models.MediaFormat
 
-	if hdFits {
+	// Prefer HD only if it fits safely; otherwise fall back to SD to avoid
+	// FD4902CC (413) on near-limit files like 52.3 MiB that probe just under 50 MiB.
+	if hdFitsSafe {
 		formats = append(formats, &models.MediaFormat{
 			FormatID:   "hd",
 			Type:       database.MediaTypeVideo,
@@ -110,7 +119,7 @@ func buildMedia(ctx *models.ExtractorContext, data *VideoData) (*models.Media, e
 			FileSize:   hdSize,
 		})
 	}
-	if sdFits {
+	if sdFitsSafe {
 		formats = append(formats, &models.MediaFormat{
 			FormatID:   "sd",
 			Type:       database.MediaTypeVideo,
@@ -120,6 +129,36 @@ func buildMedia(ctx *models.ExtractorContext, data *VideoData) (*models.Media, e
 			Bitrate:    sdBitrateHint,
 			FileSize:   sdSize,
 		})
+	}
+
+	// If no format fits safely but at least one fits within the hard limit,
+	// still include it as last resort — SendMediaGroup may still succeed if
+	// Telegram's overhead is low, otherwise the TooLarge handler downstream
+	// will surface a friendly error.
+	if len(formats) == 0 {
+		if hdFits {
+			formats = append(formats, &models.MediaFormat{
+				FormatID:   "hd",
+				Type:       database.MediaTypeVideo,
+				VideoCodec: database.MediaCodecAvc,
+				AudioCodec: database.MediaCodecAac,
+				URL:        []string{data.HDURL},
+				Width:      data.Width,
+				Height:     data.Height,
+				Bitrate:    hdBitrateHint,
+				FileSize:   hdSize,
+			})
+		} else if sdFits {
+			formats = append(formats, &models.MediaFormat{
+				FormatID:   "sd",
+				Type:       database.MediaTypeVideo,
+				VideoCodec: database.MediaCodecAvc,
+				AudioCodec: database.MediaCodecAac,
+				URL:        []string{data.SDURL},
+				Bitrate:    sdBitrateHint,
+				FileSize:   sdSize,
+			})
+		}
 	}
 
 	if len(formats) == 0 {
