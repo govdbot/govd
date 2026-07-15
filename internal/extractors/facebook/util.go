@@ -3,10 +3,12 @@ package facebook
 import (
 	"bytes"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf16"
 	"unicode/utf8"
@@ -47,15 +49,26 @@ var (
 		`"title"\s*:\s*\{\s*"text"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"`,
 	)
 	// FB modern pages embed the post caption in several places.
-	// These are tried in order; the first non-empty, longest match wins.
+	// These are tried in order; the longest non-empty match wins.
 	ogDescPattern = regexp.MustCompile(
 		`<meta\s+property="og:description"\s+content="([^"]*)"\s*/?>`,
+	)
+	ogTitlePattern = regexp.MustCompile(
+		`<meta\s+property="og:title"\s+content="([^"]*)"\s*/?>`,
 	)
 	messagePattern = regexp.MustCompile(
 		`"(?:message|attached_story)"\s*:\s*\{\s*"text"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"`,
 	)
 	storyPattern = regexp.MustCompile(
 		`"story"\s*:\s*\{\s*"comet_sections"\s*:\s*\{[^}]*"message"\s*:\s*\{\s*"text"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"`,
+	)
+	// creation_story.comet_sections – another FB wrapper (reels posted via page)
+	creationStoryPattern = regexp.MustCompile(
+		`"creation_story"\s*:\s*\{[^}]{0,500}"message"\s*:\s*\{\s*"text"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"`,
+	)
+	// "subtitle" / "description" plain text blocks that sometimes hold the caption
+	descriptionPattern = regexp.MustCompile(
+		`"description"\s*:\s*\{\s*"text"\s*:\s*"([^"\\]{20,}[^"\\]*(?:\\.[^"\\]*)*)"`,
 	)
 )
 
@@ -69,30 +82,98 @@ func GetVideoData(ctx *models.ExtractorContext) (*VideoData, error) {
 		contentURL = "https://www.facebook.com/reel/" + ctx.ContentID
 	}
 
-	resp, err := ctx.Fetch(
-		http.MethodGet,
-		contentURL,
-		&networking.RequestParams{
-			Headers: webHeaders,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+	// Facebook serves variable HTML: sometimes a full video page (with
+	// progressive_url + caption), sometimes a light/blocked variant with
+	// neither, sometimes HTTP 400/429 anti-bot. A follow-up request frequently
+	// lands on a different edge and returns the complete page, so retry the
+	// fetch with a short backoff before giving up. Using `impersonate: true`
+	// in private/config.yaml (chrome TLS) is REQUIRED to avoid the 400.
+	const maxAttempts = 4
+	var lastErr error
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		if attempt > 1 {
+			sleepMS := time.Duration(300*(1<<(attempt-2))) * time.Millisecond
+			if sleepMS > 3*time.Second {
+				sleepMS = 3 * time.Second
+			}
+			time.Sleep(sleepMS)
+		}
+
+		resp, err := ctx.Fetch(
+			http.MethodGet,
+			contentURL,
+			&networking.RequestParams{
+				Headers: webHeaders,
+			},
+		)
+		if err != nil {
+			lastErr = fmt.Errorf("failed to send request: %w", err)
+			continue
+		}
+
+		logger.WriteFile("fb_response", resp)
+
+		if resp.StatusCode != http.StatusOK {
+			// FB anti-bot often returns 400/429 on this VPS; treat as retryable
+			body, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == 429 || resp.StatusCode >= 500 {
+				lastErr = fmt.Errorf("failed to get page: %s (anti-bot, retryable)", resp.Status)
+				// keep body snippet for debug if small
+				if len(body) > 0 && len(body) < 500 {
+					lastErr = fmt.Errorf("%w body=%q", lastErr, string(body))
+				}
+				continue
+			}
+			lastErr = fmt.Errorf("failed to get page: %s", resp.Status)
+			continue
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			lastErr = fmt.Errorf("failed to read response body: %w", err)
+			continue
+		}
+
+		// If FB returns a very small / login / checkpoint page (< 5KB), treat as blocked variant
+		if len(body) < 5000 {
+			// quick check for known blocked markers before parsing
+			lb := string(body)
+			if strings.Contains(lb, "login") && strings.Contains(lb, "checkpoint") ||
+				strings.Contains(lb, "temporarily blocked") ||
+				strings.Contains(lb, "you have been temporarily blocked") {
+				lastErr = fmt.Errorf("no video URLs found in page (blocked/login page, len=%d)", len(body))
+				fmt.Printf("facebook: attempt %d/%d got blocked page (%d bytes), retrying\n", attempt, maxAttempts, len(body))
+				continue
+			}
+		}
+
+		data, err := parseVideoFromBody(body, ctx.ContentID)
+		if err != nil {
+			// Only retry on the "no video URLs" variant (light/blocked
+			// page). Other errors (real parse failures) should surface.
+			if strings.Contains(err.Error(), "no video URLs found") {
+				fmt.Printf("facebook: attempt %d/%d returned a light page, retrying\n", attempt, maxAttempts)
+				lastErr = err
+				continue
+			}
+			return nil, err
+		}
+		// Even if video URLs found but caption is empty, log for diagnostics;
+		// do NOT fail — caption may still be present on a different edge, but
+		// video itself is valid, so return it. The caption multi-source below
+		// is best-effort and already tries 6 patterns.
+		if data.Title == "" {
+			fmt.Printf("facebook: attempt %d/%d video found but caption empty (len body=%d)\n", attempt, maxAttempts, len(body))
+		}
+		return data, nil
 	}
-	defer resp.Body.Close()
 
-	logger.WriteFile("fb_response", resp)
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get page: %s", resp.Status)
+	if lastErr == nil {
+		lastErr = fmt.Errorf("no video URLs found in page")
 	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	return parseVideoFromBody(body, ctx.ContentID)
+	return nil, lastErr
 }
 
 func parseVideoFromBody(body []byte, videoID string) (*VideoData, error) {
@@ -111,6 +192,23 @@ func parseVideoFromBody(body []byte, videoID string) (*VideoData, error) {
 	if match := sdURLPattern.FindSubmatch(section); len(match) >= 2 {
 		data.SDURL = unescapeFacebookURL(string(match[1]))
 	}
+
+	// findVideoSection anchors on dash_mpd_debug.mpd?v=VIDEO_ID and bounds
+	// the block by the following "id":"VIDEO_ID" marker. On some page
+	// variants that marker lands BEFORE the progressive_url's trailing
+	// failure_reason/metadata (which carries the HD/SD quality), so the
+	// URL regexes above cannot match inside the truncated slice and we
+	// end up with no URLs even though the page clearly has them. Retry
+	// on the full body (single-video posts/reels) so the extraction does
+	// not falsely fail. Caption extraction already runs against body.
+	if data.HDURL == "" && data.SDURL == "" {
+		if match := hdURLPattern.FindSubmatch(body); len(match) >= 2 {
+			data.HDURL = unescapeFacebookURL(string(match[1]))
+		}
+		if match := sdURLPattern.FindSubmatch(body); len(match) >= 2 {
+			data.SDURL = unescapeFacebookURL(string(match[1]))
+		}
+	}
 	// title can be anywhere in the page
 	if match := titlePattern.FindSubmatch(body); len(match) >= 2 {
 		data.Title = unescapeUnicode(string(match[1]))
@@ -119,20 +217,65 @@ func parseVideoFromBody(body []byte, videoID string) (*VideoData, error) {
 	// Facebook stores the post caption / description in several places
 	// depending on page variant. Collect all candidates and keep the
 	// longest one that actually looks like a caption (not a short token).
+	// PRIORITY: caption anchored to this videoID (message closest to "id":"videoID")
 	candidates := []string{}
-	if match := ogDescPattern.FindSubmatch(body); len(match) >= 2 {
-		if c := strings.TrimSpace(unescapeUnicode(string(match[1]))); c != "" {
-			candidates = append(candidates, c)
+	anchoredCaption := findCaptionAnchoredToID(body, videoID)
+
+	// helper: decode + html-unescape + trim + basic sanity (FB often wraps caption in entities)
+	addCandidate := func(raw string) {
+		s := unescapeUnicode(raw)
+		s = html.UnescapeString(s)
+		s = strings.TrimSpace(s)
+		if s == "" {
+			return
 		}
+		// discard very short tokens that look like UI labels, not captions
+		if len(s) < 3 {
+			return
+		}
+		// FB sometimes repeats "Facebook" / "Log in" as og:description fallback – skip
+		lower := strings.ToLower(s)
+		if lower == "facebook" || strings.HasPrefix(lower, "log in to facebook") || strings.HasPrefix(lower, "log into facebook") {
+			return
+		}
+		candidates = append(candidates, s)
+	}
+
+	// If we have an anchored caption (message directly tied to this video ID), it wins outright
+	if anchoredCaption != "" {
+		// decode it through same pipeline
+		anchoredCaption = strings.TrimSpace(html.UnescapeString(unescapeUnicode(anchoredCaption)))
+		if len(anchoredCaption) >= 3 && !strings.EqualFold(anchoredCaption, "facebook") {
+			data.Title = anchoredCaption
+			if data.HDURL != "" || data.SDURL != "" {
+				return data, nil
+			}
+		}
+	}
+
+	if match := ogDescPattern.FindSubmatch(body); len(match) >= 2 {
+		addCandidate(string(match[1]))
+	}
+	if match := ogTitlePattern.FindSubmatch(body); len(match) >= 2 {
+		addCandidate(string(match[1]))
 	}
 	if match := messagePattern.FindSubmatch(body); len(match) >= 2 {
-		if c := strings.TrimSpace(unescapeUnicode(string(match[1]))); c != "" {
-			candidates = append(candidates, c)
-		}
+		addCandidate(string(match[1]))
 	}
 	if match := storyPattern.FindSubmatch(body); len(match) >= 2 {
-		if c := strings.TrimSpace(unescapeUnicode(string(match[1]))); c != "" {
-			candidates = append(candidates, c)
+		addCandidate(string(match[1]))
+	}
+	if match := creationStoryPattern.FindSubmatch(body); len(match) >= 2 {
+		addCandidate(string(match[1]))
+	}
+	if match := descriptionPattern.FindSubmatch(body); len(match) >= 2 {
+		addCandidate(string(match[1]))
+	}
+	// Also scrape ALL "message":{"text":"..."} occurrences and keep longest (page may have multiple)
+	allMessages := messagePattern.FindAllSubmatch(body, 10)
+	for _, m := range allMessages {
+		if len(m) >= 2 {
+			addCandidate(string(m[1]))
 		}
 	}
 
@@ -150,6 +293,49 @@ func parseVideoFromBody(body []byte, videoID string) (*VideoData, error) {
 	}
 
 	return data, nil
+}
+
+// findCaptionAnchoredToID looks for the caption belonging to a specific videoID.
+// FB reel pages contain multiple reels in the feed; each reel's JSON block looks like:
+// {"message":{"text":"..."},"id":"<VIDEO_ID>"}. We search backwards from each occurrence
+// of "id":"VIDEO_ID" for the nearest message text within 8KB.
+// This prevents picking a longer caption from a different reel in the same page.
+func findCaptionAnchoredToID(body []byte, videoID string) string {
+	if videoID == "" {
+		return ""
+	}
+	idMarker := []byte(`"id":"` + videoID + `"`)
+	// Find all occurrences of the id marker
+	for offset := 0; ; {
+		idx := bytes.Index(body[offset:], idMarker)
+		if idx == -1 {
+			break
+		}
+		absIdx := offset + idx
+		// Look backwards up to 8000 bytes for message pattern
+		start := absIdx - 8000
+		if start < 0 {
+			start = 0
+		}
+		window := body[start:absIdx]
+		// The message should be relatively close before the id
+		if match := messagePattern.FindSubmatch(window); len(match) >= 2 {
+			// There might be multiple messages in window; take the last one (closest to id)
+			all := messagePattern.FindAllSubmatch(window, -1)
+			if len(all) > 0 {
+				last := all[len(all)-1]
+				if len(last) >= 2 {
+					candidate := string(last[1])
+					// Basic sanity: not empty, not just hashtags spam check is handled by addCandidate
+					if len(candidate) >= 3 {
+						return candidate
+					}
+				}
+			}
+		}
+		offset = absIdx + len(idMarker)
+	}
+	return ""
 }
 
 // findVideoSection returns the slice of body containing the video delivery

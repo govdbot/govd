@@ -26,7 +26,13 @@ INSERT INTO media (
     $4,
     $5,
     $6
-) RETURNING id
+) ON CONFLICT (content_id, extractor_id) DO UPDATE SET
+    caption = EXCLUDED.caption,
+    cache_version = EXCLUDED.cache_version,
+    content_url = EXCLUDED.content_url,
+    nsfw = EXCLUDED.nsfw,
+    updated_at = CURRENT_TIMESTAMP
+RETURNING id
 `
 
 type CreateMediaParams struct {
@@ -296,4 +302,29 @@ func (q *Queries) GetMediaItems(ctx context.Context, mediaID int64) ([]GetMediaI
 		return nil, err
 	}
 	return items, nil
+}
+
+
+const deleteMediaByContentID = `-- name: DeleteMediaByContentID :exec
+DELETE FROM media WHERE content_id = $1 AND extractor_id = $2
+`
+
+type DeleteMediaByContentIDParams struct {
+	ContentID   string
+	ExtractorID string
+}
+
+func (q *Queries) DeleteMediaByContentID(ctx context.Context, arg DeleteMediaByContentIDParams) error {
+	_, err := q.db.Exec(ctx, deleteMediaByContentID, arg.ContentID, arg.ExtractorID)
+	return err
+}
+
+
+const deleteMediaItemsByMediaID = `-- name: DeleteMediaItemsByMediaID :exec
+DELETE FROM media_item WHERE media_id = $1
+`
+
+func (q *Queries) DeleteMediaItemsByMediaID(ctx context.Context, mediaID int64) error {
+	_, err := q.db.Exec(ctx, deleteMediaItemsByMediaID, mediaID)
+	return err
 }

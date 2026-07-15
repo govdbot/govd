@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
@@ -11,7 +10,6 @@ import (
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/util"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -54,14 +52,13 @@ func StoreMedia(
 		CacheVersion: config.Env.CacheVersion,
 	})
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			// unique violation, media already exists
-			logger.L.Debugf("media %s already exists in database", media.ContentID)
-			return nil
-		}
 		return err
 	}
+
+	// On conflict (upsert), the media row already existed with old items.
+	// Delete old items so we don't accumulate duplicates and so the
+	// new caption/cache_version actually takes effect.
+	_ = qtx.DeleteMediaItemsByMediaID(ctx, mediaID)
 
 	for i := range media.Items {
 		itemID, err := qtx.CreateMediaItem(ctx, mediaID)
