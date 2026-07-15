@@ -253,29 +253,41 @@ func parseVideoFromBody(body []byte, videoID string) (*VideoData, error) {
 		}
 	}
 
-	if match := ogDescPattern.FindSubmatch(body); len(match) >= 2 {
-		addCandidate(string(match[1]))
-	}
-	if match := ogTitlePattern.FindSubmatch(body); len(match) >= 2 {
-		addCandidate(string(match[1]))
-	}
-	if match := messagePattern.FindSubmatch(body); len(match) >= 2 {
-		addCandidate(string(match[1]))
-	}
-	if match := storyPattern.FindSubmatch(body); len(match) >= 2 {
-		addCandidate(string(match[1]))
-	}
-	if match := creationStoryPattern.FindSubmatch(body); len(match) >= 2 {
-		addCandidate(string(match[1]))
-	}
-	if match := descriptionPattern.FindSubmatch(body); len(match) >= 2 {
-		addCandidate(string(match[1]))
-	}
-	// Also scrape ALL "message":{"text":"..."} occurrences and keep longest (page may have multiple)
-	allMessages := messagePattern.FindAllSubmatch(body, 10)
-	for _, m := range allMessages {
-		if len(m) >= 2 {
-			addCandidate(string(m[1]))
+	// Only run other regexes if anchored did not already succeed with URLs.
+	// This saves ~6 regex scans (60MB) on the happy path.
+	if data.Title == "" || data.HDURL == "" && data.SDURL == "" {
+		// lightly: try cheap patterns first (title already tried, so og tags)
+		if match := ogDescPattern.FindSubmatch(body); len(match) >= 2 {
+			addCandidate(string(match[1]))
+		}
+		if len(candidates) == 0 { // avoid extra scans if we already have a candidate
+			if match := ogTitlePattern.FindSubmatch(body); len(match) >= 2 {
+				addCandidate(string(match[1]))
+			}
+		}
+		if match := messagePattern.FindSubmatch(body); len(match) >= 2 {
+			addCandidate(string(match[1]))
+		}
+		if len(candidates) == 0 {
+			if match := storyPattern.FindSubmatch(body); len(match) >= 2 {
+				addCandidate(string(match[1]))
+			}
+			if match := creationStoryPattern.FindSubmatch(body); len(match) >= 2 {
+				addCandidate(string(match[1]))
+			}
+			if match := descriptionPattern.FindSubmatch(body); len(match) >= 2 {
+				addCandidate(string(match[1]))
+			}
+		}
+		// Also scrape ALL "message":{"text":"..."} occurrences and keep longest (page may have multiple)
+		// Only if we still need a caption - this is the heaviest scan (FindAllSubmatch)
+		if len(candidates) == 0 {
+			allMessages := messagePattern.FindAllSubmatch(body, 10)
+			for _, m := range allMessages {
+				if len(m) >= 2 {
+					addCandidate(string(m[1]))
+				}
+			}
 		}
 	}
 

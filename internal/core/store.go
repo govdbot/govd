@@ -54,7 +54,10 @@ func StoreMedia(
 	}
 
 	// On conflict (upsert), old items are deleted so new caption/file_id takes effect.
-	_ = qtx.DeleteMediaItemsByMediaID(ctx, mediaID)
+	if err := qtx.DeleteMediaItemsByMediaID(ctx, mediaID); err != nil {
+		// log but don't fail - next insert will still work if items already gone
+		logger.L.Warnf("failed to delete old media items %d: %v", mediaID, err)
+	}
 
 	for i := range media.Items {
 		itemID, err := qtx.CreateMediaItem(ctx, mediaID)
