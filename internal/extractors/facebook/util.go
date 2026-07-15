@@ -313,10 +313,25 @@ func parseVideoFromBody(body []byte, videoID string) (*VideoData, error) {
 // {"message":{"text":"..."},"id":"<VIDEO_ID>"}. We search backwards from each occurrence
 // of "id":"VIDEO_ID" for the nearest message text within 8KB.
 // This prevents picking a longer caption from a different reel in the same page.
+//
+// Updated to use pure caption path like yt-dlp:
+//   creation_story.comet_sections.message.story.message.text  (pure, no category)
+//   vs context_layout which contains "General mbappe" dirty prefix
+// See: https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/extractor/facebook.py#L480
+// Implementation uses byte search (not heavy regex) to match yt-dlp's traverse_obj
 func findCaptionAnchoredToID(body []byte, videoID string) string {
 	if videoID == "" {
 		return ""
 	}
+	// Pure caption path search like yt-dlp get_first(media, ('creation_story','comet_sections','message','story','message','text'))
+	// We search for nested structure via bytes.Index sequential scan (faster, no RE2 backtrack)
+	// Look for "creation_story" then within next 4KB find "comet_sections" -> "message" -> "story" -> "message" -> "text"
+	// Simplified: find all "creation_story" blocks and extract message text from them
+	if pure := findPureCaptionYtDlp(body); pure != "" {
+		return pure
+	}
+
+	// Fallback: anchored search near video ID, but skip if inside context_layout (dirty)
 	idMarker := []byte(`"id":"` + videoID + `"`)
 	// Find all occurrences of the id marker
 	for offset := 0; ; {
@@ -331,6 +346,19 @@ func findCaptionAnchoredToID(body []byte, videoID string) string {
 			start = 0
 		}
 		window := body[start:absIdx]
+		// Filter: if window contains context_layout in last 1000 chars, it's dirty category field like "General mbappe"
+		// Pure field should be from content, not context_layout
+		// Check last 1000 chars of window for context_layout marker
+		tailStart := len(window) - 1000
+		if tailStart < 0 {
+			tailStart = 0
+		}
+		tail := string(window[tailStart:])
+		if strings.Contains(tail, "context_layout") {
+			// This window is likely dirty (contains category "General mbappe")
+			offset = absIdx + len(idMarker)
+			continue
+		}
 		// The message should be relatively close before the id
 		if match := messagePattern.FindSubmatch(window); len(match) >= 2 {
 			// There might be multiple messages in window; take the last one (closest to id)
@@ -339,7 +367,6 @@ func findCaptionAnchoredToID(body []byte, videoID string) string {
 				last := all[len(all)-1]
 				if len(last) >= 2 {
 					candidate := string(last[1])
-					// Basic sanity: not empty, not just hashtags spam check is handled by addCandidate
 					if len(candidate) >= 3 {
 						return candidate
 					}
@@ -348,6 +375,114 @@ func findCaptionAnchoredToID(body []byte, videoID string) string {
 		}
 		offset = absIdx + len(idMarker)
 	}
+	return ""
+}
+
+// findPureCaptionYtDlp mimics yt-dlp's get_first(media, ('creation_story','comet_sections','message','story','message','text'))
+// and content path comet_sections.content.story.comet_sections.message.text
+// It searches for pure caption without category prefix (unlike context_layout which has "General mbappe")
+func findPureCaptionYtDlp(body []byte) string {
+	// Search for creation_story -> comet_sections -> message -> story -> message -> text
+	// We do sequential byte scans to avoid heavy regex backtrack
+	// Find "creation_story"
+	searchStart := 0
+	for {
+		idx := bytes.Index(body[searchStart:], []byte(`"creation_story"`))
+		if idx == -1 {
+			break
+		}
+		absIdx := searchStart + idx
+		// Look ahead 6KB for comet_sections -> message -> story -> message -> text
+		end := absIdx + 6000
+		if end > len(body) {
+			end = len(body)
+		}
+		window := body[absIdx:end]
+		// quick check contains sequence
+		if bytes.Contains(window, []byte(`"comet_sections"`)) && bytes.Contains(window, []byte(`"message"`)) {
+			// Extract message text via regex within this small window (cheap)
+			// Look for "message":{"text":"..."} but prefer the one inside story.message
+			// Use our messagePattern on window, take last (closest to story)
+			matches := messagePattern.FindAllSubmatch(window, -1)
+			if len(matches) > 0 {
+				// The pure caption is typically the last message in creation_story block
+				// Filter out those that are inside context_layout (check preceding 200 bytes)
+				for i := len(matches) - 1; i >= 0; i-- {
+					m := matches[i]
+					if len(m) < 2 {
+						continue
+					}
+					// Find position of this match
+					matchPos := bytes.Index(window, m[0])
+					if matchPos == -1 {
+						continue
+					}
+					// Check 400 bytes before for context_layout (dirty)
+					checkStart := matchPos - 400
+					if checkStart < 0 {
+						checkStart = 0
+					}
+					preceding := string(window[checkStart:matchPos])
+					if strings.Contains(preceding, "context_layout") {
+						continue // skip dirty category like "General mbappe"
+					}
+					candidate := string(m[1])
+					if len(candidate) >= 3 {
+						return candidate
+					}
+				}
+			}
+		}
+		searchStart = absIdx + len(`"creation_story"`)
+		// Only need first few creation_story blocks
+		if searchStart > 500000 { // limit search to first 500KB to avoid scanning whole 2MB
+			break
+		}
+	}
+
+	// Second attempt: content path comet_sections.content.story.comet_sections.message.text
+	searchStart = 0
+	for {
+		idx := bytes.Index(body[searchStart:], []byte(`"content"`))
+		if idx == -1 {
+			break
+		}
+		absIdx := searchStart + idx
+		end := absIdx + 6000
+		if end > len(body) {
+			end = len(body)
+		}
+		window := body[absIdx:end]
+		if bytes.Contains(window, []byte(`"comet_sections"`)) && bytes.Contains(window, []byte(`"message"`)) {
+			matches := messagePattern.FindAllSubmatch(window, -1)
+			if len(matches) > 0 {
+				for i := len(matches) - 1; i >= 0; i-- {
+					m := matches[i]
+					if len(m) < 2 {
+						continue
+					}
+					matchPos := bytes.Index(window, m[0])
+					checkStart := matchPos - 400
+					if checkStart < 0 {
+						checkStart = 0
+					}
+					preceding := string(window[checkStart:matchPos])
+					if strings.Contains(preceding, "context_layout") {
+						continue
+					}
+					candidate := string(m[1])
+					if len(candidate) >= 3 {
+						return candidate
+					}
+				}
+			}
+		}
+		searchStart = absIdx + len(`"content"`)
+		if searchStart > 500000 {
+			break
+		}
+	}
+
 	return ""
 }
 

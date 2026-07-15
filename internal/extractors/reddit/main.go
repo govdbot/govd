@@ -61,6 +61,8 @@ var Extractor = &models.Extractor{
 	},
 }
 
+// MediaFromAPI implements yt-dlp pure method:
+// - title + selftext + thumbnails + crosspost + fallback + dash/hls + gallery
 func MediaFromAPI(ctx *models.ExtractorContext) (*models.Media, error) {
 	host := ctx.MatchGroups["host"]
 	slug := ctx.MatchGroups["slug"]
@@ -82,67 +84,82 @@ func MediaFromAPI(ctx *models.ExtractorContext) (*models.Media, error) {
 	if isNsfw {
 		media.SetNSFW()
 	}
-	media.SetCaption(title)
 
-	if !data.IsVideo {
-		// check for single photo
-		if data.Preview != nil && len(data.Preview.Images) > 0 {
-			item := media.NewItem()
-			image := data.Preview.Images[0]
-
-			if data.Preview.VideoPreview != nil {
-				formats, err := GetHLSFormats(
-					ctx,
-					data.Preview.VideoPreview.FallbackURL,
-					data.Preview.VideoPreview.Duration,
-				)
-				if err != nil {
-					return nil, err
-				}
-				item.AddFormats(formats...)
-
-				return media, nil
-			}
-
-			// check for MP4 variant (animated GIF)
-			if image.Variants.MP4 != nil {
-				item.AddFormats(&models.MediaFormat{
-					FormatID:   "gif",
-					Type:       database.MediaTypeVideo,
-					VideoCodec: database.MediaCodecAvc,
-					AudioCodec: database.MediaCodecAac,
-					URL:        []string{util.UnescapeURL(image.Variants.MP4.Source.URL)},
-				})
-
-				return media, nil
-			}
-
-			// regular photo
-			item.AddFormats(&models.MediaFormat{
-				FormatID: "photo",
-				Type:     database.MediaTypePhoto,
-				URL:      []string{util.UnescapeURL(image.Source.URL)},
-			})
-
-			return media, nil
+	// yt-dlp: title truncated 72 + selftext as description
+	caption := title
+	if data.Selftext != "" && data.Selftext != title {
+		if caption != "" {
+			caption = caption + "\n\n" + data.Selftext
+		} else {
+			caption = data.Selftext
 		}
+	}
+	media.SetCaption(caption)
 
-		// check for gallery/collection
-		if len(data.MediaMetadata) > 0 {
-			// known issue: collection is unordered
-			collection := data.MediaMetadata
-
-			for _, obj := range collection {
+	// Gallery handling - yt-dlp style media_metadata RedditVideo + Image
+	if len(data.GalleryData.Items) > 0 {
+		for _, gItem := range data.GalleryData.Items {
+			metaID := gItem.MediaID
+			if meta, ok := data.MediaMetadata[metaID]; ok {
 				item := media.NewItem()
-
-				switch obj.Type {
+				switch meta.Type {
 				case "Image":
 					item.AddFormats(&models.MediaFormat{
 						FormatID: "photo",
 						Type:     database.MediaTypePhoto,
-						URL:      []string{util.UnescapeURL(obj.Media.URL)},
+						URL:      []string{util.UnescapeURL(meta.Media.URL)},
 					})
-				case "AnimatedImage":
+				case "AnimatedImage", "RedditVideo":
+					if meta.Media.MP4 != "" {
+						item.AddFormats(&models.MediaFormat{
+							FormatID:   "video",
+							Type:       database.MediaTypeVideo,
+							VideoCodec: database.MediaCodecAvc,
+							AudioCodec: database.MediaCodecAac,
+							URL:        []string{util.UnescapeURL(meta.Media.MP4)},
+						})
+					}
+					if meta.Media.HLSURL != "" {
+						fmts, _ := GetHLSFormatsFromURL(ctx, meta.Media.HLSURL, 0)
+						item.AddFormats(fmts...)
+					}
+					if meta.Media.DashURL != "" {
+						fmts, _ := GetDASHFormatsFromURL(ctx, meta.Media.DashURL, 0)
+						item.AddFormats(fmts...)
+					}
+					if len(item.Formats) == 0 && meta.Media.URL != "" {
+						item.AddFormats(&models.MediaFormat{
+							FormatID: "photo",
+							Type:     database.MediaTypePhoto,
+							URL:      []string{util.UnescapeURL(meta.Media.URL)},
+						})
+					}
+				}
+				if len(item.Formats) > 0 {
+					media.Items = append(media.Items, item)
+				}
+			}
+		}
+		if len(media.Items) > 0 {
+			return media, nil
+		}
+	}
+
+	// Fallback unordered media_metadata (yt-dlp playlist from media_metadata)
+	if len(data.MediaMetadata) > 0 {
+		var galleryItems []*models.MediaItem
+		for _, obj := range data.MediaMetadata {
+			if obj.Type == "RedditVideo" {
+				item := media.NewItem()
+				if obj.Media.HLSURL != "" {
+					fmts, _ := GetHLSFormatsFromURL(ctx, obj.Media.HLSURL, 0)
+					item.AddFormats(fmts...)
+				}
+				if obj.Media.DashURL != "" {
+					fmts, _ := GetDASHFormatsFromURL(ctx, obj.Media.DashURL, 0)
+					item.AddFormats(fmts...)
+				}
+				if len(item.Formats) == 0 && obj.Media.MP4 != "" {
 					item.AddFormats(&models.MediaFormat{
 						FormatID:   "video",
 						Type:       database.MediaTypeVideo,
@@ -151,37 +168,188 @@ func MediaFromAPI(ctx *models.ExtractorContext) (*models.Media, error) {
 						URL:        []string{util.UnescapeURL(obj.Media.MP4)},
 					})
 				}
+				if len(item.Formats) > 0 {
+					galleryItems = append(galleryItems, item)
+				}
 			}
-
+		}
+		if len(galleryItems) > 0 {
+			media.Items = append(media.Items, galleryItems...)
 			return media, nil
 		}
-	} else {
-		item := media.NewItem()
-		var redditVideo *Video
 
+		// Image gallery
+		for _, obj := range data.MediaMetadata {
+			var item *models.MediaItem
+			switch obj.Type {
+			case "Image":
+				item = media.NewItem()
+				item.AddFormats(&models.MediaFormat{
+					FormatID: "photo",
+					Type:     database.MediaTypePhoto,
+					URL:      []string{util.UnescapeURL(obj.Media.URL)},
+				})
+			case "AnimatedImage":
+				item = media.NewItem()
+				item.AddFormats(&models.MediaFormat{
+					FormatID:   "video",
+					Type:       database.MediaTypeVideo,
+					VideoCodec: database.MediaCodecAvc,
+					AudioCodec: database.MediaCodecAac,
+					URL:        []string{util.UnescapeURL(obj.Media.MP4)},
+				})
+			}
+			if item != nil && len(item.Formats) > 0 {
+				media.Items = append(media.Items, item)
+			}
+		}
+		if len(media.Items) > 0 {
+			return media, nil
+		}
+	}
+
+	if !data.IsVideo {
+		// Single photo / gif / video preview
+		if data.Preview != nil && len(data.Preview.Images) > 0 {
+			image := data.Preview.Images[0]
+			if data.Preview.VideoPreview != nil {
+				item := media.NewItem()
+				formats, err := GetHLSFormats(ctx, data.Preview.VideoPreview.FallbackURL, data.Preview.VideoPreview.Duration)
+				if err != nil {
+					return nil, err
+				}
+				item.AddFormats(formats...)
+				return media, nil
+			}
+			if image.Variants.MP4 != nil {
+				item := media.NewItem()
+				item.AddFormats(&models.MediaFormat{
+					FormatID:   "gif",
+					Type:       database.MediaTypeVideo,
+					VideoCodec: database.MediaCodecAvc,
+					AudioCodec: database.MediaCodecAac,
+					URL:        []string{util.UnescapeURL(image.Variants.MP4.Source.URL)},
+				})
+				return media, nil
+			}
+			item := media.NewItem()
+			item.AddFormats(&models.MediaFormat{
+				FormatID: "photo",
+				Type:     database.MediaTypePhoto,
+				URL:      []string{util.UnescapeURL(image.Source.URL)},
+				Width:    image.Source.Width,
+				Height:   image.Source.Height,
+			})
+			return media, nil
+		}
+
+		// Crosspost check (yt-dlp style)
+		if len(data.CrosspostParentList) > 0 {
+			for _, parent := range data.CrosspostParentList {
+				var rv *Video
+				if parent.Media != nil && parent.Media.Video != nil {
+					rv = parent.Media.Video
+				} else if parent.SecureMedia != nil && parent.SecureMedia.Video != nil {
+					rv = parent.SecureMedia.Video
+				}
+				if rv != nil {
+					item := media.NewItem()
+					formats := buildRedditVideoFormats(ctx, rv)
+					item.AddFormats(formats...)
+					if len(item.Formats) > 0 {
+						return media, nil
+					}
+				}
+			}
+		}
+	} else {
+		var redditVideo *Video
 		if data.Media != nil && data.Media.Video != nil {
 			redditVideo = data.Media.Video
 		} else if data.SecureMedia != nil && data.SecureMedia.Video != nil {
 			redditVideo = data.SecureMedia.Video
 		}
-
-		if redditVideo != nil {
-			formats, err := GetHLSFormats(
-				ctx,
-				redditVideo.FallbackURL,
-				redditVideo.Duration,
-			)
-			if err != nil {
-				return nil, err
+		if redditVideo == nil && len(data.CrosspostParentList) > 0 {
+			for _, parent := range data.CrosspostParentList {
+				if parent.Media != nil && parent.Media.Video != nil {
+					redditVideo = parent.Media.Video
+					break
+				} else if parent.SecureMedia != nil && parent.SecureMedia.Video != nil {
+					redditVideo = parent.SecureMedia.Video
+					break
+				}
 			}
+		}
+		if redditVideo != nil {
+			item := media.NewItem()
+			formats := buildRedditVideoFormats(ctx, redditVideo)
 			item.AddFormats(formats...)
+			if len(item.Formats) > 0 {
+				return media, nil
+			}
+		}
+	}
 
+	// Fallback preview video
+	if data.Preview != nil && data.Preview.VideoPreview != nil {
+		item := media.NewItem()
+		formats, err := GetHLSFormats(ctx, data.Preview.VideoPreview.FallbackURL, data.Preview.VideoPreview.Duration)
+		if err == nil {
+			item.AddFormats(formats...)
 			return media, nil
 		}
 	}
 
-	// no media found
 	return nil, nil
+}
+
+// buildRedditVideoFormats implements yt-dlp reddit_video handling: fallback + hls + dash
+func buildRedditVideoFormats(ctx *models.ExtractorContext, rv *Video) []*models.MediaFormat {
+	var formats []*models.MediaFormat
+
+	if rv.FallbackURL != "" {
+		formats = append(formats, &models.MediaFormat{
+			FormatID:   "fallback",
+			Type:       database.MediaTypeVideo,
+			VideoCodec: database.MediaCodecAvc,
+			AudioCodec: database.MediaCodecAac,
+			URL:        []string{util.UnescapeURL(rv.FallbackURL)},
+			Width:      rv.Width,
+			Height:     rv.Height,
+			Duration:   rv.Duration,
+		})
+	}
+
+	if rv.HLSURL != "" {
+		hlsFmts, _ := GetHLSFormatsFromURL(ctx, rv.HLSURL, rv.Duration)
+		formats = append(formats, hlsFmts...)
+	} else if rv.FallbackURL != "" {
+		if m := videoURLPattern.FindStringSubmatch(rv.FallbackURL); len(m) >= 2 {
+			videoID := m[1]
+			hlsURL := fmt.Sprintf(hlsURLFormat, videoID)
+			hlsFmts, _ := GetHLSFormatsFromURL(ctx, hlsURL, rv.Duration)
+			formats = append(formats, hlsFmts...)
+		}
+	}
+
+	if rv.DashURL != "" {
+		dashFmts, _ := GetDASHFormatsFromURL(ctx, rv.DashURL, rv.Duration)
+		formats = append(formats, dashFmts...)
+	} else if rv.FallbackURL != "" {
+		if m := videoURLPattern.FindStringSubmatch(rv.FallbackURL); len(m) >= 2 {
+			videoID := m[1]
+			dashURL := fmt.Sprintf("https://v.redd.it/%s/DASHPlaylist.mpd", videoID)
+			dashFmts, _ := GetDASHFormatsFromURL(ctx, dashURL, rv.Duration)
+			formats = append(formats, dashFmts...)
+		}
+	}
+
+	if len(formats) == 0 && rv.FallbackURL != "" {
+		legacy, _ := GetHLSFormats(ctx, rv.FallbackURL, rv.Duration)
+		formats = append(formats, legacy...)
+	}
+
+	return formats
 }
 
 func GetRedditData(
@@ -205,16 +373,13 @@ func GetRedditData(
 		if raise {
 			return nil, fmt.Errorf("failed to get reddit data: %s", resp.Status)
 		}
-		// try with alternative domain
 		altHost := "old.reddit.com"
 		if host == "old.reddit.com" {
 			altHost = "www.reddit.com"
 		}
-
 		return GetRedditData(ctx, altHost, slug, true)
 	}
 
-	// debugging
 	logger.WriteFile("reddit_api_response", resp)
 
 	var response Response
