@@ -139,16 +139,6 @@ func taskFromDatabase(ctx *models.ExtractorContext) (*models.TaskResult, error) 
 		return nil, fmt.Errorf("stale cached caption")
 	}
 
-	// Global cache-version gate: when CACHE_VERSION is bumped (e.g. after an
-	// extractor bug fix) every older cached row is treated as stale and
-	// re-extracted. This applies to ALL extractors, not just one, so a fix
-	// never gets stuck behind a cached (broken) result.
-	if config.Env.CacheVersion != "" && mediaRow.CacheVersion != config.Env.CacheVersion {
-		ctx.Debugf("cached media for %s has cache_version %q (want %q), re-extracting",
-			ctx.ContentID, mediaRow.CacheVersion, config.Env.CacheVersion)
-		return nil, fmt.Errorf("cache version mismatch")
-	}
-
 	media, err := ParseStoredMedia(ctx.Context, ctx.Extractor, &mediaRow)
 	if err != nil {
 		return nil, err

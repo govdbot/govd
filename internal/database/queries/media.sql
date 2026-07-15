@@ -4,18 +4,15 @@ INSERT INTO media (
     content_url,
     extractor_id,
     caption,
-    nsfw,
-    cache_version
+    nsfw
 ) VALUES (
     @content_id,
     @content_url,
     @extractor_id,
     @caption,
-    @nsfw,
-    @cache_version
+    @nsfw
 ) ON CONFLICT (content_id, extractor_id) DO UPDATE SET
     caption = EXCLUDED.caption,
-    cache_version = EXCLUDED.cache_version,
     content_url = EXCLUDED.content_url,
     nsfw = EXCLUDED.nsfw,
     updated_at = CURRENT_TIMESTAMP
@@ -72,8 +69,7 @@ SELECT
     content_url,
     extractor_id,
     caption,
-    nsfw,
-    cache_version
+    nsfw
 FROM media WHERE content_id = @content_id
 AND extractor_id = @extractor_id;
 

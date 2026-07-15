@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
-	"github.com/govdbot/govd/internal/config"
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
@@ -48,16 +47,13 @@ func StoreMedia(
 			String: media.Caption,
 			Valid:  media.Caption != "",
 		},
-		Nsfw:        media.NSFW,
-		CacheVersion: config.Env.CacheVersion,
+		Nsfw: media.NSFW,
 	})
 	if err != nil {
 		return err
 	}
 
-	// On conflict (upsert), the media row already existed with old items.
-	// Delete old items so we don't accumulate duplicates and so the
-	// new caption/cache_version actually takes effect.
+	// On conflict (upsert), old items are deleted so new caption/file_id takes effect.
 	_ = qtx.DeleteMediaItemsByMediaID(ctx, mediaID)
 
 	for i := range media.Items {
