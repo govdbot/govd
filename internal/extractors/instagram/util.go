@@ -97,8 +97,18 @@ func ParseGQLMedia(ctx *models.ExtractorContext, data *Media) (*models.Media, er
 				item := media.NewItem()
 				node := edges[i].Node
 
+				// The embed page's sidecar children omit __typename entirely
+				// (unlike the GQL API), so fall back to the is_video flag,
+				// which is always present, when Typename didn't match.
+				isVideo := node.IsVideo
 				switch node.Typename {
 				case "GraphVideo", "XDTGraphVideo":
+					isVideo = true
+				case "GraphImage", "XDTGraphImage":
+					isVideo = false
+				}
+
+				if isVideo {
 					item.AddFormats(&models.MediaFormat{
 						FormatID:     "video",
 						Type:         database.MediaTypeVideo,
@@ -109,8 +119,7 @@ func ParseGQLMedia(ctx *models.ExtractorContext, data *Media) (*models.Media, er
 						Width:        node.Dimensions.Width,
 						Height:       node.Dimensions.Height,
 					})
-
-				case "GraphImage", "XDTGraphImage":
+				} else {
 					item.AddFormats(&models.MediaFormat{
 						FormatID: "image",
 						Type:     database.MediaTypePhoto,
