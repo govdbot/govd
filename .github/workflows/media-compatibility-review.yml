@@ -1,5 +1,7 @@
 name: Media compatibility review
 on:
+  push:
+    branches: [fix/public-facebook-tiktok]
   workflow_dispatch:
   pull_request:
 permissions:
