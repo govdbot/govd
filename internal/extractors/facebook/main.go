@@ -1,47 +1,45 @@
 package facebook
 
 import (
+	"errors"
 	"fmt"
+	"github.com/govdbot/govd/internal/util"
 	"regexp"
 
 	"github.com/govdbot/govd/internal/database"
 	"github.com/govdbot/govd/internal/models"
-	"github.com/govdbot/govd/internal/networking"
 )
 
 var facebookHost = []string{"facebook"}
+
+var shareURLPattern = regexp.MustCompile(`https?://(?:(?:www|m)\.)?facebook\.com/share/(?:r|v|p)/(?P<id>[a-zA-Z0-9]+)`)
 
 var ShareExtractor = &models.Extractor{
 	ID:          "facebook",
 	DisplayName: "Facebook (Share)",
 
-	URLPattern: regexp.MustCompile(`https?://(?:(?:www|m)\.)?facebook\.com/share/(?:r|v|p)/(?P<id>[a-zA-Z0-9]+)`),
+	URLPattern: shareURLPattern,
 	Host:       facebookHost,
 
-	Redirect: true,
-
+	Redirect: false,
 	GetFunc: func(ctx *models.ExtractorContext) (*models.ExtractorResponse, error) {
-		finalURL, err := ctx.FetchLocation(
-			ctx.ContentURL,
-			&networking.RequestParams{Headers: webHeaders},
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to follow share redirect: %w", err)
-		}
-		return &models.ExtractorResponse{URL: finalURL}, nil
+		media, err := GetPublicMedia(ctx)
+		return &models.ExtractorResponse{Media: media}, err
 	},
 }
+
+var videoURLPattern = regexp.MustCompile(
+	`https?://(?:(?:www|m|mbasic)\.)?facebook\.com/` +
+		`(?:watch/?\?(?:[^&]*&)*v=|video(?:/video)?\.php\?(?:[^&]*&)*v=|(?:reel|videos?|posts?)/|[^/]+/(?:videos|posts|reels?)/)` +
+		`(?P<id>[a-zA-Z0-9]+)`,
+)
 
 var Extractor = &models.Extractor{
 	ID:          "facebook",
 	DisplayName: "Facebook",
 
-	URLPattern: regexp.MustCompile(
-		`https?://(?:(?:www|m|mbasic)\.)?facebook\.com/` +
-			`(?:watch/?\?(?:[^&]*&)*v=|(?:reel|videos?|posts?)/|[^/]+/(?:videos|posts|reels?)/)` +
-			`(?P<id>[a-zA-Z0-9]+)`,
-	),
-	Host: facebookHost,
+	URLPattern: videoURLPattern,
+	Host:       facebookHost,
 
 	GetFunc: func(ctx *models.ExtractorContext) (*models.ExtractorResponse, error) {
 		media, err := GetMedia(ctx)
@@ -55,12 +53,17 @@ var Extractor = &models.Extractor{
 }
 
 func GetMedia(ctx *models.ExtractorContext) (*models.Media, error) {
-	if ctx.HTTPClient.Cookies == nil {
-		return nil, fmt.Errorf("auth cookies are required for facebook")
+
+	media, publicErr := GetPublicMedia(ctx)
+	if publicErr == nil {
+		return media, nil
+	}
+	if errors.Is(publicErr, util.ErrFileTooLarge) || errors.Is(publicErr, util.ErrDurationTooLong) || len(ctx.HTTPClient.Cookies) == 0 {
+		return nil, publicErr
 	}
 	videoData, err := GetVideoData(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get video data: %w", err)
+		return nil, fmt.Errorf("Facebook public/native methods failed: %w; %w", publicErr, err)
 	}
 	return buildMedia(ctx, videoData)
 }

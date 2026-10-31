@@ -10,6 +10,7 @@ import (
 
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/networking"
+	"github.com/govdbot/govd/internal/util"
 )
 
 type ChunkedDownloader struct {
@@ -41,15 +42,19 @@ func New(
 	resp, err := client.FetchWithContext(
 		ctx, http.MethodHead, url,
 		&networking.RequestParams{
+			Headers: settings.Headers,
 			Cookies: settings.Cookies,
 		},
 	)
 
 	chunkSize := settings.ChunkSize
 
-	if err == nil {
+	if err == nil && resp.StatusCode == http.StatusOK {
 		defer resp.Body.Close()
 		totalSize := resp.ContentLength
+		if util.ExceedsMaxFileSize(totalSize) {
+			return nil, util.ErrFileTooLarge
+		}
 		if totalSize > 0 && resp.Header.Get("Accept-Ranges") == "bytes" {
 			numChunks := int((totalSize + chunkSize - 1) / chunkSize)
 			return &ChunkedDownloader{
@@ -60,6 +65,9 @@ func New(
 				settings:  settings,
 			}, nil
 		}
+	}
+	if err == nil && resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
 	}
 
 	headers := map[string]string{
@@ -82,6 +90,9 @@ func New(
 	if cr := resp.Header.Get("Content-Range"); cr != "" {
 		total, parseErr := parseContentRange(cr)
 		if parseErr == nil && total > 0 {
+			if util.ExceedsMaxFileSize(total) {
+				return nil, util.ErrFileTooLarge
+			}
 			if resp.StatusCode != http.StatusPartialContent {
 				return nil, fmt.Errorf("expected 206 for ranged GET, got %d", resp.StatusCode)
 			}
@@ -101,6 +112,9 @@ func New(
 			return nil, fmt.Errorf("server does not support range requests")
 		}
 		totalSize := resp.ContentLength
+		if util.ExceedsMaxFileSize(totalSize) {
+			return nil, util.ErrFileTooLarge
+		}
 		numChunks := int((totalSize + chunkSize - 1) / chunkSize)
 		return &ChunkedDownloader{
 			client:    client,
@@ -137,6 +151,14 @@ func (cd *ChunkedDownloader) Download(
 	go func() {
 		cd.wg.Wait()
 		close(chunks)
+	}()
+	defer func() {
+		cd.wg.Wait()
+		for c := range chunks {
+			if c.reader != nil {
+				c.reader.Close()
+			}
+		}
 	}()
 
 	return cd.writeChunks(writer, chunks)

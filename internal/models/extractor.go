@@ -128,5 +128,10 @@ func (ctx *ExtractorContext) FetchLocation(
 	defer resp.Body.Close()
 
 	redirectURL := resp.Request.URL.String()
+	if resp.StatusCode >= 300 && resp.StatusCode < 400 {
+		if next, err := resp.Location(); err == nil {
+			redirectURL = next.String()
+		}
+	}
 	return redirectURL, nil
 }

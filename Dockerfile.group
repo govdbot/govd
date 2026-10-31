@@ -1,0 +1,24 @@
+FROM golang:1.26.10-alpine@sha256:a2012b4a1d1f9f7e9f44e0d39b805a901e856b1dd80b4e6ee4338db547050308 AS builder
+ENV GOMAXPROCS=2
+RUN apk add --no-cache build-base libheif-dev ffmpeg unzip
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN find internal -name '*.go' -exec gofmt -w {} + && go test -p 2 -count=1 ./... && CGO_ENABLED=1 go build -p 2 -ldflags="-s -w" -o /app/govd ./cmd/main.go && go test -p 2 -c -o /app/instagram.test ./internal/extractors/instagram && go test -p 2 -c -o /app/core.test ./internal/core
+RUN mkdir -p /opt/yt-dlp && unzip -q yt-dlp_musllinux.zip -d /opt/yt-dlp && chmod 755 /opt/yt-dlp/yt-dlp_musllinux
+
+FROM alpine:3.24 AS runtime
+RUN apk add --no-cache ffmpeg libheif ca-certificates && addgroup -g 10001 govd && adduser -D -H -u 10001 -G govd govd
+WORKDIR /app
+COPY --from=builder /app/govd /app/govd
+COPY --from=builder /opt/yt-dlp /opt/yt-dlp
+RUN ln -s /opt/yt-dlp/yt-dlp_musllinux /usr/local/bin/yt-dlp && mkdir -p /app/logs && ln -s /dev/null /app/logs/app.log
+ENV GOMAXPROCS=2
+USER 10001:10001
+ENTRYPOINT ["/app/govd"]
+
+FROM runtime AS verification
+COPY --from=builder /app/instagram.test /probe/instagram.test
+COPY --from=builder /app/core.test /probe/core.test
+ENTRYPOINT ["/probe/core.test"]

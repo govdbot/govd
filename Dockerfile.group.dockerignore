@@ -1,0 +1,10 @@
+.git
+.env
+.env.*
+!.env.example
+private/
+logs/
+downloads/
+tmp/
+*.exe
+*.md

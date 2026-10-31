@@ -1,13 +1,13 @@
 package tiktok
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"regexp"
 
 	"github.com/bytedance/sonic"
-	"github.com/govdbot/govd/internal/logger"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/networking"
 	"github.com/govdbot/govd/internal/util"
@@ -16,7 +16,7 @@ import (
 const videoURLBase = "https://www.tiktok.com/@_/video/"
 
 var (
-	universalDataPattern = regexp.MustCompile(`<script[^>]+\bid="__UNIVERSAL_DATA_FOR_REHYDRATION__"[^>]*>(.*?)<\/script>`)
+	universalDataPattern = regexp.MustCompile(`(?s)<script[^>]+\bid="__UNIVERSAL_DATA_FOR_REHYDRATION__"[^>]*>(.*?)<\/script>`)
 
 	webHeaders = map[string]string{
 		"Host":            "www.tiktok.com",
@@ -30,12 +30,15 @@ var (
 
 func GetVideoWeb(ctx *models.ExtractorContext) (*WebItemStruct, []*http.Cookie, error) {
 	awemeID := ctx.ContentID
+	if !videoIDPattern.MatchString(awemeID) {
+		return nil, nil, util.ErrUnavailable
+	}
 
 	resp, err := ctx.Fetch(
 		http.MethodGet,
-		videoURLBase+awemeID,
+		videoURLBase+awemeID+"?is_from_webapp=1&sender_device=mobile",
 		&networking.RequestParams{
-			Headers: webHeaders,
+			Headers: publicTikTokHeaders(),
 		},
 	)
 	if err != nil {
@@ -65,32 +68,33 @@ func ParseUniversalData(body []byte) (*WebItemStruct, error) {
 		return nil, fmt.Errorf("universal data not found")
 	}
 
-	var data any
-	err := sonic.ConfigFastest.Unmarshal(matches[1], &data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal universal data: %w", err)
+	var data struct {
+		Scope map[string]json.RawMessage `json:"__DEFAULT_SCOPE__"`
 	}
-	logger.WriteFile("tt_universal_data", data)
-
-	defaultScope := util.TraverseJSON(data, "__DEFAULT_SCOPE__")
-	if defaultScope == nil {
-		return nil, fmt.Errorf("default scope not found")
+	if err := json.Unmarshal(matches[1], &data); err != nil {
+		return nil, fmt.Errorf("invalid TikTok public data: %w", err)
 	}
-	logger.WriteFile("tt_default_scope", defaultScope)
-
-	itemStruct := util.TraverseJSON(defaultScope, "itemStruct")
-	if itemStruct == nil {
+	var itemStructBytes json.RawMessage
+	for _, key := range []string{"webapp.video-detail", "webapp.reflow.video.detail"} {
+		var page struct {
+			ItemInfo struct {
+				Item json.RawMessage `json:"itemStruct"`
+			} `json:"itemInfo"`
+		}
+		if raw := data.Scope[key]; len(raw) == 0 || json.Unmarshal(raw, &page) != nil {
+			continue
+		}
+		if candidate := page.ItemInfo.Item; len(candidate) > 0 && string(candidate) != "null" {
+			itemStructBytes = candidate
+			break
+		}
+	}
+	if len(itemStructBytes) == 0 {
 		return nil, util.ErrUnavailable
-	}
-	logger.WriteFile("tt_item_struct", itemStruct)
-
-	itemStructBytes, err := sonic.ConfigFastest.Marshal(itemStruct)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal item struct: %w", err)
 	}
 
 	var webItem WebItemStruct
-	err = sonic.ConfigFastest.Unmarshal(itemStructBytes, &webItem)
+	err := sonic.ConfigFastest.Unmarshal(itemStructBytes, &webItem)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal item struct: %w", err)
 	}
