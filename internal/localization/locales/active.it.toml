@@ -177,3 +177,5 @@ other = "benvenuto {{.Name}} in govd, un bot telegram open-source per scaricare 
 [SupportedExtractorsMessage]
 hash = "sha1-c16d18ef8e24a2d2df3d011dbac5282bbd8783ca"
 other = "elenco degli estrattori supportati dal bot"
+[ErrorBusy]
+other = "Attendi la fine del download in corso oppure riprova fra un minuto."

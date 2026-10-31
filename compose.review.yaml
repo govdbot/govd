@@ -1,0 +1,75 @@
+# Fresh Linux amd64 installation. Always pass --env-file .env.review.
+# This deliberately uses a separate database volume; see INSTALL-IT.md for migration.
+services:
+  bot:
+    image: govd:review
+    build:
+      context: .
+      dockerfile: Dockerfile.group
+      target: runtime
+    restart: unless-stopped
+    init: true
+    user: "10001:10001"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    cpus: 1.0
+    mem_limit: 768m
+    memswap_limit: 768m
+    pids_limit: 128
+    env_file: [.env.review]
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN:?Set BOT_TOKEN in .env.review}
+      ADMINS: ${ADMINS:?Set your numeric Telegram user ID in ADMINS}
+      WHITELIST: ${WHITELIST:?Set allowed numeric chat IDs in WHITELIST}
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: govd
+      DB_USER: govd
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.review}
+      DOWNLOADS_DIR: /app/downloads
+      MAX_FILE_SIZE: "52428800"
+      MAX_DURATION: 5m
+      CONCURRENT_UPDATES: "2"
+      CACHING: "false"
+      METRICS_PORT: "0"
+      PROFILER_PORT: "0"
+    volumes:
+      - ./private:/app/private:ro
+    tmpfs:
+      - /app/downloads:rw,noexec,nosuid,nodev,size=234881024,uid=10001,gid=10001,mode=0700
+      - /tmp:rw,noexec,nosuid,nodev,size=33554432,uid=10001,gid=10001,mode=0700
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [govd]
+    logging:
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: "2"
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: govd
+      POSTGRES_USER: govd
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.review}
+    volumes:
+      - review-db:/var/lib/postgresql/data
+    networks: [govd]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U govd -d govd]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    logging:
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: "2"
+volumes:
+  review-db:
+networks:
+  govd:
+    driver: bridge

@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/govdbot/govd/internal/database"
@@ -20,7 +21,7 @@ func downloadMediaFormats(
 
 	numItems := len(media.Items)
 	formats := make(chan *models.DownloadedFormat, numItems)
-	semaphore := make(chan struct{}, 3)
+	semaphore := make(chan struct{}, 1)
 
 	wg.Add(numItems)
 	for i := range numItems {
@@ -96,6 +97,12 @@ func downloadItem(
 	// validate format again after download
 	// in case metadata extraction is done
 	// after download
+	if info, statErr := os.Stat(downloadedFormat.FilePath); statErr == nil {
+		format.FileSize = info.Size()
+	} else {
+		formats <- &models.DownloadedFormat{Index: index, Error: statErr}
+		return
+	}
 	err = validateFormat(format)
 	if err != nil {
 		formats <- &models.DownloadedFormat{
@@ -107,6 +114,10 @@ func downloadItem(
 
 	// merge audio into video if needed
 	mergeFormats(item, downloadedFormat)
+	if info, statErr := os.Stat(downloadedFormat.FilePath); statErr == nil && util.ExceedsMaxFileSize(info.Size()) {
+		formats <- &models.DownloadedFormat{Index: index, Error: util.ErrFileTooLarge}
+		return
+	}
 
 	for _, plugin := range format.Plugins {
 		if plugin != nil {
@@ -122,7 +133,18 @@ func downloadItem(
 		}
 	}
 
+	info, statErr := os.Stat(downloadedFormat.FilePath)
+	if statErr != nil {
+		formats <- &models.DownloadedFormat{Index: index, Error: statErr}
+		return
+	}
+	if util.ExceedsMaxFileSize(info.Size()) {
+		formats <- &models.DownloadedFormat{Index: index, Error: util.ErrFileTooLarge}
+		return
+	}
+	format.FileSize = info.Size()
 	formats <- downloadedFormat
+
 }
 
 func downloadFormat(
@@ -190,10 +212,11 @@ func downloadFormat(
 
 	thumbnailFilePath, err = getThumbnail(ctx, format, filePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get thumbnail: %w", err)
+		ctx.Warnf("optional thumbnail unavailable: %v", err)
+		thumbnailFilePath = ""
 	}
 
-	if format.MissingMetadata() {
+	if format.Type == database.MediaTypeVideo || format.Type == database.MediaTypeAudio {
 		// extract video metadata if missing
 		// width, height, duration
 		// this is needed for Telegram video messages

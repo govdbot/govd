@@ -45,3 +45,5 @@ SilentModeButton = "silent mode"
 SilentModeSettingsMessage = "when enabled, the bot will not send error messages"
 StartMessage = "welcome {{.Name}} to govd, an open-source telegram bot for downloading content from various social platforms"
 SupportedExtractorsMessage = "list of supported extractors by the bot"
+[ErrorBusy]
+other = "Please wait for the current download to finish, or try again in a minute."

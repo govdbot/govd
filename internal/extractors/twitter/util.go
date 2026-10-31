@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -14,7 +15,7 @@ import (
 	"github.com/bytedance/sonic"
 )
 
-const authToken = "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
+var authToken = os.Getenv("TWITTER_WEB_BEARER_TOKEN")
 
 var resolutionRegex = regexp.MustCompile(`(\d+)x(\d+)`)
 

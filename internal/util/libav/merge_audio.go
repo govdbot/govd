@@ -3,6 +3,7 @@ package libav
 import (
 	"fmt"
 	"os"
+	"time"
 
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 )
@@ -14,8 +15,8 @@ func MergeVideoWithAudio(
 ) error {
 	err := ffmpeg.Output(
 		[]*ffmpeg.Stream{
-			ffmpeg.Input(videoPath),
-			ffmpeg.Input(audioPath),
+			ffmpeg.Input(videoPath, inputOptions()),
+			ffmpeg.Input(audioPath, inputOptions()),
 		},
 		outputPath,
 		ffmpeg.KwArgs{
@@ -25,6 +26,7 @@ func MergeVideoWithAudio(
 		}).
 		Silent(true).
 		OverWriteOutput().
+		WithTimeout(60 * time.Second).
 		Run()
 
 	if err != nil {

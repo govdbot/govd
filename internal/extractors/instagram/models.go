@@ -72,6 +72,7 @@ type Posts struct {
 }
 
 type Context struct {
+	CopyrightBlocked      bool   `json:"copyright_blocked"`
 	AltText               string `json:"alt_text"`
 	Caption               string `json:"caption"`
 	CaptionTitleLinkified string `json:"caption_title_linkified"`

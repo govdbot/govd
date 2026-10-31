@@ -3,6 +3,7 @@ package libav
 import (
 	"encoding/json"
 	"strconv"
+	"time"
 
 	"github.com/govdbot/govd/internal/logger"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
@@ -22,7 +23,9 @@ type VideoProbeData struct {
 func ExtractVideoMetadata(inputPath string) (int32, int32, int32) {
 	logger.L.Debugf("extracting video metadata: %s", inputPath)
 
-	data, err := ffmpeg.Probe(inputPath)
+	options := inputOptions()
+	options["show_entries"] = "stream=codec_type,width,height:format=duration"
+	data, err := ffmpeg.ProbeWithTimeout(inputPath, 15*time.Second, options)
 	if err != nil {
 		return 0, 0, 0
 	}

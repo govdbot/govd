@@ -80,6 +80,16 @@ func DecodeImage(
 		return nil, false, err
 	}
 	logger.L.Debugf("detected image format: %s", format)
+	info, _, err := image.DecodeConfig(file)
+	if err != nil {
+		return nil, false, fmt.Errorf("invalid image header: %w", err)
+	}
+	if info.Width <= 0 || info.Height <= 0 || info.Width > 12000 || info.Height > 12000 || int64(info.Width)*int64(info.Height) > 25000000 {
+		return nil, false, fmt.Errorf("image dimensions exceed safety limit")
+	}
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		return nil, false, err
+	}
 
 	if format == "jpeg" {
 		img, err := jpeg.Decode(file)
@@ -93,13 +103,27 @@ func DecodeImage(
 				img, img.Bounds(),
 				draw.Over, nil,
 			)
-			return dst, true, nil
+			return dst, false, nil
 		}
 		return img, true, nil
 	}
 	img, _, err := image.Decode(file)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to decode image: %w", err)
+	}
+	if resize > 0 {
+		bounds := img.Bounds()
+		w, h := bounds.Dx(), bounds.Dy()
+		if w > h {
+			h = max(1, h*resize/w)
+			w = resize
+		} else {
+			w = max(1, w*resize/h)
+			h = resize
+		}
+		dst := image.NewRGBA(image.Rect(0, 0, w, h))
+		draw.NearestNeighbor.Scale(dst, dst.Bounds(), img, bounds, draw.Over, nil)
+		img = dst
 	}
 	return img, false, nil
 }

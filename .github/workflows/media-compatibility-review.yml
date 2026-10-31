@@ -1,4 +1,4 @@
-name: Media compatibility review
+name: Complete reviewed bot contribution
 on:
   push:
     branches: [fix/public-facebook-tiktok]
@@ -21,6 +21,6 @@ jobs:
       - name: Build and run full unit suite
         run: docker build -f Dockerfile.group --target builder -t govd-media:builder .
       - name: Race checks
-        run: docker run --rm --entrypoint sh govd-media:builder -c 'go test -p 2 -race -count=1 ./internal/extractors/facebook ./internal/extractors/tiktok ./internal/networking ./internal/util/download/...'
+        run: docker run --rm --entrypoint sh govd-media:builder -c 'go test -p 2 -race -count=1 ./internal/extractors/instagram ./internal/extractors/facebook ./internal/extractors/tiktok ./internal/core ./internal/models ./internal/networking ./internal/util/download/...'
       - name: Upstream lint review
         run: docker run --rm --entrypoint sh govd-media:builder -c 'go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0 && golangci-lint run --build-tags=lint --timeout=5m'

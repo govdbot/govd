@@ -5,7 +5,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN find internal -name '*.go' -exec gofmt -w {} + && go test -p 2 -count=1 ./... && CGO_ENABLED=1 go build -p 2 -ldflags="-s -w" -o /app/govd ./cmd/main.go
+RUN find internal -name '*.go' -exec gofmt -w {} + && go test -p 2 -count=1 ./... && CGO_ENABLED=1 go build -p 2 -ldflags="-s -w" -o /app/govd ./cmd/main.go && go test -p 2 -c -o /app/instagram.test ./internal/extractors/instagram && go test -p 2 -c -o /app/core.test ./internal/core
 RUN mkdir -p /opt/yt-dlp && unzip -q yt-dlp_musllinux.zip -d /opt/yt-dlp && chmod 755 /opt/yt-dlp/yt-dlp_musllinux
 
 FROM alpine:3.24 AS runtime
@@ -18,3 +18,7 @@ ENV GOMAXPROCS=2
 USER 10001:10001
 ENTRYPOINT ["/app/govd"]
 
+FROM runtime AS verification
+COPY --from=builder /app/instagram.test /probe/instagram.test
+COPY --from=builder /app/core.test /probe/core.test
+ENTRYPOINT ["/probe/core.test"]

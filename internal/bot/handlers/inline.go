@@ -5,6 +5,7 @@ import (
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
+	"github.com/govdbot/govd/internal/admission"
 	"github.com/govdbot/govd/internal/core"
 	"github.com/govdbot/govd/internal/extractors"
 	"github.com/govdbot/govd/internal/localization"
@@ -56,17 +57,24 @@ func InlineHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 }
 
 func InlineResultHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
+	if ctx == nil || ctx.Update == nil || ctx.ChosenInlineResult == nil {
+		return ext.EndGroups
+	}
 	taskID := ctx.ChosenInlineResult.ResultId
 
-	extractorCtx, ok := core.GetTask(taskID)
+	extractorCtx, ok := core.ClaimTask(taskID, ctx.ChosenInlineResult.From.Id)
 	if !ok {
 		logger.L.Warnf("inline task not found: %s", taskID)
 		return ext.EndGroups
 	}
-	defer core.RemoveTask(taskID)
-
 	// cancel the context after the task is complete
 	defer extractorCtx.CancelFunc()
+	release, allowed := admission.Default.Begin(ctx.ChosenInlineResult.From.Id, extractorCtx.Chat.ChatID, false)
+	if !allowed {
+		core.HandleError(bot, ctx, extractorCtx, util.ErrBusy)
+		return ext.EndGroups
+	}
+	defer release()
 
 	err := core.HandleInlineResultTask(bot, ctx, extractorCtx)
 	if err != nil {

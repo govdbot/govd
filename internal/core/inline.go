@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
@@ -14,14 +15,15 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
-var tasks = expirable.NewLRU[string, *models.ExtractorContext](0, nil, 5*time.Minute)
+var tasks = expirable.NewLRU[string, *models.ExtractorContext](1024, nil, 3*time.Minute)
+var tasksMu sync.Mutex
 
 func HandleInlineTask(
 	bot *gotgbot.Bot,
 	ctx *ext.Context,
 	extractorCtx *models.ExtractorContext,
 ) error {
-	taskID := uuid.NewString()[:8]
+	taskID := uuid.NewString()
 	ok := AddTask(taskID, extractorCtx)
 	if !ok {
 		return fmt.Errorf("failed to add inline task to cache")
@@ -62,6 +64,7 @@ func HandleInlineTask(
 		},
 	)
 	if err != nil || !ok {
+		RemoveTask(taskID)
 		return err
 	}
 
@@ -77,8 +80,11 @@ func HandleInlineResultTask(
 
 	key := extractorCtx.Key()
 
-	acquireQueue(key)
-	defer releaseQueue(key)
+	release, err := acquireQueue(extractorCtx.Context, key)
+	if err != nil {
+		return err
+	}
+	defer release()
 
 	taskResult, err := executeDownload(extractorCtx, true)
 	if err != nil {
@@ -107,13 +113,40 @@ func HandleInlineResultTask(
 }
 
 func AddTask(taskID string, ctx *models.ExtractorContext) bool {
-	return !tasks.Add(taskID, ctx)
+	tasksMu.Lock()
+	defer tasksMu.Unlock()
+	if _, exists := tasks.Get(taskID); exists {
+		return false
+	}
+	tasks.Add(taskID, ctx)
+	return true
+}
+
+// ClaimTask validates the Telegram actor and consumes a task atomically.
+// A rejected claim must leave the owner's task available.
+func ClaimTask(taskID string, actorID int64) (*models.ExtractorContext, bool) {
+	tasksMu.Lock()
+	defer tasksMu.Unlock()
+	task, exists := tasks.Get(taskID)
+	if !exists || task == nil || task.Chat == nil || actorID <= 0 || task.Chat.ChatID != actorID {
+		return nil, false
+	}
+	if task.Context != nil && task.Context.Err() != nil {
+		tasks.Remove(taskID)
+		return nil, false
+	}
+	tasks.Remove(taskID)
+	return task, true
 }
 
 func GetTask(taskID string) (*models.ExtractorContext, bool) {
+	tasksMu.Lock()
+	defer tasksMu.Unlock()
 	return tasks.Get(taskID)
 }
 
 func RemoveTask(taskID string) bool {
+	tasksMu.Lock()
+	defer tasksMu.Unlock()
 	return tasks.Remove(taskID)
 }

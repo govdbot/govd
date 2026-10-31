@@ -18,8 +18,11 @@ func HandleDownloadTask(
 
 	key := extractorCtx.Key()
 
-	acquireQueue(key)
-	defer releaseQueue(key)
+	release, err := acquireQueue(extractorCtx.Context, key)
+	if err != nil {
+		return err
+	}
+	defer release()
 
 	message := ctx.EffectiveMessage
 	isSpoiler := util.HasHashtagEntity(message, "spoiler") ||

@@ -25,7 +25,7 @@ services:
     environment:
       POSTGRES_DB: govd
       POSTGRES_USER: govd
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
     volumes:
       - db:/var/lib/postgresql
     networks:
@@ -42,11 +42,11 @@ services:
     restart: unless-stopped
     command: >
       --bind=0.0.0.0
-      --url=postgres://govd:password@db:5432/govd?sslmode=disable
+      --url=postgres://govd:${DB_PASSWORD:?Set DB_PASSWORD in .env}@db:5432/govd?sslmode=disable
       --log-level=error
     environment:
       PGWEB_AUTH_USER: ${PGWEB_USER:-admin}
-      PGWEB_AUTH_PASS: ${PGWEB_PASSWORD:-password}
+      PGWEB_AUTH_PASS: ${PGWEB_PASSWORD:?Set PGWEB_PASSWORD in .env}
     ports:
       - "${PGWEB_PORT:-8081}:8081"
     networks:

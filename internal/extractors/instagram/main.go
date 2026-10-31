@@ -1,6 +1,7 @@
 package instagram
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"maps"
@@ -41,13 +42,20 @@ var Extractor = &models.Extractor{
 			}, nil
 		}
 		// method 3: get media from 3rd party service (unlikely)
+		media, errYTDLP := GetYTDLPMedia(ctx)
+		if errYTDLP == nil {
+			return &models.ExtractorResponse{Media: media}, nil
+		}
+		if errors.Is(errYTDLP, util.ErrFileTooLarge) || errors.Is(errYTDLP, util.ErrDurationTooLong) {
+			return nil, errYTDLP
+		}
 		media, err3 := GetIGramPost(ctx)
 		if err3 == nil {
 			return &models.ExtractorResponse{
 				Media: media,
 			}, nil
 		}
-		return nil, fmt.Errorf("all methods failed: %w; %w; %w", err1, err2, err3)
+		return nil, fmt.Errorf("all methods failed: %w; %w; %w; %w", err1, err2, errYTDLP, err3)
 	},
 }
 
@@ -71,15 +79,22 @@ var ShareURLExtractor = &models.Extractor{
 	ID:          "instagram",
 	DisplayName: "Instagram (Share)",
 
-	URLPattern: regexp.MustCompile(`https?:\/\/(www\.)?(?:dd)?instagram\.com\/share\/((reels?|video|s|p)\/)?(?P<id>[^\/\?]+)`),
+	URLPattern: regexp.MustCompile(`https?:\/\/(www\.)?(?:dd)?instagram\.com\/share\/((reels?|video|s|p)\/)?(?P<id>[a-zA-Z0-9_-]+)`),
 	Host:       instagramHost,
 
 	Redirect: true,
 
 	GetFunc: func(ctx *models.ExtractorContext) (*models.ExtractorResponse, error) {
-		redirectURL, err := ctx.FetchLocation(ctx.ContentURL, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get url location: %w", err)
+		redirectURL, err := ctx.FetchLocation(ctx.ContentURL, &networking.RequestParams{StopRedirect: func(next *http.Request) bool {
+			match := Extractor.URLPattern.FindStringIndex(next.URL.String())
+			return len(match) > 0 && match[0] == 0
+		}})
+		match := Extractor.URLPattern.FindStringIndex(redirectURL)
+		if err != nil || len(match) == 0 || match[0] != 0 {
+			redirectURL, err = resolvePublicShare(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to resolve public share: %w", err)
+			}
 		}
 		return &models.ExtractorResponse{URL: redirectURL}, nil
 	},

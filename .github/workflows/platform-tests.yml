@@ -1,0 +1,57 @@
+name: Public media parser tests
+
+on:
+  pull_request:
+    paths:
+      - 'internal/extractors/facebook/**'
+      - 'internal/extractors/tiktok/**'
+      - 'internal/util/download/**'
+      - '.github/workflows/platform-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platform-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Get the pinned public extractor
+        shell: bash
+        run: |
+          curl --fail --location --retry 2 --max-time 90 --output yt-dlp_musllinux.zip https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.26/yt-dlp_musllinux.zip
+          echo 'c3a67f7c14d4cbf876e7801039237fc16b929a629c72f9c785ec3fdc8aa40748  yt-dlp_musllinux.zip' | sha256sum --check -
+      - name: Build and run the complete unit suite
+        run: docker build --progress plain --file Dockerfile.group --target verification --tag govd-platforms:verify .
+      - name: Build test tools from the same source
+        run: docker build --file Dockerfile.group --target builder --tag govd-platforms:builder .
+      - name: Check concurrent parser and resource handling
+        run: docker run --rm --cpus=2 --memory=3g --memory-swap=3g --pids-limit=256 --entrypoint sh govd-platforms:builder -c 'go test -p 2 -race -count=1 ./internal/extractors/facebook ./internal/extractors/tiktok ./internal/core ./internal/models ./internal/networking ./internal/util/download/...'
+      - name: Export the verified binaries and formatted source
+        shell: bash
+        run: |
+          mkdir dist
+          container=$(docker create govd-platforms:verify)
+          docker cp "$container":/app/govd dist/govd
+          docker cp "$container":/probe/core.test dist/core.test
+          docker rm "$container"
+          container=$(docker create govd-platforms:builder)
+          docker cp "$container":/app/internal/extractors/facebook dist/facebook
+          docker cp "$container":/app/internal/extractors/tiktok dist/tiktok
+          docker cp "$container":/app/internal/util/download dist/download
+          docker rm "$container"
+          git rev-parse HEAD > dist/COMMIT
+          (cd dist && sha256sum govd core.test > SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: govd-platforms-linux-amd64
+          path: dist/
+          retention-days: 1

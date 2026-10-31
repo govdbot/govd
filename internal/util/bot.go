@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"unicode/utf16"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
@@ -210,17 +211,44 @@ func HasHashtagEntity(msg *gotgbot.Message, entity string) bool {
 }
 
 func URLFromMessage(msg *gotgbot.Message) string {
-	for _, entity := range msg.Entities {
-		if entity.Type != "url" {
-			continue
-		}
-		parsedEntity := gotgbot.ParseEntity(
-			msg.Text,
-			entity,
-		)
-		return parsedEntity.Text
+	urls := URLsFromMessage(msg)
+	if len(urls) > 0 {
+		return urls[0]
 	}
 	return ""
+}
+
+func URLsFromMessage(msg *gotgbot.Message) []string {
+	if msg == nil {
+		return nil
+	}
+	var result []string
+	seen := map[string]bool{}
+	add := func(value string) {
+		if value != "" && len(value) <= 2048 && !seen[value] && len(result) < 3 {
+			seen[value] = true
+			result = append(result, value)
+		}
+	}
+	text := msg.Text
+	entities := msg.Entities
+	if text == "" {
+		text = msg.Caption
+		entities = msg.CaptionEntities
+	}
+	units := utf16.Encode([]rune(text))
+	for _, entity := range entities {
+		if entity.Type == "text_link" {
+			add(entity.Url)
+			continue
+		}
+		if entity.Type != "url" || entity.Offset < 0 || entity.Length <= 0 || entity.Offset > int64(len(units)) || entity.Length > int64(len(units))-entity.Offset {
+			continue
+		}
+		value := string(utf16.Decode(units[entity.Offset : entity.Offset+entity.Length]))
+		add(value)
+	}
+	return result
 }
 
 func ExtractCommentFromMessage(msg *gotgbot.Message) string {
@@ -300,10 +328,9 @@ func GetMessageFileSize(msg *gotgbot.Message) int64 {
 }
 
 func IsBotAdmin(ctx *ext.Context) bool {
-	chatType := ctx.EffectiveChat.Type
-	if chatType != gotgbot.ChatTypePrivate {
+	if ctx == nil || ctx.EffectiveChat == nil || ctx.EffectiveUser == nil || ctx.EffectiveChat.Type != gotgbot.ChatTypePrivate {
 		return false
 	}
-	userID := ctx.EffectiveMessage.From.Id
+	userID := ctx.EffectiveUser.Id
 	return slices.Contains(config.Env.Admins, userID)
 }

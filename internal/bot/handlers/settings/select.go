@@ -22,7 +22,7 @@ func SettingsSelectHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 	valueStr := parts[3]
 
 	setting := GetSettingByID(settingID)
-	if setting == nil {
+	if setting == nil || setting.Type != SettingsTypeSelect || setting.SetValueFunc == nil {
 		return nil
 	}
 
@@ -31,6 +31,9 @@ func SettingsSelectHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 		return err
 	}
 	isGroup := chat.Type == database.ChatTypeGroup
+	if !allowedScope(setting, chat) {
+		return nil
+	}
 
 	localizer := localization.New(chat.Language)
 	if isGroup && !util.CheckAdminPermission(b, ctx, localizer) {
@@ -40,6 +43,9 @@ func SettingsSelectHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 	err = json.Unmarshal([]byte(valueStr), &value)
 	if err != nil {
 		return err
+	}
+	if !allowedValue(setting, localizer, value) {
+		return nil
 	}
 	if setting.SetValueFunc != nil {
 		err = setting.SetValueFunc(

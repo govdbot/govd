@@ -2,11 +2,13 @@ package models
 
 import (
 	"os"
+	"sync"
 
 	"github.com/govdbot/govd/internal/logger"
 )
 
 type FilesTracker struct {
+	mu    sync.Mutex
 	Files []string
 }
 
@@ -17,11 +19,17 @@ func NewFilesTracker() *FilesTracker {
 }
 
 func (ft *FilesTracker) Add(files ...string) {
+	ft.mu.Lock()
+	defer ft.mu.Unlock()
 	ft.Files = append(ft.Files, files...)
 }
 
 func (ft *FilesTracker) Cleanup() {
-	for _, fileName := range ft.Files {
+	ft.mu.Lock()
+	files := ft.Files
+	ft.Files = nil
+	ft.mu.Unlock()
+	for _, fileName := range files {
 		info, err := os.Stat(fileName)
 		if err != nil {
 			continue
@@ -38,5 +46,4 @@ func (ft *FilesTracker) Cleanup() {
 			}
 		}
 	}
-	ft.Files = make([]string, 0)
 }

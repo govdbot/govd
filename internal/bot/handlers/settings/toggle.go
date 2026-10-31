@@ -20,7 +20,7 @@ func SettingsToggleHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 	settingID := parts[2]
 
 	setting := GetSettingByID(settingID)
-	if setting == nil {
+	if setting == nil || setting.Type != SettingsTypeToggle || setting.ToggleFunc == nil {
 		return nil
 	}
 
@@ -29,6 +29,9 @@ func SettingsToggleHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 		return err
 	}
 	isGroup := chat.Type == database.ChatTypeGroup
+	if !allowedScope(setting, chat) {
+		return nil
+	}
 
 	localizer := localization.New(chat.Language)
 	if isGroup && !util.CheckAdminPermission(b, ctx, localizer) {

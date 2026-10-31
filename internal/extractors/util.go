@@ -2,6 +2,8 @@ package extractors
 
 import (
 	"context"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/govdbot/govd/internal/config"
@@ -16,9 +18,13 @@ const maxRedirects = 5
 var extractorsByHost = getExtractorsMap()
 
 func FromURL(url string) *models.ExtractorContext {
+	url = normalizeURL(url)
+	if !inputURLAllowed(url) {
+		return nil
+	}
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		5*time.Minute,
+		3*time.Minute,
 	)
 
 	var redirectCount int
@@ -43,6 +49,10 @@ func FromURL(url string) *models.ExtractorContext {
 		var groups map[string]string
 
 		for _, e := range extractors {
+			indices := e.URLPattern.FindStringSubmatchIndex(currentURL)
+			if len(indices) == 0 || indices[0] != 0 {
+				continue
+			}
 			matches = e.URLPattern.FindStringSubmatch(currentURL)
 			if matches != nil {
 				extractor = e
@@ -112,6 +122,10 @@ func FromURL(url string) *models.ExtractorContext {
 		extractorCtx.Debugf("redirected to %s", response.URL)
 
 		currentURL = response.URL
+		if !inputURLAllowed(currentURL) {
+			cancel()
+			return nil
+		}
 		redirectCount++
 
 		if redirectCount > maxRedirects {
@@ -123,6 +137,40 @@ func FromURL(url string) *models.ExtractorContext {
 
 	cancel()
 	return nil
+}
+
+func normalizeURL(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if !strings.Contains(raw, "://") {
+		raw = "https://" + raw
+	}
+	return raw
+}
+
+// A cheap, network-free gate before admission and redirects.
+func InputSupported(raw string) bool {
+	raw = normalizeURL(raw)
+	if !inputURLAllowed(raw) {
+		return false
+	}
+	host, err := util.ExtractBaseHost(raw)
+	if err != nil {
+		return false
+	}
+	for _, e := range getExtractorsByHost(host) {
+		indices := e.URLPattern.FindStringSubmatchIndex(raw)
+		if len(indices) > 0 && indices[0] == 0 && !config.GetExtractorConfig(e.ID).IsDisabled {
+			return true
+		}
+	}
+	return false
+}
+func inputURLAllowed(raw string) bool {
+	if len(raw) > 2048 {
+		return false
+	}
+	u, err := url.Parse(raw)
+	return err == nil && (u.Scheme == "https" || u.Scheme == "http") && u.User == nil && u.Hostname() != "" && (u.Port() == "" || u.Port() == "80" || u.Port() == "443")
 }
 
 func getExtractorsMap() map[string][]*models.Extractor {
