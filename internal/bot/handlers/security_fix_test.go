@@ -1,6 +1,7 @@
 package handlers
 
 import (
+ "errors"
 	"context"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
@@ -43,7 +44,7 @@ func TestSecurityStatsCallbackRequiresAdminBeforeDatabase(t *testing.T) {
 	defer func() { config.Env.Admins = old }()
 	actor := gotgbot.User{Id: 202}
 	ctx := &ext.Context{Update: &gotgbot.Update{CallbackQuery: &gotgbot.CallbackQuery{From: actor, Data: "stats:all"}}, EffectiveUser: &actor, EffectiveChat: &gotgbot.Chat{Id: 202, Type: "private"}}
-	if err := StatsCallbackHandler(nil, ctx); err != ext.EndGroups {
+	if err := StatsCallbackHandler(nil, ctx); !errors.Is(err, ext.EndGroups) {
 		t.Fatalf("unexpected result: %v", err)
 	}
 }

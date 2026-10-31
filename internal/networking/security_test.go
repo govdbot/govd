@@ -30,7 +30,7 @@ func TestSecurityPublicAddresses(t *testing.T) {
 	}
 }
 func TestSecurityCookieScope(t *testing.T) {
-	c := &http.Cookie{Name: "sessionid", Value: "fixture", Domain: ".instagram.com", Path: "/api", Secure: true}
+	c := &http.Cookie{Name: "sessionid", Value: "fixture", Domain: fixtureInstagramDomain, Path: "/api", Secure: true}
 	for raw, want := range map[string]bool{"https://www.instagram.com/api": true, "https://www.instagram.com/api/v1": true, "https://www.instagram.com/apifake": false, "http://www.instagram.com/api": false, "https://other.invalid/api": false, "https://instagram.com.evil.invalid/api": false} {
 		u, _ := url.Parse(raw)
 		if got := cookieMatches(c, u, false); got != want {
@@ -39,7 +39,7 @@ func TestSecurityCookieScope(t *testing.T) {
 	}
 }
 func TestSecurityNoCookieToForeignHost(t *testing.T) {
-	c := DefaultHTTPClient(&NewHTTPClientOptions{Cookies: []*http.Cookie{{Name: "sessionid", Value: "fixture", Domain: ".instagram.com"}}})
+	c := DefaultHTTPClient(&NewHTTPClientOptions{Cookies: []*http.Cookie{{Name: "sessionid", Value: "fixture", Domain: fixtureInstagramDomain}}})
 	c.Client = &http.Client{Transport: fixtureTransport(func(r *http.Request) (*http.Response, error) {
 		if r.Header.Get("Cookie") != "" {
 			t.Error("cookie leaked")
@@ -61,13 +61,14 @@ func TestSecurityRejectRedirectBeforeFollowingPrivateAddress(t *testing.T) {
 		res.Header.Set("Location", "http://127.0.0.1/secret")
 		return res, nil
 	})}
-	_, err := c.Fetch("GET", "https://www.instagram.com/fixture", nil)
+	resp, err := c.Fetch("GET", "https://www.instagram.com/fixture", nil)
+	if resp != nil { resp.Body.Close() }
 	if err == nil || !errors.Is(err, ErrUnsafeDestination) || calls != 1 {
 		t.Fatalf("err=%v calls=%d", err, calls)
 	}
 }
 func TestSecurityCookiePathRecheckedOnRedirect(t *testing.T) {
-	c := DefaultHTTPClient(&NewHTTPClientOptions{Cookies: []*http.Cookie{{Name: "sessionid", Value: "fixture", Domain: ".instagram.com", Path: "/api"}}})
+	c := DefaultHTTPClient(&NewHTTPClientOptions{Cookies: []*http.Cookie{{Name: "sessionid", Value: "fixture", Domain: fixtureInstagramDomain, Path: "/api"}}})
 	calls := 0
 	c.Client = &http.Client{Transport: fixtureTransport(func(r *http.Request) (*http.Response, error) {
 		calls++

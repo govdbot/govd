@@ -20,9 +20,9 @@ func MergeVideoWithAudio(
 		},
 		outputPath,
 		ffmpeg.KwArgs{
-			"movflags": "+faststart",
-			"c:v":      "copy",
-			"c:a":      "copy",
+			"movflags": fastStartFlag,
+			"c:v":      copyCodec,
+			"c:a":      copyCodec,
 		}).
 		Silent(true).
 		OverWriteOutput().

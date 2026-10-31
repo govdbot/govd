@@ -13,11 +13,11 @@ import (
 )
 
 var VMExtractor = &models.Extractor{
-	ID:          "tiktok",
+	ID:          extractorID,
 	DisplayName: "TikTok VM",
 
 	URLPattern: regexp.MustCompile(`https:\/\/((?:vm|vt|www)\.)?(vx)?tiktok\.com\/(?:t\/)?(?P<id>[a-zA-Z0-9-]+)`),
-	Host:       []string{"tiktok", "vxtiktok"},
+	Host:       []string{extractorID, "vxtiktok"},
 	Redirect:   true,
 
 	GetFunc: func(ctx *models.ExtractorContext) (*models.ExtractorResponse, error) {
@@ -58,11 +58,11 @@ var VMExtractor = &models.Extractor{
 }
 
 var Extractor = &models.Extractor{
-	ID:          "tiktok",
+	ID:          extractorID,
 	DisplayName: "TikTok",
 
 	URLPattern: regexp.MustCompile(`https?:\/\/(?:(?:www|m)\.)?(?:vx)?tiktok\.com\/(?:(?:@[\w.-]*\/)?(?:video|photo|v|p)\/|embed\/(?:v2\/)?)(?P<id>[0-9]+)`),
-	Host:       []string{"tiktok", "vxtiktok"},
+	Host:       []string{extractorID, "vxtiktok"},
 
 	GetFunc: func(ctx *models.ExtractorContext) (*models.ExtractorResponse, error) {
 		media, err := GetMedia(ctx)

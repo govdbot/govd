@@ -12,70 +12,70 @@ import (
 var (
 	totalRequests = promauto.NewCounterVec(
 		prometheus.CounterOpts{
-			Namespace: "gotgbot",
+			Namespace: metricsNamespace,
 			Name:      "requests_total",
 			Help:      "Number of requests made to the bot API.",
 		},
 		[]string{
-			"api_method",
+			apiMethodField,
 		},
 	)
 	totalHTTPErrors = promauto.NewCounterVec(
 		prometheus.CounterOpts{
-			Namespace: "gotgbot",
+			Namespace: metricsNamespace,
 			Name:      "http_request_errors_total",
 			Help:      "Number of HTTP errors obtained.",
 		},
 		[]string{
-			"api_method",
+			apiMethodField,
 		},
 	)
 	totalAPIErrors = promauto.NewCounterVec(
 		prometheus.CounterOpts{
-			Namespace: "gotgbot",
+			Namespace: metricsNamespace,
 			Name:      "api_request_errors_total",
 			Help:      "Number of bot API errors obtained.",
 		},
 		[]string{
-			"api_method",
+			apiMethodField,
 			"api_status_code",
 			"description",
 		},
 	)
 	requestDuration = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Namespace: "gotgbot",
+			Namespace: metricsNamespace,
 			Name:      "api_request_time_seconds",
 			Help:      "Duration of requests made to the bot API.",
 		},
 		[]string{
-			"api_method",
+			apiMethodField,
 		},
 	)
 	totalUpdates = promauto.NewCounter(
 		prometheus.CounterOpts{
-			Namespace: "gotgbot",
+			Namespace: metricsNamespace,
 			Name:      "updates_total",
 			Help:      "Number of incoming updates.",
 		},
 	)
 	updateProcessingDuration = promauto.NewHistogram(
 		prometheus.HistogramOpts{
-			Namespace: "gotgbot",
+			Namespace: metricsNamespace,
 			Name:      "update_processing_time_seconds",
 			Help:      "Time to process each update.",
 		},
 	)
 	bufferedUpdates = promauto.NewGauge(
 		prometheus.GaugeOpts{
-			Namespace: "gotgbot",
+			Namespace: metricsNamespace,
 			Name:      "buffered_updates",
 			Help:      "Number of updates currently buffered in the dispatcher limiter channel.",
 		},
 	)
 	bufferedUpdatesLimit = promauto.NewGauge(
 		prometheus.GaugeOpts{
-			Namespace: "gotgbot",
+			Namespace: metricsNamespace,
 			Name:      "buffered_updates_limit",
 			Help:      "Maximum number of buffered updates in the limiter channel.",
 		},

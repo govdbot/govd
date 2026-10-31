@@ -27,7 +27,7 @@ func TestGroupLimitsAndRecovery(t *testing.T) {
 	release()
 	release()
 	other()
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		r, ok := g.Begin(101, -10, false)
 		if !ok {
 			t.Fatal("within rate rejected")
@@ -69,7 +69,7 @@ func TestLightGateAndNotice(t *testing.T) {
 	g := New()
 	now := time.Now()
 	g.now = func() time.Time { return now }
-	for i := 0; i < 30; i++ {
+	for range 30 {
 		if !g.AllowLight(101) {
 			t.Fatal("early reject")
 		}

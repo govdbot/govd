@@ -22,7 +22,7 @@ const (
 )
 
 var ShortExtractor = &models.Extractor{
-	ID:          "twitter",
+	ID:          extractorID,
 	DisplayName: "Twitter (Short)",
 
 	URLPattern: regexp.MustCompile(`https?://t\.co/(?P<id>\w+)`),
@@ -57,13 +57,13 @@ var ShortExtractor = &models.Extractor{
 }
 
 var Extractor = &models.Extractor{
-	ID:          "twitter",
+	ID:          extractorID,
 	DisplayName: "Twitter (X)",
 
 	URLPattern: regexp.MustCompile(`https?:\/\/(?:fx|vx|fixup)?(twitter|x)\.com\/([^\/]+)\/status\/(?P<id>\d+)`),
 	Host: []string{
 		"x",
-		"twitter",
+		extractorID,
 		"fxtwitter",
 		"vxtwitter",
 		"fixuptwitter",

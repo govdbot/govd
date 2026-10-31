@@ -16,10 +16,10 @@ import (
 	"github.com/govdbot/govd/internal/util"
 )
 
-var instagramHost = []string{"instagram", "ddinstagram"}
+var instagramHost = []string{extractorID, "ddinstagram"}
 
 var Extractor = &models.Extractor{
-	ID:          "instagram",
+	ID:          extractorID,
 	DisplayName: "Instagram",
 
 	URLPattern: regexp.MustCompile(`https:\/\/(www\.)?(?:dd)?instagram\.com\/(reels?|p|tv)\/(?P<id>[a-zA-Z0-9_-]+)`),
@@ -60,7 +60,7 @@ var Extractor = &models.Extractor{
 }
 
 var StoriesExtractor = &models.Extractor{
-	ID:          "instagram",
+	ID:          extractorID,
 	DisplayName: "Instagram Stories",
 
 	URLPattern: regexp.MustCompile(`https:\/\/(www\.)?(?:dd)?instagram\.com\/stories\/[a-zA-Z0-9._]+\/(?P<id>\d+)`),
@@ -76,7 +76,7 @@ var StoriesExtractor = &models.Extractor{
 }
 
 var ShareURLExtractor = &models.Extractor{
-	ID:          "instagram",
+	ID:          extractorID,
 	DisplayName: "Instagram (Share)",
 
 	URLPattern: regexp.MustCompile(`https?:\/\/(www\.)?(?:dd)?instagram\.com\/share\/((reels?|video|s|p)\/)?(?P<id>[a-zA-Z0-9_-]+)`),
@@ -210,7 +210,7 @@ func GetIGramStory(ctx *models.ExtractorContext) (*models.Media, error) {
 	if isVideo {
 		video := GetBestVideoVersion(result.VideoVersions)
 		item.AddFormats(&models.MediaFormat{
-			FormatID:   "video",
+			FormatID:   videoFormatID,
 			Type:       database.MediaTypeVideo,
 			URL:        []string{video.URL},
 			VideoCodec: database.MediaCodecAvc,
@@ -241,7 +241,7 @@ func GetPostFromIGram(ctx *models.ExtractorContext) (*IGramResponse, error) {
 	}
 
 	headers := map[string]string{
-		"Content-Type": "application/json",
+		contentTypeHeader: "application/json",
 	}
 	maps.Copy(headers, igramHeaders)
 
@@ -284,7 +284,7 @@ func GetStoryFromIGram(ctx *models.ExtractorContext) (*IGramStoryResponse, error
 	}
 
 	headers := map[string]string{
-		"Content-Type": "application/json",
+		contentTypeHeader: "application/json",
 	}
 	maps.Copy(headers, igramHeaders)
 

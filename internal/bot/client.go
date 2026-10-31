@@ -39,7 +39,7 @@ func (b Client) RequestWithContext(
 	for attempt := range maxRetries {
 		totalRequests.WithLabelValues(method).Inc()
 		timer := prometheus.NewTimer(requestDuration.With(prometheus.Labels{
-			"api_method": method,
+			apiMethodField: method,
 		}))
 
 		val, err = b.BotClient.RequestWithContext(ctx, token, method, params, opts)

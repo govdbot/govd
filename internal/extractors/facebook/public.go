@@ -149,9 +149,9 @@ func GetPublicMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	client.Cookies = nil
 	client.Headers = nil
 	if standard, ok := client.Client.(*http.Client); ok {
-		copy := *standard
-		copy.Jar = nil
-		client.Client = &copy
+		cloned := *standard
+		cloned.Jar = nil
+		client.Client = &cloned
 	}
 	ctx.HTTPClient = &client
 	return m, nil

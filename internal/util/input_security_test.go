@@ -17,11 +17,11 @@ import (
 
 func TestURLMessageRepresentations(t *testing.T) {
 	raw := "https://www.instagram.com/p/B/"
-	msg := &gotgbot.Message{Text: "😀 " + raw, Entities: []gotgbot.MessageEntity{{Type: "url", Offset: 3, Length: int64(len(raw))}}}
+	msg := &gotgbot.Message{Text: "😀 " + raw, Entities: []gotgbot.MessageEntity{{Type: urlEntityType, Offset: 3, Length: int64(len(raw))}}}
 	if URLFromMessage(msg) != raw {
 		t.Fatal("UTF16 URL failed")
 	}
-	msg = &gotgbot.Message{Caption: raw, CaptionEntities: []gotgbot.MessageEntity{{Type: "url", Length: int64(len(raw))}}}
+	msg = &gotgbot.Message{Caption: raw, CaptionEntities: []gotgbot.MessageEntity{{Type: urlEntityType, Length: int64(len(raw))}}}
 	if URLFromMessage(msg) != raw {
 		t.Fatal("caption URL failed")
 	}
@@ -33,7 +33,7 @@ func TestURLMessageRepresentations(t *testing.T) {
 	if len(URLsFromMessage(msg)) != 1 {
 		t.Fatal("duplicate not removed")
 	}
-	for _, entity := range []gotgbot.MessageEntity{{Type: "url", Offset: -1, Length: 4}, {Type: "url", Offset: 1 << 62, Length: 8}, {Type: "url", Offset: 1, Length: 1 << 62}} {
+	for _, entity := range []gotgbot.MessageEntity{{Type: urlEntityType, Offset: -1, Length: 4}, {Type: urlEntityType, Offset: 1 << 62, Length: 8}, {Type: urlEntityType, Offset: 1, Length: 1 << 62}} {
 		if URLFromMessage(&gotgbot.Message{Text: "abc", Entities: []gotgbot.MessageEntity{entity}}) != "" {
 			t.Fatal("malformed entity accepted")
 		}
@@ -41,7 +41,8 @@ func TestURLMessageRepresentations(t *testing.T) {
 }
 func TestImageDimensionsRejectedBeforePixelDecode(t *testing.T) {
 	logger.L = zap.NewNop().Sugar()
-	b := []byte{137, 80, 78, 71, 13, 10, 26, 10}
+	b := make([]byte, 8, 256)
+	copy(b, []byte{137, 80, 78, 71, 13, 10, 26, 10})
 	data := make([]byte, 13)
 	binary.BigEndian.PutUint32(data[:4], 30000)
 	binary.BigEndian.PutUint32(data[4:8], 30000)

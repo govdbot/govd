@@ -19,7 +19,7 @@ const (
 )
 
 var ShortExtractor = &models.Extractor{
-	ID:          "pinterest",
+	ID:          extractorID,
 	DisplayName: "Pinterest (Short)",
 
 	URLPattern: regexp.MustCompile(`https?://(www\.)?pin\.[^/]+/(?P<id>\w+)`),
@@ -38,11 +38,11 @@ var ShortExtractor = &models.Extractor{
 }
 
 var Extractor = &models.Extractor{
-	ID:          "pinterest",
+	ID:          extractorID,
 	DisplayName: "Pinterest",
 
 	URLPattern: regexp.MustCompile(`https?://(?:[^/]+\.)?pinterest\.[^/]+/pin/(?:[\w-]+--)?(?P<id>\d+)`),
-	Host:       []string{"pinterest"},
+	Host:       []string{extractorID},
 
 	GetFunc: func(ctx *models.ExtractorContext) (*models.ExtractorResponse, error) {
 		media, err := ExtractPinMedia(ctx)

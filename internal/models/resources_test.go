@@ -40,7 +40,7 @@ func TestUploadHandlesClosedAndIdempotent(t *testing.T) {
 	format.uploadClosers = append(format.uploadClosers, f)
 	format.CloseUploads()
 	format.CloseUploads()
-	if _, err = f.Write([]byte("must fail")); err == nil {
+	if _, err = f.WriteString("must fail"); err == nil {
 		t.Fatal("upload handle remains open")
 	}
 	if len(format.uploadClosers) != 0 {

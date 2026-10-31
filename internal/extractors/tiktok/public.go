@@ -57,15 +57,15 @@ func publicTikTokCookies(cookies []*http.Cookie) []*http.Cookie {
 		if cookie == nil {
 			continue
 		}
-		copy := *cookie
-		if copy.Domain == "" {
-			copy.Domain = "www.tiktok.com"
+		cloned := *cookie
+		if cloned.Domain == "" {
+			cloned.Domain = "www.tiktok.com"
 		}
-		domain := strings.TrimPrefix(strings.ToLower(copy.Domain), ".")
+		domain := strings.TrimPrefix(strings.ToLower(cloned.Domain), ".")
 		if domain != "tiktok.com" && !strings.HasSuffix(domain, ".tiktok.com") {
 			continue
 		}
-		result = append(result, &copy)
+		result = append(result, &cloned)
 	}
 	return result
 }

@@ -130,12 +130,12 @@ func TestLivePublicMedia(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 && resp.StatusCode != 206 {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
 		t.Fatalf("CDN HTTP %d", resp.StatusCode)
 	}
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 1024))
 	if err != nil || !strings.Contains(string(body), "ftyp") {
 		t.Fatal("not a readable MP4")
 	}
-	t.Logf("PUBLIC_OK items=%d bytes=%d type=%s", len(media.Items), len(body), resp.Header.Get("Content-Type"))
+	t.Logf("PUBLIC_OK items=%d bytes=%d type=%s", len(media.Items), len(body), resp.Header.Get(contentTypeHeader))
 }

@@ -19,9 +19,9 @@ func RemuxFile(inputPath string, outputPath string) error {
 
 	err := ffmpeg.Input(inputPath, inputOptions()).
 		Output(outputPath, ffmpeg.KwArgs{
-			"map":      "0",
-			"c":        "copy",
-			"movflags": "+faststart",
+			mapOption:      "0",
+			"c":        copyCodec,
+			"movflags": fastStartFlag,
 		}).
 		Silent(true).
 		OverWriteOutput().
@@ -41,9 +41,9 @@ func RemuxFileWithDoublePass(inputPath string, outputPath string) error {
 	tempPath := inputPath + ".temp.mkv"
 	err := ffmpeg.Input(inputPath, inputOptions()).
 		Output(tempPath, ffmpeg.KwArgs{
-			"map":      "0",
-			"c":        "copy",
-			"movflags": "+faststart",
+			mapOption:      "0",
+			"c":        copyCodec,
+			"movflags": fastStartFlag,
 		}).
 		Silent(true).
 		OverWriteOutput().
@@ -57,9 +57,9 @@ func RemuxFileWithDoublePass(inputPath string, outputPath string) error {
 
 	err = ffmpeg.Input(tempPath, inputOptions()).
 		Output(outputPath, ffmpeg.KwArgs{
-			"map":      "0",
-			"c":        "copy",
-			"movflags": "+faststart",
+			mapOption:      "0",
+			"c":        copyCodec,
+			"movflags": fastStartFlag,
 		}).
 		Silent(true).
 		OverWriteOutput().

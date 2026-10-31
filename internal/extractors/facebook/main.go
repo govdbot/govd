@@ -10,12 +10,12 @@ import (
 	"github.com/govdbot/govd/internal/models"
 )
 
-var facebookHost = []string{"facebook"}
+var facebookHost = []string{extractorID}
 
 var shareURLPattern = regexp.MustCompile(`https?://(?:(?:www|m)\.)?facebook\.com/share/(?:r|v|p)/(?P<id>[a-zA-Z0-9]+)`)
 
 var ShareExtractor = &models.Extractor{
-	ID:          "facebook",
+	ID:          extractorID,
 	DisplayName: "Facebook (Share)",
 
 	URLPattern: shareURLPattern,
@@ -35,7 +35,7 @@ var videoURLPattern = regexp.MustCompile(
 )
 
 var Extractor = &models.Extractor{
-	ID:          "facebook",
+	ID:          extractorID,
 	DisplayName: "Facebook",
 
 	URLPattern: videoURLPattern,
@@ -63,7 +63,7 @@ func GetMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	}
 	videoData, err := GetVideoData(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("Facebook public/native methods failed: %w; %w", publicErr, err)
+		return nil, fmt.Errorf("facebook public/native methods failed: %w; %w", publicErr, err)
 	}
 	return buildMedia(ctx, videoData)
 }

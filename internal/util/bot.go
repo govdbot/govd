@@ -242,7 +242,7 @@ func URLsFromMessage(msg *gotgbot.Message) []string {
 			add(entity.Url)
 			continue
 		}
-		if entity.Type != "url" || entity.Offset < 0 || entity.Length <= 0 || entity.Offset > int64(len(units)) || entity.Length > int64(len(units))-entity.Offset {
+		if entity.Type != urlEntityType || entity.Offset < 0 || entity.Length <= 0 || entity.Offset > int64(len(units)) || entity.Length > int64(len(units))-entity.Offset {
 			continue
 		}
 		value := string(utf16.Decode(units[entity.Offset : entity.Offset+entity.Length]))
@@ -258,7 +258,7 @@ func ExtractCommentFromMessage(msg *gotgbot.Message) string {
 
 	var urlEntity *gotgbot.MessageEntity
 	for _, entity := range msg.Entities {
-		if entity.Type == "url" {
+		if entity.Type == urlEntityType {
 			urlEntity = &entity
 			break
 		}

@@ -82,7 +82,7 @@ func ParseGQLMedia(ctx *models.ExtractorContext, data *Media) (*models.Media, er
 		}
 		item := media.NewItem()
 		item.AddFormats(&models.MediaFormat{
-			FormatID:     "video",
+			FormatID:     videoFormatID,
 			Type:         database.MediaTypeVideo,
 			VideoCodec:   database.MediaCodecAvc,
 			AudioCodec:   database.MediaCodecAac,
@@ -94,7 +94,7 @@ func ParseGQLMedia(ctx *models.ExtractorContext, data *Media) (*models.Media, er
 	case "GraphImage", "XDTGraphImage":
 		item := media.NewItem()
 		item.AddFormats(&models.MediaFormat{
-			FormatID: "image",
+			FormatID: imageFormatID,
 			Type:     database.MediaTypePhoto,
 			URL:      []string{data.DisplayURL},
 		})
@@ -115,7 +115,7 @@ func ParseGQLMedia(ctx *models.ExtractorContext, data *Media) (*models.Media, er
 						return nil, util.ErrUnavailable
 					}
 					item.AddFormats(&models.MediaFormat{
-						FormatID:     "video",
+						FormatID:     videoFormatID,
 						Type:         database.MediaTypeVideo,
 						VideoCodec:   database.MediaCodecAvc,
 						AudioCodec:   database.MediaCodecAac,
@@ -127,7 +127,7 @@ func ParseGQLMedia(ctx *models.ExtractorContext, data *Media) (*models.Media, er
 
 				case "GraphImage", "XDTGraphImage":
 					item.AddFormats(&models.MediaFormat{
-						FormatID: "image",
+						FormatID: imageFormatID,
 						Type:     database.MediaTypePhoto,
 						URL:      []string{node.DisplayURL},
 					})
@@ -421,7 +421,7 @@ func BuildGQLData() (map[string]string, map[string]string, error) {
 		"X-Bloks-Version-Id": bloksVersionID,
 		"x-asbd-id":          asbdID,
 		"cookie":             strings.Join(cookies, "; "),
-		"Content-Type":       "application/x-www-form-urlencoded",
+		contentTypeHeader:       "application/x-www-form-urlencoded",
 		"X-FB-Friendly-Name": polarisAction,
 	}
 	body := map[string]string{

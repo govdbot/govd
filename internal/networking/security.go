@@ -40,7 +40,7 @@ func publicAddress(ip netip.Addr) bool {
 	return true
 }
 func validatePublicURL(u *url.URL) error {
-	if u == nil || (u.Scheme != "https" && u.Scheme != "http") || u.User != nil || u.Hostname() == "" || len(u.String()) > 4096 {
+	if u == nil || (u.Scheme != httpsScheme && u.Scheme != "http") || u.User != nil || u.Hostname() == "" || len(u.String()) > 4096 {
 		return ErrUnsafeDestination
 	}
 	if p := u.Port(); p != "" && p != "80" && p != "443" {
@@ -102,7 +102,7 @@ func checkRedirect(req *http.Request, via []*http.Request) error {
 	}
 	if len(via) > 0 {
 		previous := via[len(via)-1].URL
-		if previous.Scheme == "https" && req.URL.Scheme != "https" {
+		if previous.Scheme == httpsScheme && req.URL.Scheme != httpsScheme {
 			return ErrUnsafeDestination
 		}
 		if !strings.EqualFold(previous.Host, req.URL.Host) {
@@ -114,7 +114,7 @@ func checkRedirect(req *http.Request, via []*http.Request) error {
 	return nil
 }
 func cookieMatches(c *http.Cookie, u *url.URL, explicit bool) bool {
-	if c == nil || c.MaxAge < 0 || (!c.Expires.IsZero() && c.Expires.Before(time.Now())) || (c.Secure && u.Scheme != "https") {
+	if c == nil || c.MaxAge < 0 || (!c.Expires.IsZero() && c.Expires.Before(time.Now())) || (c.Secure && u.Scheme != httpsScheme) {
 		return false
 	}
 	domain := strings.TrimPrefix(strings.ToLower(c.Domain), ".")

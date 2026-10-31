@@ -64,9 +64,9 @@ func (client *HTTPClient) FetchWithContext(
 
 	executor := client.Client
 	if standard, ok := executor.(*http.Client); ok {
-		copy := *standard
+		cloned := *standard
 		original := req.URL
-		copy.CheckRedirect = func(next *http.Request, via []*http.Request) error {
+		cloned.CheckRedirect = func(next *http.Request, via []*http.Request) error {
 			if err := checkRedirect(next, via); err != nil {
 				return err
 			}
@@ -87,7 +87,7 @@ func (client *HTTPClient) FetchWithContext(
 			}
 			return nil
 		}
-		executor = &copy
+		executor = &cloned
 	}
 	resp, err := executor.Do(req)
 	if err != nil {

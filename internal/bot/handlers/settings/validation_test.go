@@ -11,15 +11,16 @@ import (
 func TestManipulatedCallbackKindsReturnBeforeDatabase(t *testing.T) {
 	for _, data := range []string{"settings.toggle.language", "settings.select.captions.true", "settings.many.language.add.x", "settings.toggle.unknown"} {
 		ctx := &ext.Context{Update: &gotgbot.Update{CallbackQuery: &gotgbot.CallbackQuery{Data: data}}}
-		if len(data) >= 16 && data[:16] == "settings.toggle." {
+		switch {
+		case len(data) >= 16 && data[:16] == "settings.toggle.":
 			if err := SettingsToggleHandler(nil, ctx); err != nil {
 				t.Fatal(err)
 			}
-		} else if len(data) >= 16 && data[:16] == "settings.select." {
+		case len(data) >= 16 && data[:16] == "settings.select.":
 			if err := SettingsSelectHandler(nil, ctx); err != nil {
 				t.Fatal(err)
 			}
-		} else {
+		default:
 			if err := SettingsManyHandler(nil, ctx); err != nil {
 				t.Fatal(err)
 			}

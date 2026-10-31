@@ -86,7 +86,7 @@ func parseYTDLPMedia(ctx *models.ExtractorContext, info *ytdlpMedia) (*models.Me
 			return nil, util.ErrUnavailable
 		}
 		if entry.URL == "" && len(entry.Formats) == 0 && entry.Duration == 0 && publicInstagramCDN(entry.Thumbnail) && !strings.Contains(ctx.ContentURL, "/reel") {
-			media.NewItem().AddFormats(&models.MediaFormat{FormatID: "image", Type: database.MediaTypePhoto, URL: []string{entry.Thumbnail}})
+			media.NewItem().AddFormats(&models.MediaFormat{FormatID: imageFormatID, Type: database.MediaTypePhoto, URL: []string{entry.Thumbnail}})
 			continue
 		}
 		if !publicInstagramCDN(entry.URL) {
@@ -98,7 +98,7 @@ func parseYTDLPMedia(ctx *models.ExtractorContext, info *ytdlpMedia) (*models.Me
 		if entry.FileSize > config.Env.MaxFileSize {
 			return nil, util.ErrFileTooLarge
 		}
-		media.NewItem().AddFormats(&models.MediaFormat{FormatID: "video", Type: database.MediaTypeVideo, URL: []string{entry.URL}, VideoCodec: database.MediaCodecAvc, AudioCodec: database.MediaCodecAac, Duration: int32(math.Ceil(entry.Duration)), FileSize: entry.FileSize})
+		media.NewItem().AddFormats(&models.MediaFormat{FormatID: videoFormatID, Type: database.MediaTypeVideo, URL: []string{entry.URL}, VideoCodec: database.MediaCodecAvc, AudioCodec: database.MediaCodecAac, Duration: int32(math.Ceil(entry.Duration)), FileSize: entry.FileSize})
 	}
 	return media, nil
 }
@@ -158,9 +158,9 @@ func GetYTDLPMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	client.Cookies = nil
 	client.Headers = nil
 	if standard, ok := client.Client.(*http.Client); ok {
-		copy := *standard
-		copy.Jar = nil
-		client.Client = &copy
+		cloned := *standard
+		cloned.Jar = nil
+		client.Client = &cloned
 	}
 	ctx.HTTPClient = &client
 	return media, nil
@@ -181,7 +181,7 @@ func resolvePublicShare(ctx *models.ExtractorContext) (string, error) {
 	path := "/share/"
 	if len(parts) == 3 {
 		switch parts[1] {
-		case "reel", "reels", "video", "s", "p":
+		case "reel", "reels", videoFormatID, "s", "p":
 			path += parts[1] + "/"
 		default:
 			return "", util.ErrUnavailable
