@@ -18,7 +18,7 @@ func TestQueueWaitCanBeCancelledAndKeysAreReleased(t *testing.T) {
 		t.Fatal("cancelled wait succeeded")
 	}
 	release()
-	for range 100 {
+	for i := range 100 {
 		r, e := acquireQueue(context.Background(), fmt.Sprint(i))
 		if e != nil {
 			t.Fatal(e)
