@@ -1,4 +1,4 @@
-+name: Complete reviewed bot contribution
+name: Complete reviewed bot contribution
 on:
   push:
     branches: [fix/public-facebook-tiktok]
