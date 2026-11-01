@@ -1,0 +1,42 @@
+name: Complete reviewed bot contribution
+on:
+  push:
+    branches: [fix/public-facebook-tiktok]
+  workflow_dispatch:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Get pinned optional extractor
+        run: |
+          curl --fail --location --retry 2 --max-time 90 -o yt-dlp_musllinux.zip https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.26/yt-dlp_musllinux.zip
+          echo 'c3a67f7c14d4cbf876e7801039237fc16b929a629c72f9c785ec3fdc8aa40748  yt-dlp_musllinux.zip' | sha256sum --check -
+      - name: Build and run full unit suite
+        run: docker build -f Dockerfile.group --target builder -t govd-media:builder .
+      - name: Race checks
+        run: docker run --rm --entrypoint sh govd-media:builder -c 'go test -p 2 -race -count=1 ./internal/extractors/instagram ./internal/extractors/facebook ./internal/extractors/tiktok ./internal/core ./internal/models ./internal/networking ./internal/util/download/...'
+      - name: Upstream lint review
+        run: docker run --rm --entrypoint sh govd-media:builder -c 'go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0 && golangci-lint run --build-tags=lint --timeout=5m'
+
+      - name: Export formatted source and generated localization review
+        run: |
+          mkdir -p dist
+          docker run --name govd-review-source --entrypoint sh govd-media:builder -c 'go install github.com/nicksnyder/go-i18n/v2/goi18n@v2.6.0 && cd internal/localization && mkdir -p /tmp/govd-extracted /tmp/govd-merged && goi18n extract -outdir /tmp/govd-extracted && goi18n merge -outdir /tmp/govd-merged /tmp/govd-extracted/active.en.toml locales/active.it.toml'
+          docker cp govd-review-source:/app/internal dist/internal
+          docker cp govd-review-source:/tmp/govd-extracted dist/extracted
+          docker cp govd-review-source:/tmp/govd-merged dist/merged
+          docker rm govd-review-source
+          git rev-parse HEAD > dist/COMMIT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: govd-reviewed-source
+          path: dist/
+          retention-days: 3
+

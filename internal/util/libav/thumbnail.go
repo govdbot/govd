@@ -2,6 +2,7 @@ package libav
 
 import (
 	"os"
+	"time"
 
 	"github.com/govdbot/govd/internal/logger"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
@@ -13,7 +14,7 @@ func ExtractVideoThumbnail(
 ) (string, error) {
 	logger.L.Debugf("extracting thumbnail from video: %s", videoPath)
 
-	err := ffmpeg.Input(videoPath).
+	err := ffmpeg.Input(videoPath, inputOptions()).
 		Filter("select", ffmpeg.Args{"gte(n,0)"}).
 		Output(outputPath, ffmpeg.KwArgs{
 			"vframes": 1,
@@ -21,6 +22,7 @@ func ExtractVideoThumbnail(
 		}).
 		Silent(true).
 		OverWriteOutput().
+		WithTimeout(30 * time.Second).
 		Run()
 
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/bytedance/sonic"
 )
@@ -36,28 +37,71 @@ func (client *HTTPClient) FetchWithContext(
 	if err != nil {
 		return nil, err
 	}
+	if err := validatePublicURL(req.URL); err != nil {
+		return nil, err
+	}
 	// set client scoped headers and cookies
 	// then override with request specific ones
 	for k, v := range client.Headers {
 		req.Header.Set(k, v)
 	}
 	for _, cookie := range client.Cookies {
-		req.AddCookie(cookie)
+		if cookieMatches(cookie, req.URL, false) {
+			req.AddCookie(cookie)
+		}
 	}
 	for k, v := range params.Headers {
 		req.Header.Set(k, v)
 	}
 	for _, cookie := range params.Cookies {
-		req.AddCookie(cookie)
+		if cookieMatches(cookie, req.URL, true) {
+			req.AddCookie(cookie)
+		}
 	}
-	if req.Header.Get("User-Agent") == "" {
-		req.Header.Set("User-Agent", generateChromeUA())
+	if req.Header.Get(userAgentHeader) == "" {
+		req.Header.Set(userAgentHeader, generateChromeUA())
 	}
 
-	resp, err := client.Client.Do(req)
+	executor := client.Client
+	if standard, ok := executor.(*http.Client); ok {
+		cloned := *standard
+		original := req.URL
+		cloned.CheckRedirect = func(next *http.Request, via []*http.Request) error {
+			if err := checkRedirect(next, via); err != nil {
+				return err
+			}
+			if params.StopRedirect != nil && params.StopRedirect(next) {
+				return http.ErrUseLastResponse
+			}
+			next.Header.Del(cookieHeader)
+			for _, cookie := range client.Cookies {
+				if cookieMatches(cookie, next.URL, false) {
+					next.AddCookie(cookie)
+				}
+			}
+			for _, cookie := range params.Cookies {
+				explicit := strings.EqualFold(next.URL.Host, original.Host)
+				if cookieMatches(cookie, next.URL, explicit) {
+					next.AddCookie(cookie)
+				}
+			}
+			return nil
+		}
+		executor = &cloned
+	}
+	resp, err := executor.Do(req)
 	if err != nil {
 		return nil, err
 	}
+	limit := client.ResponseLimit
+	if limit <= 0 {
+		limit = 8 * 1024 * 1024
+	}
+	if resp.ContentLength > limit {
+		resp.Body.Close()
+		return nil, ErrResponseTooLarge
+	}
+	resp.Body = &responseLimit{ReadCloser: resp.Body, remaining: limit}
 	return resp, nil
 }
 

@@ -2,6 +2,7 @@ package libav
 
 import (
 	"os"
+	"time"
 
 	"github.com/govdbot/govd/internal/extractors/twitter"
 	"github.com/govdbot/govd/internal/logger"
@@ -16,14 +17,15 @@ func RemuxFile(inputPath string, outputPath string) error {
 
 	logger.L.Debugf("remuxing file: %s", inputPath)
 
-	err := ffmpeg.Input(inputPath).
+	err := ffmpeg.Input(inputPath, inputOptions()).
 		Output(outputPath, ffmpeg.KwArgs{
-			"map":      "0",
-			"c":        "copy",
-			"movflags": "+faststart",
+			mapOption:      "0",
+			"c":            copyCodec,
+			movflagsOption: fastStartFlag,
 		}).
 		Silent(true).
 		OverWriteOutput().
+		WithTimeout(60 * time.Second).
 		Run()
 
 	if err != nil {
@@ -37,14 +39,15 @@ func RemuxFileWithDoublePass(inputPath string, outputPath string) error {
 	logger.L.Debugf("remuxing file with double pass: %s", inputPath)
 
 	tempPath := inputPath + ".temp.mkv"
-	err := ffmpeg.Input(inputPath).
+	err := ffmpeg.Input(inputPath, inputOptions()).
 		Output(tempPath, ffmpeg.KwArgs{
-			"map":      "0",
-			"c":        "copy",
-			"movflags": "+faststart",
+			mapOption:      "0",
+			"c":            copyCodec,
+			movflagsOption: fastStartFlag,
 		}).
 		Silent(true).
 		OverWriteOutput().
+		WithTimeout(60 * time.Second).
 		Run()
 
 	if err != nil {
@@ -52,14 +55,15 @@ func RemuxFileWithDoublePass(inputPath string, outputPath string) error {
 		return err
 	}
 
-	err = ffmpeg.Input(tempPath).
+	err = ffmpeg.Input(tempPath, inputOptions()).
 		Output(outputPath, ffmpeg.KwArgs{
-			"map":      "0",
-			"c":        "copy",
-			"movflags": "+faststart",
+			mapOption:      "0",
+			"c":            copyCodec,
+			movflagsOption: fastStartFlag,
 		}).
 		Silent(true).
 		OverWriteOutput().
+		WithTimeout(60 * time.Second).
 		Run()
 
 	os.Remove(tempPath)

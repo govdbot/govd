@@ -33,6 +33,9 @@ func StatsHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 }
 
 func StatsCallbackHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
+	if !util.IsBotAdmin(ctx) {
+		return ext.EndGroups
+	}
 	data := ctx.CallbackQuery.Data
 	parts := strings.Split(data, ":")
 	if len(parts) < 2 {

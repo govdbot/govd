@@ -1,0 +1,42 @@
+name: Validate reviewed deployment example
+on:
+  push:
+    paths:
+      - compose.review.yaml
+      - deploy/review.env.example
+      - .github/workflows/deployment-example.yml
+  pull_request:
+    paths:
+      - compose.review.yaml
+      - deploy/review.env.example
+      - .github/workflows/deployment-example.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate Compose without displaying interpolated secrets
+        shell: bash
+        run: |
+          cp deploy/review.env.example .env.review
+          printf '\nBOT_TOKEN=synthetic-test-only\nADMINS=101\nWHITELIST=101\nDB_PASSWORD=synthetic-test-only\n' >> .env.review
+          docker compose --env-file .env.review -f compose.review.yaml config --quiet
+          python3 - <<'PY'
+          import json, subprocess
+          command = ['docker', 'compose', '--env-file', '.env.review', '-f', 'compose.review.yaml', 'config', '--format', 'json']
+          config = json.loads(subprocess.check_output(command))
+          bot = config['services']['bot']
+          assert bot['build']['dockerfile'] == 'Dockerfile.group'
+          assert bot['read_only'] and bot['user'] == '10001:10001'
+          assert not bot.get('ports') and not config['services']['db'].get('ports')
+          assert bot['environment']['MAX_FILE_SIZE'] == '52428800'
+          assert bot['environment']['WHITELIST'] == '101'
+          assert bot['restart'] == 'unless-stopped'
+          assert int(bot['mem_limit']) == int(bot['memswap_limit']) == 805306368
+          assert len(bot['tmpfs']) == 2
+          print('Reviewed Compose structure and limits: PASS (no containers started).')
+          PY

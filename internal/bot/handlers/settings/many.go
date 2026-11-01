@@ -22,7 +22,7 @@ func SettingsManyHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 	value := parts[4]
 
 	setting := GetSettingByID(settingID)
-	if setting == nil {
+	if setting == nil || (setting.Type != SettingsTypeMany && setting.Type != SettingsTypeManyReverse) {
 		return nil
 	}
 
@@ -32,8 +32,14 @@ func SettingsManyHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 	}
 
 	isGroup := chat.Type == database.ChatTypeGroup
+	if !allowedScope(setting, chat) {
+		return nil
+	}
 
 	localizer := localization.New(chat.Language)
+	if !allowedValue(setting, localizer, value) {
+		return nil
+	}
 	if isGroup && !util.CheckAdminPermission(b, ctx, localizer) {
 		return nil
 	}

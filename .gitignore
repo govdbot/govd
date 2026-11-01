@@ -21,3 +21,11 @@ translate.*.toml
 
 # Agents
 CLAUDE.md
+
+# Local credentials and downloaded helper binaries
+/.env.*
+!/.env.example
+/private/*
+!/private/.gitignore
+!/private/config-example.yaml
+/yt-dlp_musllinux.zip

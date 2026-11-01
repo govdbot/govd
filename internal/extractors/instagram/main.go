@@ -1,6 +1,7 @@
 package instagram
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"maps"
@@ -15,10 +16,10 @@ import (
 	"github.com/govdbot/govd/internal/util"
 )
 
-var instagramHost = []string{"instagram", "ddinstagram"}
+var instagramHost = []string{extractorID, "ddinstagram"}
 
 var Extractor = &models.Extractor{
-	ID:          "instagram",
+	ID:          extractorID,
 	DisplayName: "Instagram",
 
 	URLPattern: regexp.MustCompile(`https:\/\/(www\.)?(?:dd)?instagram\.com\/(reels?|p|tv)\/(?P<id>[a-zA-Z0-9_-]+)`),
@@ -41,18 +42,25 @@ var Extractor = &models.Extractor{
 			}, nil
 		}
 		// method 3: get media from 3rd party service (unlikely)
+		media, errYTDLP := GetYTDLPMedia(ctx)
+		if errYTDLP == nil {
+			return &models.ExtractorResponse{Media: media}, nil
+		}
+		if errors.Is(errYTDLP, util.ErrFileTooLarge) || errors.Is(errYTDLP, util.ErrDurationTooLong) {
+			return nil, errYTDLP
+		}
 		media, err3 := GetIGramPost(ctx)
 		if err3 == nil {
 			return &models.ExtractorResponse{
 				Media: media,
 			}, nil
 		}
-		return nil, fmt.Errorf("all methods failed: %w; %w; %w", err1, err2, err3)
+		return nil, fmt.Errorf("all methods failed: %w; %w; %w; %w", err1, err2, errYTDLP, err3)
 	},
 }
 
 var StoriesExtractor = &models.Extractor{
-	ID:          "instagram",
+	ID:          extractorID,
 	DisplayName: "Instagram Stories",
 
 	URLPattern: regexp.MustCompile(`https:\/\/(www\.)?(?:dd)?instagram\.com\/stories\/[a-zA-Z0-9._]+\/(?P<id>\d+)`),
@@ -68,18 +76,25 @@ var StoriesExtractor = &models.Extractor{
 }
 
 var ShareURLExtractor = &models.Extractor{
-	ID:          "instagram",
+	ID:          extractorID,
 	DisplayName: "Instagram (Share)",
 
-	URLPattern: regexp.MustCompile(`https?:\/\/(www\.)?(?:dd)?instagram\.com\/share\/((reels?|video|s|p)\/)?(?P<id>[^\/\?]+)`),
+	URLPattern: regexp.MustCompile(`https?:\/\/(www\.)?(?:dd)?instagram\.com\/share\/((reels?|video|s|p)\/)?(?P<id>[a-zA-Z0-9_-]+)`),
 	Host:       instagramHost,
 
 	Redirect: true,
 
 	GetFunc: func(ctx *models.ExtractorContext) (*models.ExtractorResponse, error) {
-		redirectURL, err := ctx.FetchLocation(ctx.ContentURL, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get url location: %w", err)
+		redirectURL, err := ctx.FetchLocation(ctx.ContentURL, &networking.RequestParams{StopRedirect: func(next *http.Request) bool {
+			match := Extractor.URLPattern.FindStringIndex(next.URL.String())
+			return len(match) > 0 && match[0] == 0
+		}})
+		match := Extractor.URLPattern.FindStringIndex(redirectURL)
+		if err != nil || len(match) == 0 || match[0] != 0 {
+			redirectURL, err = resolvePublicShare(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to resolve public share: %w", err)
+			}
 		}
 		return &models.ExtractorResponse{URL: redirectURL}, nil
 	},
@@ -195,7 +210,7 @@ func GetIGramStory(ctx *models.ExtractorContext) (*models.Media, error) {
 	if isVideo {
 		video := GetBestVideoVersion(result.VideoVersions)
 		item.AddFormats(&models.MediaFormat{
-			FormatID:   "video",
+			FormatID:   videoFormatID,
 			Type:       database.MediaTypeVideo,
 			URL:        []string{video.URL},
 			VideoCodec: database.MediaCodecAvc,
@@ -226,7 +241,7 @@ func GetPostFromIGram(ctx *models.ExtractorContext) (*IGramResponse, error) {
 	}
 
 	headers := map[string]string{
-		"Content-Type": "application/json",
+		contentTypeHeader: "application/json",
 	}
 	maps.Copy(headers, igramHeaders)
 
@@ -269,7 +284,7 @@ func GetStoryFromIGram(ctx *models.ExtractorContext) (*IGramStoryResponse, error
 	}
 
 	headers := map[string]string{
-		"Content-Type": "application/json",
+		contentTypeHeader: "application/json",
 	}
 	maps.Copy(headers, igramHeaders)
 

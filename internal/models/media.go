@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"slices"
@@ -46,6 +47,7 @@ type MediaItem struct {
 }
 
 type MediaFormat struct {
+	uploadClosers    []io.Closer
 	FormatID         string
 	FileID           string
 	Type             database.MediaType
@@ -286,6 +288,7 @@ func (format *MediaFormat) GetInputMedia(
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
+	format.uploadClosers = append(format.uploadClosers, fileObj)
 
 	fileInputMedia := gotgbot.InputFileByReader(
 		filepath.Base(filePath),
@@ -298,6 +301,7 @@ func (format *MediaFormat) GetInputMedia(
 		if err != nil {
 			return nil, fmt.Errorf("failed to open file: %w", err)
 		}
+		format.uploadClosers = append(format.uploadClosers, thumbnailFileObj)
 		thumbnailFileInputMedia = gotgbot.InputFileByReader(
 			filepath.Base(thumbnailFilePath),
 			thumbnailFileObj,

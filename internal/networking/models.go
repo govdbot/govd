@@ -17,6 +17,7 @@ type HTTPClient struct {
 	EdgeProxy     string
 	DownloadProxy string
 	DisableProxy  bool
+	ResponseLimit int64
 }
 
 type NewHTTPClientOptions struct {
@@ -30,9 +31,10 @@ type NewHTTPClientOptions struct {
 }
 
 type RequestParams struct {
-	Body    io.Reader
-	Headers map[string]string
-	Cookies []*http.Cookie
+	StopRedirect func(*http.Request) bool
+	Body         io.Reader
+	Headers      map[string]string
+	Cookies      []*http.Cookie
 }
 
 type EdgeProxyResponse struct {

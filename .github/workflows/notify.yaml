@@ -1,9 +1,7 @@
 name: telegram notifications
 
 on:
-  push:
-    branches:
-      - "main"
+  workflow_dispatch:
 
 jobs:
   notify:

@@ -13,10 +13,10 @@ import (
 	"github.com/bytedance/sonic"
 )
 
-var baseHost = []string{"reddit", "redditmedia.com"}
+var baseHost = []string{extractorID, "redditmedia.com"}
 
 var ShortExtractor = &models.Extractor{
-	ID:          "reddit",
+	ID:          extractorID,
 	DisplayName: "Reddit (Short)",
 
 	URLPattern: regexp.MustCompile(`https?://(?P<host>(?:\w+\.)?reddit(?:media)?\.com)/(?P<slug>(?:(?:r|user)/[^/]+/)?s/(?P<id>[^/?#&]+))`),
@@ -44,7 +44,7 @@ var ShortExtractor = &models.Extractor{
 }
 
 var Extractor = &models.Extractor{
-	ID:          "reddit",
+	ID:          extractorID,
 	DisplayName: "Reddit",
 
 	URLPattern: regexp.MustCompile(`https?://(?P<host>(?:\w+\.)?reddit(?:media)?\.com)/(?P<slug>(?:(?:r|user)/[^/]+/)?comments/(?P<id>[^/?#&]+))`),

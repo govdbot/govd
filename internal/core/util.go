@@ -58,17 +58,15 @@ func getThumbnail(
 			return "", fmt.Errorf("downloaded file is nil")
 		}
 
-		var size int
-		if format.Type == database.MediaTypeAudio {
-			// for audio, use a smaller thumbnail
-			size = 320
-		}
+		size := 320
 		bounds, err := util.ImgToJPEG(file, thumbnailFilePath, size)
 		if err != nil {
 			return "", err
 		}
-		format.Width = bounds.W
-		format.Height = bounds.H
+		if format.Type != database.MediaTypeVideo {
+			format.Width = bounds.W
+			format.Height = bounds.H
+		}
 	} else if format.Type == database.MediaTypeVideo {
 		return libav.ExtractVideoThumbnail(filePath, thumbnailFilePath)
 	}

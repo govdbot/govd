@@ -3,6 +3,7 @@ package networking
 import (
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/govdbot/govd/internal/logger"
@@ -23,8 +24,9 @@ func NewHTTPClient(options *NewHTTPClientOptions) *HTTPClient {
 			logger.L.Warnf("invalid proxy URL: %v", err)
 		} else {
 			client.Client = &http.Client{
-				Transport: NewTransportWithProxy(proxyURL),
-				Timeout:   defaultTimeout,
+				Transport:     NewTransportWithProxy(proxyURL),
+				Timeout:       defaultTimeout,
+				CheckRedirect: checkRedirect,
 			}
 			client.Proxy = options.Proxy
 		}
@@ -33,8 +35,9 @@ func NewHTTPClient(options *NewHTTPClientOptions) *HTTPClient {
 		client.EdgeProxy = options.EdgeProxy
 	case options.DisableProxy:
 		client.Client = &http.Client{
-			Transport: NewTransportNoProxyFromEnv(),
-			Timeout:   defaultTimeout,
+			Transport:     NewTransportNoProxyFromEnv(),
+			Timeout:       defaultTimeout,
+			CheckRedirect: checkRedirect,
 		}
 		client.DisableProxy = true
 	}
@@ -52,11 +55,13 @@ func DefaultHTTPClient(options *NewHTTPClientOptions) *HTTPClient {
 	}
 	return &HTTPClient{
 		Client: &http.Client{
-			Transport: NewTransport(),
-			Timeout:   defaultTimeout,
+			Transport:     NewTransport(),
+			Timeout:       defaultTimeout,
+			CheckRedirect: checkRedirect,
 		},
-		Headers: options.Headers,
-		Cookies: options.Cookies,
+		Headers:       options.Headers,
+		Cookies:       options.Cookies,
+		ResponseLimit: 8 * 1024 * 1024,
 	}
 }
 
@@ -65,6 +70,13 @@ func (c *HTTPClient) AsDownloadClient() *HTTPClient {
 		Headers: c.Headers,
 		Cookies: c.Cookies,
 	})
+	client.ResponseLimit = 128 * 1024 * 1024
+	client.Headers = make(map[string]string)
+	for name, value := range c.Headers {
+		if name != "" && !strings.EqualFold(name, cookieHeader) && !strings.EqualFold(name, authorizationHeader) && !strings.EqualFold(name, "Proxy-Authorization") {
+			client.Headers[name] = value
+		}
+	}
 	if c.DownloadProxy != "" {
 		proxyURL, err := url.Parse(c.DownloadProxy)
 		if err != nil {
@@ -72,14 +84,16 @@ func (c *HTTPClient) AsDownloadClient() *HTTPClient {
 			return c
 		}
 		client.Client = &http.Client{
-			Transport: NewTransportWithProxy(proxyURL),
-			Timeout:   defaultTimeout,
+			Transport:     NewTransportWithProxy(proxyURL),
+			Timeout:       defaultTimeout,
+			CheckRedirect: checkRedirect,
 		}
 		client.DownloadProxy = c.DownloadProxy
 	} else if c.DisableProxy {
 		client.Client = &http.Client{
-			Transport: NewTransportNoProxyFromEnv(),
-			Timeout:   defaultTimeout,
+			Transport:     NewTransportNoProxyFromEnv(),
+			Timeout:       defaultTimeout,
+			CheckRedirect: checkRedirect,
 		}
 		client.DisableProxy = true
 	}

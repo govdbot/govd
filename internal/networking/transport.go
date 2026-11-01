@@ -1,7 +1,6 @@
 package networking
 
 import (
-	"net"
 	"net/http"
 	"net/url"
 	"time"
@@ -9,20 +8,18 @@ import (
 
 func NewTransport() *http.Transport {
 	return &http.Transport{
-		Proxy: proxyFromEnv,
-		DialContext: (&net.Dialer{
-			Timeout:   defaultTimeout,
-			KeepAlive: defaultTimeout,
-		}).DialContext,
-		ForceAttemptHTTP2:     true,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   15 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		MaxIdleConnsPerHost:   100,
-		MaxConnsPerHost:       100,
-		ResponseHeaderTimeout: 15 * time.Second,
-		DisableCompression:    false,
+		Proxy:                  proxyFromEnv,
+		DialContext:            publicDialContext,
+		ForceAttemptHTTP2:      true,
+		MaxIdleConns:           100,
+		IdleConnTimeout:        90 * time.Second,
+		TLSHandshakeTimeout:    15 * time.Second,
+		ExpectContinueTimeout:  1 * time.Second,
+		MaxIdleConnsPerHost:    100,
+		MaxConnsPerHost:        100,
+		ResponseHeaderTimeout:  15 * time.Second,
+		MaxResponseHeaderBytes: 1024 * 1024,
+		DisableCompression:     false,
 	}
 }
 

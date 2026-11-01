@@ -97,6 +97,10 @@ func newDispatcher() *ext.Dispatcher {
 }
 
 func registerHandlers(dispatcher *ext.Dispatcher) *ext.Dispatcher {
+	dispatcher.AddHandlerToGroup(handlers.NewMessage(message.All, botHandlers.AdmissionHandler), -5)
+	dispatcher.AddHandlerToGroup(handlers.NewCallback(callbackquery.All, botHandlers.AdmissionHandler), -5)
+	dispatcher.AddHandlerToGroup(handlers.NewInlineQuery(inlinequery.All, botHandlers.AdmissionHandler), -5)
+	dispatcher.AddHandlerToGroup(handlers.NewChosenInlineResult(choseninlineresult.All, botHandlers.AdmissionHandler), -5)
 	// url
 	dispatcher.AddHandler(handlers.NewMessage(
 		botHandlers.URLFilter,
@@ -199,6 +203,10 @@ func registerHandlers(dispatcher *ext.Dispatcher) *ext.Dispatcher {
 		), -10)
 		dispatcher.AddHandlerToGroup(handlers.NewInlineQuery(
 			inlinequery.All,
+			botHandlers.WhitelistHandler,
+		), -10)
+		dispatcher.AddHandlerToGroup(handlers.NewChosenInlineResult(
+			choseninlineresult.All,
 			botHandlers.WhitelistHandler,
 		), -10)
 	}

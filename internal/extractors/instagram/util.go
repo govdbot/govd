@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -31,9 +32,11 @@ const (
 
 	igramHostname = "api-wh.igram.world"
 	igramAPIBase  = "api.igram.world"
-	igramHMACKey  = "75f2d70d3724f98e4a7d1ffd0ba9cfd907f3ae2632ee159980e2c521bff62358"
+
 	igramStaticTS = 1771418815381 // parseInt("mls10xp1", 36)
 )
+
+var igramHMACKey = os.Getenv("IGRAM_HMAC_KEY")
 
 var (
 	embedPattern = regexp.MustCompile(
@@ -61,8 +64,11 @@ var (
 )
 
 func ParseGQLMedia(ctx *models.ExtractorContext, data *Media) (*models.Media, error) {
+	if data == nil {
+		return nil, util.ErrUnavailable
+	}
 	var caption string
-	if data.EdgeMediaToCaption != nil && len(data.EdgeMediaToCaption.Edges) > 0 {
+	if data.EdgeMediaToCaption != nil && len(data.EdgeMediaToCaption.Edges) > 0 && data.EdgeMediaToCaption.Edges[0] != nil && data.EdgeMediaToCaption.Edges[0].Node != nil {
 		caption = data.EdgeMediaToCaption.Edges[0].Node.Text
 	}
 
@@ -71,21 +77,24 @@ func ParseGQLMedia(ctx *models.ExtractorContext, data *Media) (*models.Media, er
 
 	switch data.Typename {
 	case "GraphVideo", "XDTGraphVideo":
+		if !validMediaURL(data.VideoURL) {
+			return nil, util.ErrUnavailable
+		}
 		item := media.NewItem()
 		item.AddFormats(&models.MediaFormat{
-			FormatID:     "video",
+			FormatID:     videoFormatID,
 			Type:         database.MediaTypeVideo,
 			VideoCodec:   database.MediaCodecAvc,
 			AudioCodec:   database.MediaCodecAac,
 			URL:          []string{data.VideoURL},
 			ThumbnailURL: []string{data.DisplayURL},
-			Width:        data.Dimensions.Width,
-			Height:       data.Dimensions.Height,
+			Width:        gqlWidth(data),
+			Height:       gqlHeight(data),
 		})
 	case "GraphImage", "XDTGraphImage":
 		item := media.NewItem()
 		item.AddFormats(&models.MediaFormat{
-			FormatID: "image",
+			FormatID: imageFormatID,
 			Type:     database.MediaTypePhoto,
 			URL:      []string{data.DisplayURL},
 		})
@@ -94,25 +103,31 @@ func ParseGQLMedia(ctx *models.ExtractorContext, data *Media) (*models.Media, er
 			edges := data.EdgeSidecarToChildren.Edges
 
 			for i := range edges {
+				if edges[i] == nil || edges[i].Node == nil {
+					continue
+				}
 				item := media.NewItem()
 				node := edges[i].Node
 
 				switch node.Typename {
 				case "GraphVideo", "XDTGraphVideo":
+					if !validMediaURL(node.VideoURL) {
+						return nil, util.ErrUnavailable
+					}
 					item.AddFormats(&models.MediaFormat{
-						FormatID:     "video",
+						FormatID:     videoFormatID,
 						Type:         database.MediaTypeVideo,
 						VideoCodec:   database.MediaCodecAvc,
 						AudioCodec:   database.MediaCodecAac,
 						URL:          []string{node.VideoURL},
 						ThumbnailURL: []string{node.DisplayURL},
-						Width:        node.Dimensions.Width,
-						Height:       node.Dimensions.Height,
+						Width:        gqlWidth(node),
+						Height:       gqlHeight(node),
 					})
 
 				case "GraphImage", "XDTGraphImage":
 					item.AddFormats(&models.MediaFormat{
-						FormatID: "image",
+						FormatID: imageFormatID,
 						Type:     database.MediaTypePhoto,
 						URL:      []string{node.DisplayURL},
 					})
@@ -121,6 +136,14 @@ func ParseGQLMedia(ctx *models.ExtractorContext, data *Media) (*models.Media, er
 		}
 	}
 
+	if len(media.Items) == 0 {
+		return nil, util.ErrUnavailable
+	}
+	for _, item := range media.Items {
+		if len(item.Formats) == 0 {
+			return nil, util.ErrUnavailable
+		}
+	}
 	return media, nil
 }
 
@@ -150,6 +173,9 @@ func ParseEmbedGQL(body []byte) (*Media, error) {
 	}
 	if ctxJSON.GqlData == nil {
 		return nil, fmt.Errorf("gql_data not found")
+	}
+	if ctxJSON.Context != nil && ctxJSON.Context.CopyrightBlocked {
+		return nil, util.ErrUnavailable
 	}
 	if ctxJSON.GqlData.ShortcodeMedia == nil {
 		return nil, fmt.Errorf("shortcode_media not found")
@@ -213,6 +239,9 @@ func igramBuildPayload(urlParams map[string]string) (io.Reader, error) {
 }
 
 func igramSign(partial map[string]any, ts int64) (string, error) {
+	if igramHMACKey == "" {
+		return "", fmt.Errorf("optional iGram signing key is not configured")
+	}
 	// sonic.ConfigStd sorts map keys alphabetically, matching
 	// the signing: JSON.stringify(sorted_partial) + String(ts)
 	jsonBytes, err := sonic.ConfigStd.Marshal(partial)
@@ -234,7 +263,7 @@ func igramSign(partial map[string]any, ts int64) (string, error) {
 
 func getIGramServerTime() int64 {
 	apiURL := fmt.Sprintf("https://%s/msec", igramAPIBase)
-	resp, err := http.Get(apiURL)
+	resp, err := networking.DefaultHTTPClient(nil).Fetch(http.MethodGet, apiURL, nil)
 	if err != nil {
 		return time.Now().UnixMilli()
 	}
@@ -394,7 +423,7 @@ func BuildGQLData() (map[string]string, map[string]string, error) {
 		"X-Bloks-Version-Id": bloksVersionID,
 		"x-asbd-id":          asbdID,
 		"cookie":             strings.Join(cookies, "; "),
-		"Content-Type":       "application/x-www-form-urlencoded",
+		contentTypeHeader:    "application/x-www-form-urlencoded",
 		"X-FB-Friendly-Name": polarisAction,
 	}
 	body := map[string]string{

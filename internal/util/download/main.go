@@ -2,6 +2,7 @@ package download
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/govdbot/govd/internal/models"
 	"github.com/govdbot/govd/internal/networking"
+	"github.com/govdbot/govd/internal/util"
 	"github.com/govdbot/govd/internal/util/download/chunked"
 	"github.com/govdbot/govd/internal/util/download/segmented"
 	"github.com/govdbot/govd/internal/util/libav"
@@ -26,10 +28,12 @@ func DownloadFile(
 	if ctx == nil {
 		return "", fmt.Errorf("nil extractor context")
 	}
+	return downloadFileWithClient(ctx, ctx.HTTPClient.AsDownloadClient(), urlList, fileName, settings)
+}
+
+func downloadFileWithClient(ctx *models.ExtractorContext, client *networking.HTTPClient, urlList []string, fileName string, settings *models.DownloadSettings) (string, error) {
 	settings = ensureDownloadSettings(settings)
 	ensureDownloadDir()
-
-	client := ctx.HTTPClient.AsDownloadClient()
 
 	filePath := ToPath(fileName)
 	ctx.FilesTracker.Add(filePath)
@@ -44,19 +48,42 @@ func DownloadFile(
 	for _, url := range urlList {
 		ctx.Debugf("attempting download from: %s", url)
 
+		if err := file.Truncate(0); err != nil {
+			return "", err
+		}
+		if _, err := file.Seek(0, io.SeekStart); err != nil {
+			return "", err
+		}
+		writer := limitedWriter(file)
 		cd, err := chunked.New(ctx.Context, client, url, settings)
 		if err != nil {
+			if errors.Is(err, util.ErrFileTooLarge) {
+				return "", err
+			}
 			// ranged requests not supported, fallback to sequential download
-			err = downloadSequential(ctx, client, url, file, settings)
+			err = downloadSequential(ctx, client, url, writer, settings)
 			if err != nil {
 				lastErr = err
 				continue
 			}
 		} else {
-			err = cd.Download(ctx, file, settings.NumConnections)
+			err = cd.Download(ctx, writer, settings.NumConnections)
 			if err != nil {
-				lastErr = err
-				continue
+				if errors.Is(err, util.ErrFileTooLarge) || errors.Is(err, networking.ErrUnsafeDestination) || ctx.Context.Err() != nil {
+					return "", err
+				}
+				// Some public CDNs advertise ranges but reject ranged GETs. Retry
+				// once as a bounded ordinary GET, replacing any partial output.
+				if e := file.Truncate(0); e != nil {
+					return "", e
+				}
+				if _, e := file.Seek(0, io.SeekStart); e != nil {
+					return "", e
+				}
+				if e := downloadSequential(ctx, client, url, limitedWriter(file), settings); e != nil {
+					lastErr = e
+					continue
+				}
 			}
 		}
 
@@ -123,7 +150,7 @@ func DownloadFileWithSegments(
 	}
 	defer file.Close()
 
-	err = sd.Download(ctx.Context, file, settings.NumConnections)
+	err = sd.Download(ctx.Context, limitedWriter(file), settings.NumConnections)
 	if err != nil {
 		return "", err
 	}
@@ -179,7 +206,7 @@ func DownloadFileInMemory(
 				continue
 			}
 
-			data, err := io.ReadAll(resp.Body)
+			data, err := readLimited(resp.Body)
 			if err != nil {
 				resp.Body.Close()
 				continue

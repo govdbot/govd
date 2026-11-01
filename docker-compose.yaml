@@ -25,7 +25,7 @@ services:
     environment:
       POSTGRES_DB: govd
       POSTGRES_USER: govd
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
     volumes:
       - db:/var/lib/postgresql
     networks:

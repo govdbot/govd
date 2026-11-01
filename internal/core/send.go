@@ -63,6 +63,7 @@ func SendFormats(
 	for _, chunk := range mediaGroupChunks {
 		var inputMediaList []gotgbot.InputMedia
 		for i, f := range chunk {
+			defer f.Format.CloseUploads()
 			var caption string
 			if i == 0 {
 				caption = options.Caption
@@ -84,6 +85,9 @@ func SendFormats(
 			inputMediaList,
 			messageOptions,
 		)
+		for _, f := range chunk {
+			f.Format.CloseUploads()
+		}
 		if err != nil {
 			return nil, fmt.Errorf("failed to send media group: %w", err)
 		}

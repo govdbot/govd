@@ -77,7 +77,8 @@ func NewChromeClient() *http.Client {
 	transport.TLSClientConfig = tlsConfig
 
 	return &http.Client{
-		Transport: transport,
-		Timeout:   30 * time.Second,
+		Transport:     transport,
+		Timeout:       30 * time.Second,
+		CheckRedirect: checkRedirect,
 	}
 }

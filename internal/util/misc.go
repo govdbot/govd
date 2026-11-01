@@ -87,7 +87,7 @@ func CleanupDownloads(ignoreTime bool) {
 func CleanupDownloadsJob() {
 	CleanupDownloads(true) // initial cleanup on startup
 
-	tikcer := time.NewTicker(10 * time.Minute)
+	tikcer := time.NewTicker(time.Minute)
 	go func() {
 		for range tikcer.C {
 			CleanupDownloads(false)

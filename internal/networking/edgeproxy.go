@@ -18,7 +18,9 @@ func NewEdgeProxyClient(proxyURL string) HTTPClientInterface {
 	return &EdgeProxyClient{
 		Client: HTTPClient{
 			Client: &http.Client{
-				Timeout: defaultTimeout,
+				Timeout:       defaultTimeout,
+				Transport:     NewTransport(),
+				CheckRedirect: checkRedirect,
 			},
 		},
 		ProxyURL: proxyURL,

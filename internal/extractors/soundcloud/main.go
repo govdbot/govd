@@ -23,11 +23,11 @@ const (
 )
 
 var ShortExtractor = &models.Extractor{
-	ID:          "soundcloud",
+	ID:          extractorID,
 	DisplayName: "SoundCloud (Short)",
 
 	URLPattern: regexp.MustCompile(`https?:\/\/on\.soundcloud\.com\/(?P<id>\w+)`),
-	Host:       []string{"soundcloud"},
+	Host:       []string{extractorID},
 
 	Redirect: true,
 
@@ -43,11 +43,11 @@ var ShortExtractor = &models.Extractor{
 }
 
 var Extractor = &models.Extractor{
-	ID:          "soundcloud",
+	ID:          extractorID,
 	DisplayName: "SoundCloud",
 
 	URLPattern: regexp.MustCompile(`(?i)^(?:https?://)?(?:(?:www\.|m\.)?soundcloud\.com/(?P<uploader>[\w\d-]+)/(?P<id>[\w\d-]+)(?:/(?P<token>[^/?#]+))?(?:[?].*)?$|api(?:-v2)?\.soundcloud\.com/tracks/(?P<track_id>\d+)(?:/?\?secret_token=(?P<secret_token>[^&]+))?)`),
-	Host:       []string{"soundcloud"},
+	Host:       []string{extractorID},
 
 	GetFunc: func(ctx *models.ExtractorContext) (*models.ExtractorResponse, error) {
 		media, err := GetTrackMedia(ctx)

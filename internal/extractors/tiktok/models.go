@@ -51,10 +51,13 @@ type AwemeDetail struct {
 }
 
 type WebItemStruct struct {
-	ID        string        `json:"id"`
-	Desc      string        `json:"desc"`
-	Video     *WebVideo     `json:"video"`
-	ImagePost *WebImagePost `json:"imagePost"`
+	PrivateItem bool          `json:"privateItem"`
+	Secret      bool          `json:"secret"`
+	ForFriend   bool          `json:"forFriend"`
+	ID          string        `json:"id"`
+	Desc        string        `json:"desc"`
+	Video       *WebVideo     `json:"video"`
+	ImagePost   *WebImagePost `json:"imagePost"`
 }
 
 type WebImagePost struct {
@@ -63,10 +66,12 @@ type WebImagePost struct {
 }
 
 type WebVideo struct {
-	Duration int32        `json:"duration"`
-	Height   int32        `json:"height"`
-	PlayAddr *WebPlayAddr `json:"PlayAddrStruct"`
-	Width    int32        `json:"width"`
+	PlayURL     string       `json:"playAddr"`
+	DownloadURL string       `json:"downloadAddr"`
+	Duration    int32        `json:"duration"`
+	Height      int32        `json:"height"`
+	PlayAddr    *WebPlayAddr `json:"PlayAddrStruct"`
+	Width       int32        `json:"width"`
 }
 
 type WebImageURL struct {

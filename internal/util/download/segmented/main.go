@@ -60,6 +60,9 @@ func (sd *SegmentedDownloader) Download(
 	maxConcurrency int,
 ) error {
 	numSegments := len(sd.segments)
+	if numSegments > 1024 {
+		return fmt.Errorf("too many media segments")
+	}
 
 	maxConcurrency = max(maxConcurrency, 1)
 
@@ -85,6 +88,7 @@ func (sd *SegmentedDownloader) Download(
 		sd.wg.Wait()
 		close(segmentsCh)
 	}()
+	defer sd.wg.Wait()
 
 	segments, err := sd.collectSegments(segmentsCh)
 	if err != nil {

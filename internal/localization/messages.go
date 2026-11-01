@@ -183,6 +183,10 @@ var (
 		ID:    "ErrorPaidContent",
 		Other: "this content is paid and requires a subscription to access",
 	}
+	ErrorBusy = &i18n.Message{
+		ID:    "ErrorBusy",
+		Other: "Please wait for the current download to finish, or try again in a minute.",
+	}
 	ErrorAgeRestricted = &i18n.Message{
 		ID:    "ErrorAgeRestricted",
 		Other: "this content is age-restricted and cannot be accessed",

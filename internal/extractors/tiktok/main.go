@@ -2,6 +2,7 @@ package tiktok
 
 import (
 	"fmt"
+	"github.com/govdbot/govd/internal/networking"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -12,15 +13,23 @@ import (
 )
 
 var VMExtractor = &models.Extractor{
-	ID:          "tiktok",
+	ID:          extractorID,
 	DisplayName: "TikTok VM",
 
 	URLPattern: regexp.MustCompile(`https:\/\/((?:vm|vt|www)\.)?(vx)?tiktok\.com\/(?:t\/)?(?P<id>[a-zA-Z0-9-]+)`),
-	Host:       []string{"tiktok", "vxtiktok"},
+	Host:       []string{extractorID, "vxtiktok"},
 	Redirect:   true,
 
 	GetFunc: func(ctx *models.ExtractorContext) (*models.ExtractorResponse, error) {
-		redirectURL, err := ctx.FetchLocation(ctx.ContentURL, nil)
+		redirectURL, err := ctx.FetchLocation(ctx.ContentURL, &networking.RequestParams{Headers: publicTikTokHeaders(), StopRedirect: func(req *http.Request) bool {
+			if !publicTikTokURL(req.URL.String()) {
+				return true
+			}
+			if idx := Extractor.URLPattern.FindStringIndex(req.URL.String()); idx != nil && idx[0] == 0 {
+				return true
+			}
+			return false
+		}})
 		if err != nil {
 			return nil, err
 		}
@@ -28,11 +37,14 @@ var VMExtractor = &models.Extractor{
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse redirect url: %w", err)
 		}
+		if !publicTikTokURL(redirectURL) {
+			return nil, networking.ErrUnsafeDestination
+		}
 
 		if parsedURL.Path == "/login" {
 			ctx.Debugf("tiktok is geo restricted in your region, attemping bypass...")
 			realURL := parsedURL.Query().Get("redirect_url")
-			if realURL == "" {
+			if !publicTikTokURL(realURL) || !Extractor.URLPattern.MatchString(realURL) {
 				return nil, util.ErrGeoRestrictedContent
 			}
 			return &models.ExtractorResponse{
@@ -46,11 +58,11 @@ var VMExtractor = &models.Extractor{
 }
 
 var Extractor = &models.Extractor{
-	ID:          "tiktok",
+	ID:          extractorID,
 	DisplayName: "TikTok",
 
-	URLPattern: regexp.MustCompile(`https?:\/\/((www|m)\.)?(vx)?tiktok\.com\/((?:embed|@[\w\.-]*)\/)?(v(ideo)?|p(hoto)?)\/(?P<id>[0-9]+)`),
-	Host:       []string{"tiktok", "vxtiktok"},
+	URLPattern: regexp.MustCompile(`https?:\/\/(?:(?:www|m)\.)?(?:vx)?tiktok\.com\/(?:(?:@[\w.-]*\/)?(?:video|photo|v|p)\/|embed\/(?:v2\/)?)(?P<id>[0-9]+)`),
+	Host:       []string{extractorID, "vxtiktok"},
 
 	GetFunc: func(ctx *models.ExtractorContext) (*models.ExtractorResponse, error) {
 		media, err := GetMedia(ctx)
@@ -65,21 +77,23 @@ var Extractor = &models.Extractor{
 }
 
 func GetMedia(ctx *models.ExtractorContext) (*models.Media, error) {
-	var details *WebItemStruct
-	var cookies []*http.Cookie
-	var err error
-
-	// sometimes web page just returns a
-	// login page, so we need to retry
-	// a few times to get the correct page
-	for range 5 {
-		details, cookies, err = GetVideoWeb(ctx)
-		if err == nil {
-			break
+	details, cookies, webErr := GetVideoWeb(ctx)
+	if webErr == nil {
+		webErr = ensureItemIdentity(details, ctx.ContentID)
+	}
+	if webErr == nil && details.ImagePost == nil && !hasDownloadableVideo(details.Video) {
+		webErr = util.ErrUnavailable
+	}
+	if webErr != nil {
+		var embedErr error
+		details, embedErr = GetVideoEmbed(ctx)
+		cookies = nil
+		if embedErr != nil {
+			return nil, fmt.Errorf("TikTok public web/embed failed: %w; %w", webErr, embedErr)
 		}
 	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to get from web: %w", err)
+	if err := ensureItemIdentity(details, ctx.ContentID); err != nil {
+		return nil, err
 	}
 
 	media := ctx.NewMedia()
@@ -89,11 +103,20 @@ func GetMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 	if !isImageSlide {
 		item := media.NewItem()
 		video := details.Video
-		if video.PlayAddr != nil {
+		if video == nil {
+			return nil, util.ErrUnavailable
+		}
+		if video.PlayAddr == nil {
+			urls := validTikTokURLs([]string{video.PlayURL, video.DownloadURL})
+			if len(urls) > 0 {
+				video.PlayAddr = &WebPlayAddr{URI: details.ID, URLList: urls, Width: video.Width, Height: video.Height}
+			}
+		}
+		if video.PlayAddr != nil && len(validTikTokURLs(video.PlayAddr.URLList)) > 0 {
 			item.AddFormats(&models.MediaFormat{
 				Type:       database.MediaTypeVideo,
 				FormatID:   video.PlayAddr.URI,
-				URL:        video.PlayAddr.URLList,
+				URL:        validTikTokURLs(video.PlayAddr.URLList),
 				VideoCodec: database.MediaCodecAvc,
 				AudioCodec: database.MediaCodecAac,
 				Width:      video.PlayAddr.Width,
@@ -101,7 +124,8 @@ func GetMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 				Duration:   video.Duration,
 				DownloadSettings: &models.DownloadSettings{
 					// avoid 403 error for videos
-					Cookies: cookies,
+					Headers: publicTikTokHeaders(),
+					Cookies: publicTikTokCookies(cookies),
 				},
 			})
 			return media, nil
@@ -109,13 +133,22 @@ func GetMedia(ctx *models.ExtractorContext) (*models.Media, error) {
 		return nil, util.ErrUnavailable
 	} else {
 		images := details.ImagePost.Images
+		if len(images) > 30 {
+			return nil, util.ErrMediaAlbumGlobalLimitExceeded
+		}
 		for _, image := range images {
+			if image == nil || image.URL == nil || len(validTikTokURLs(image.URL.URLList)) == 0 {
+				return nil, util.ErrUnavailable
+			}
 			item := media.NewItem()
 			item.AddFormats(&models.MediaFormat{
 				Type:     database.MediaTypePhoto,
 				FormatID: "image",
-				URL:      image.URL.URLList,
+				URL:      validTikTokURLs(image.URL.URLList),
 			})
+		}
+		if len(media.Items) == 0 {
+			return nil, util.ErrUnavailable
 		}
 		return media, nil
 	}
