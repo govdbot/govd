@@ -1,4 +1,4 @@
-name: Complete reviewed bot contribution
++name: Complete reviewed bot contribution
 on:
   push:
     branches: [fix/public-facebook-tiktok]
@@ -24,3 +24,19 @@ jobs:
         run: docker run --rm --entrypoint sh govd-media:builder -c 'go test -p 2 -race -count=1 ./internal/extractors/instagram ./internal/extractors/facebook ./internal/extractors/tiktok ./internal/core ./internal/models ./internal/networking ./internal/util/download/...'
       - name: Upstream lint review
         run: docker run --rm --entrypoint sh govd-media:builder -c 'go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0 && golangci-lint run --build-tags=lint --timeout=5m'
+
+      - name: Export formatted source and generated localization review
+        run: |
+          mkdir -p dist
+          docker run --name govd-review-source --entrypoint sh govd-media:builder -c 'go install github.com/nicksnyder/go-i18n/v2/goi18n@v2.6.0 && cd internal/localization && mkdir -p /tmp/govd-extracted /tmp/govd-merged && goi18n extract -outdir /tmp/govd-extracted && goi18n merge -outdir /tmp/govd-merged /tmp/govd-extracted/active.en.toml locales/active.it.toml'
+          docker cp govd-review-source:/app/internal dist/internal
+          docker cp govd-review-source:/tmp/govd-extracted dist/extracted
+          docker cp govd-review-source:/tmp/govd-merged dist/merged
+          docker rm govd-review-source
+          git rev-parse HEAD > dist/COMMIT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: govd-reviewed-source
+          path: dist/
+          retention-days: 3
+

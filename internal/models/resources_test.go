@@ -14,7 +14,7 @@ func TestFilesTrackerConcurrentCleanup(t *testing.T) {
 	tracker := NewFilesTracker()
 	dir := t.TempDir()
 	var wg sync.WaitGroup
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		f, err := os.CreateTemp(dir, "tracked-")
 		if err != nil {
 			t.Fatal(err)

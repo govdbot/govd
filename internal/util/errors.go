@@ -17,7 +17,7 @@ func (err *Error) Error() string {
 }
 
 var (
-	ErrBusy                          = &Error{ID: "ErrorBusy"}
+	ErrBusy                          = &Error{ID: localization.ErrorBusy.ID}
 	ErrUnavailable                   = &Error{ID: localization.ErrorUnavailable.ID}
 	ErrTimeout                       = &Error{ID: localization.ErrorTimeout.ID}
 	ErrUnsupportedImageFormat        = &Error{ID: localization.ErrorUnsupportedImageFormat.ID}
