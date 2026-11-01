@@ -106,9 +106,9 @@ func checkRedirect(req *http.Request, via []*http.Request) error {
 			return ErrUnsafeDestination
 		}
 		if !strings.EqualFold(previous.Host, req.URL.Host) {
-			req.Header.Del("Authorization")
+			req.Header.Del(authorizationHeader)
 			req.Header.Del("Proxy-Authorization")
-			req.Header.Del("Cookie")
+			req.Header.Del(cookieHeader)
 		}
 	}
 	return nil

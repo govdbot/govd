@@ -58,8 +58,8 @@ func (client *HTTPClient) FetchWithContext(
 			req.AddCookie(cookie)
 		}
 	}
-	if req.Header.Get("User-Agent") == "" {
-		req.Header.Set("User-Agent", generateChromeUA())
+	if req.Header.Get(userAgentHeader) == "" {
+		req.Header.Set(userAgentHeader, generateChromeUA())
 	}
 
 	executor := client.Client
@@ -73,7 +73,7 @@ func (client *HTTPClient) FetchWithContext(
 			if params.StopRedirect != nil && params.StopRedirect(next) {
 				return http.ErrUseLastResponse
 			}
-			next.Header.Del("Cookie")
+			next.Header.Del(cookieHeader)
 			for _, cookie := range client.Cookies {
 				if cookieMatches(cookie, next.URL, false) {
 					next.AddCookie(cookie)

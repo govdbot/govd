@@ -73,7 +73,7 @@ func (c *HTTPClient) AsDownloadClient() *HTTPClient {
 	client.ResponseLimit = 128 * 1024 * 1024
 	client.Headers = make(map[string]string)
 	for name, value := range c.Headers {
-		if name != "" && !strings.EqualFold(name, "Cookie") && !strings.EqualFold(name, "Authorization") && !strings.EqualFold(name, "Proxy-Authorization") {
+		if name != "" && !strings.EqualFold(name, cookieHeader) && !strings.EqualFold(name, authorizationHeader) && !strings.EqualFold(name, "Proxy-Authorization") {
 			client.Headers[name] = value
 		}
 	}

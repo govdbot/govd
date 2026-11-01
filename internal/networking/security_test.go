@@ -30,7 +30,7 @@ func TestSecurityPublicAddresses(t *testing.T) {
 	}
 }
 func TestSecurityCookieScope(t *testing.T) {
-	c := &http.Cookie{Name: "sessionid", Value: fixtureCookieValue, Domain: fixtureInstagramDomain, Path: "/api", Secure: true}
+	c := &http.Cookie{Name: sessionCookieName, Value: fixtureCookieValue, Domain: fixtureInstagramDomain, Path: "/api", Secure: true}
 	for raw, want := range map[string]bool{"https://www.instagram.com/api": true, "https://www.instagram.com/api/v1": true, "https://www.instagram.com/apifake": false, "http://www.instagram.com/api": false, "https://other.invalid/api": false, "https://instagram.com.evil.invalid/api": false} {
 		u, _ := url.Parse(raw)
 		if got := cookieMatches(c, u, false); got != want {
@@ -39,14 +39,14 @@ func TestSecurityCookieScope(t *testing.T) {
 	}
 }
 func TestSecurityNoCookieToForeignHost(t *testing.T) {
-	c := DefaultHTTPClient(&NewHTTPClientOptions{Cookies: []*http.Cookie{{Name: "sessionid", Value: fixtureCookieValue, Domain: fixtureInstagramDomain}}})
+	c := DefaultHTTPClient(&NewHTTPClientOptions{Cookies: []*http.Cookie{{Name: sessionCookieName, Value: fixtureCookieValue, Domain: fixtureInstagramDomain}}})
 	c.Client = &http.Client{Transport: fixtureTransport(func(r *http.Request) (*http.Response, error) {
-		if r.Header.Get("Cookie") != "" {
+		if r.Header.Get(cookieHeader) != "" {
 			t.Error("cookie leaked")
 		}
 		return fixtureResponse(r, 200, "ok"), nil
 	})}
-	resp, err := c.Fetch("GET", "https://other.invalid/a", nil)
+	resp, err := c.Fetch(http.MethodGet, "https://other.invalid/a", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,30 +61,30 @@ func TestSecurityRejectRedirectBeforeFollowingPrivateAddress(t *testing.T) {
 		res.Header.Set("Location", "http://127.0.0.1/secret")
 		return res, nil
 	})}
-	resp, err := c.Fetch("GET", "https://www.instagram.com/fixture", nil)
+	resp, err := c.Fetch(http.MethodGet, "https://www.instagram.com/fixture", nil)
 	if resp != nil { resp.Body.Close() }
 	if err == nil || !errors.Is(err, ErrUnsafeDestination) || calls != 1 {
 		t.Fatalf("err=%v calls=%d", err, calls)
 	}
 }
 func TestSecurityCookiePathRecheckedOnRedirect(t *testing.T) {
-	c := DefaultHTTPClient(&NewHTTPClientOptions{Cookies: []*http.Cookie{{Name: "sessionid", Value: fixtureCookieValue, Domain: fixtureInstagramDomain, Path: "/api"}}})
+	c := DefaultHTTPClient(&NewHTTPClientOptions{Cookies: []*http.Cookie{{Name: sessionCookieName, Value: fixtureCookieValue, Domain: fixtureInstagramDomain, Path: "/api"}}})
 	calls := 0
 	c.Client = &http.Client{Transport: fixtureTransport(func(r *http.Request) (*http.Response, error) {
 		calls++
 		res := fixtureResponse(r, 200, "ok")
 		if calls == 1 {
-			if r.Header.Get("Cookie") == "" {
+			if r.Header.Get(cookieHeader) == "" {
 				t.Error("missing scoped cookie")
 			}
 			res.StatusCode = 302
 			res.Header.Set("Location", "https://www.instagram.com/unrelated")
-		} else if r.Header.Get("Cookie") != "" {
+		} else if r.Header.Get(cookieHeader) != "" {
 			t.Error("path-limited cookie leaked")
 		}
 		return res, nil
 	})}
-	resp, err := c.Fetch("GET", "https://www.instagram.com/api", nil)
+	resp, err := c.Fetch(http.MethodGet, "https://www.instagram.com/api", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +103,7 @@ func TestSecurityResponseLimitUnknownLength(t *testing.T) {
 		c := DefaultHTTPClient(nil)
 		c.ResponseLimit = 8
 		c.Client = &http.Client{Transport: fixtureTransport(func(r *http.Request) (*http.Response, error) { return fixtureResponse(r, 200, body), nil })}
-		resp, err := c.Fetch("GET", "https://example.invalid/fixture", nil)
+		resp, err := c.Fetch(http.MethodGet, "https://example.invalid/fixture", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -115,9 +115,9 @@ func TestSecurityResponseLimitUnknownLength(t *testing.T) {
 	}
 }
 func TestSecurityDownloadDropsSensitiveHeaders(t *testing.T) {
-	c := DefaultHTTPClient(&NewHTTPClientOptions{Headers: map[string]string{"Authorization": fixtureCookieValue, "Cookie": fixtureCookieValue, "User-Agent": fixtureCookieValue}})
+	c := DefaultHTTPClient(&NewHTTPClientOptions{Headers: map[string]string{authorizationHeader: fixtureCookieValue, cookieHeader: fixtureCookieValue, userAgentHeader: fixtureCookieValue}})
 	d := c.AsDownloadClient()
-	if d.Headers["Authorization"] != "" || d.Headers["Cookie"] != "" || d.Headers["User-Agent"] != fixtureCookieValue || c.Headers["Authorization"] != fixtureCookieValue {
+	if d.Headers[authorizationHeader] != "" || d.Headers[cookieHeader] != "" || d.Headers[userAgentHeader] != fixtureCookieValue || c.Headers[authorizationHeader] != fixtureCookieValue {
 		t.Fatal("header isolation failed")
 	}
 }
