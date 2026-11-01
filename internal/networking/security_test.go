@@ -62,7 +62,9 @@ func TestSecurityRejectRedirectBeforeFollowingPrivateAddress(t *testing.T) {
 		return res, nil
 	})}
 	resp, err := c.Fetch(http.MethodGet, "https://www.instagram.com/fixture", nil)
-	if resp != nil { resp.Body.Close() }
+	if resp != nil {
+		resp.Body.Close()
+	}
 	if err == nil || !errors.Is(err, ErrUnsafeDestination) || calls != 1 {
 		t.Fatalf("err=%v calls=%d", err, calls)
 	}

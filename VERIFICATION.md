@@ -1,5 +1,13 @@
 # Verification provenance
 
+## Complete upstream contribution — 1 November 2026
+
+The complete contribution, including Instagram recovery and the authorization/resource protections, passed full unit/build checks, targeted race checks, and unmodified upstream golangci-lint rules (v2.15.0) in [run 41286345573](https://github.com/mrjacock/govd-upstream/actions/runs/41286345573), source `a261f20eb94cf83c6acd217cc63eeff49ee673b3`. The same run used the official goi18n v2.6.0 extraction/merge commands and exported formatted sources; those generated/formatted files were subsequently committed. Source artifact SHA256: `37b5ee0f76af4b0528f1ed63e6f5a71e4755a6e3343313712f0ca04610939157`.
+
+The contribution is [upstream PR #45](https://github.com/govdbot/govd/pull/45); a passed contributor-side run is not maintainer acceptance. Upstream workflow execution can require maintainer approval. The live downloads below were verified on the earlier build; they were not repeated for formatting-only changes. Host-specific firewall configuration, private settings and credentials are not part of this source contribution.
+
+## Earlier live download verification
+
 The Facebook/TikTok update was built and tested from commit `8dc1c3ac03e5c65f6b837d3bcd41fb37055b9727` in [GitHub Actions run 41242029556](https://github.com/mrjacock/govd/actions/runs/41242029556), then merged through [PR #1](https://github.com/mrjacock/govd/pull/1). Formatted source files exported from that same build are committed here; source formatting and documentation do not change the compiled application behavior.
 
 The complete Go unit suite and targeted race checks passed, including platform parsers, URL/identity/privacy/cookie boundaries, download-header consistency and replacement of partial output when a ranged transfer falls back to an ordinary GET.

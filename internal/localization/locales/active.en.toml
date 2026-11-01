@@ -11,6 +11,7 @@ DisabledExtractorsSettingsMessage = "select which extractors should be disabled.
 EnabledButton = "enabled"
 ErrorAgeRestricted = "this content is age-restricted and cannot be accessed"
 ErrorAuthenticationNeeded = "this instance is not authenticated with this service"
+ErrorBusy = "Please wait for the current download to finish, or try again in a minute."
 ErrorDurationTooLong = "this video is too long and exceeds the maximum allowed duration for this instance"
 ErrorFileTooLarge = "this file is too large and exceeds the maximum allowed size for this instance"
 ErrorGeoRestrictedContent = "this content has geo-restrictions and cannot be accessed from the server's location"
@@ -45,5 +46,3 @@ SilentModeButton = "silent mode"
 SilentModeSettingsMessage = "when enabled, the bot will not send error messages"
 StartMessage = "welcome {{.Name}} to govd, an open-source telegram bot for downloading content from various social platforms"
 SupportedExtractorsMessage = "list of supported extractors by the bot"
-[ErrorBusy]
-other = "Please wait for the current download to finish, or try again in a minute."

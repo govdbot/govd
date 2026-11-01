@@ -17,7 +17,6 @@ const videoURLBase = "https://www.tiktok.com/@_/video/"
 
 var (
 	universalDataPattern = regexp.MustCompile(`(?s)<script[^>]+\bid="__UNIVERSAL_DATA_FOR_REHYDRATION__"[^>]*>(.*?)<\/script>`)
-
 )
 
 func GetVideoWeb(ctx *models.ExtractorContext) (*WebItemStruct, []*http.Cookie, error) {

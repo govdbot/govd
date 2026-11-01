@@ -20,7 +20,7 @@ func RemuxFile(inputPath string, outputPath string) error {
 	err := ffmpeg.Input(inputPath, inputOptions()).
 		Output(outputPath, ffmpeg.KwArgs{
 			mapOption:      "0",
-			"c":        copyCodec,
+			"c":            copyCodec,
 			movflagsOption: fastStartFlag,
 		}).
 		Silent(true).
@@ -42,7 +42,7 @@ func RemuxFileWithDoublePass(inputPath string, outputPath string) error {
 	err := ffmpeg.Input(inputPath, inputOptions()).
 		Output(tempPath, ffmpeg.KwArgs{
 			mapOption:      "0",
-			"c":        copyCodec,
+			"c":            copyCodec,
 			movflagsOption: fastStartFlag,
 		}).
 		Silent(true).
@@ -58,7 +58,7 @@ func RemuxFileWithDoublePass(inputPath string, outputPath string) error {
 	err = ffmpeg.Input(tempPath, inputOptions()).
 		Output(outputPath, ffmpeg.KwArgs{
 			mapOption:      "0",
-			"c":        copyCodec,
+			"c":            copyCodec,
 			movflagsOption: fastStartFlag,
 		}).
 		Silent(true).

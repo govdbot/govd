@@ -239,7 +239,9 @@ func igramBuildPayload(urlParams map[string]string) (io.Reader, error) {
 }
 
 func igramSign(partial map[string]any, ts int64) (string, error) {
- if igramHMACKey == "" { return "", fmt.Errorf("optional iGram signing key is not configured") }
+	if igramHMACKey == "" {
+		return "", fmt.Errorf("optional iGram signing key is not configured")
+	}
 	// sonic.ConfigStd sorts map keys alphabetically, matching
 	// the signing: JSON.stringify(sorted_partial) + String(ts)
 	jsonBytes, err := sonic.ConfigStd.Marshal(partial)
@@ -421,7 +423,7 @@ func BuildGQLData() (map[string]string, map[string]string, error) {
 		"X-Bloks-Version-Id": bloksVersionID,
 		"x-asbd-id":          asbdID,
 		"cookie":             strings.Join(cookies, "; "),
-		contentTypeHeader:       "application/x-www-form-urlencoded",
+		contentTypeHeader:    "application/x-www-form-urlencoded",
 		"X-FB-Friendly-Name": polarisAction,
 	}
 	body := map[string]string{

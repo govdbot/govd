@@ -1,8 +1,8 @@
 package handlers
 
 import (
- "errors"
 	"context"
+	"errors"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/govdbot/govd/internal/config"

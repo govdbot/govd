@@ -1,11 +1,11 @@
 package networking
 
 const (
-	httpsScheme = "https"
+	httpsScheme            = "https"
 	fixtureInstagramDomain = ".instagram.com"
-	fixtureCookieValue = "fixture"
-	cookieHeader = "Cookie"
-	authorizationHeader = "Authorization"
-	userAgentHeader = "User-Agent"
-	sessionCookieName = "sessionid"
+	fixtureCookieValue     = "fixture"
+	cookieHeader           = "Cookie"
+	authorizationHeader    = "Authorization"
+	userAgentHeader        = "User-Agent"
+	sessionCookieName      = "sessionid"
 )

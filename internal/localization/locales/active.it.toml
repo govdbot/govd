@@ -42,6 +42,10 @@ other = "questo contenuto ha restrizioni di età e non può essere accessibile"
 hash = "sha1-62c2e1cba75e4fb31392484973781bcbe5c6b62e"
 other = "questa istanza non è autenticata con questo servizio"
 
+[ErrorBusy]
+hash = "sha1-1559b0dcc8dac2c979c212ab19352ce6d8e406aa"
+other = "Attendi la fine del download in corso oppure riprova fra un minuto."
+
 [ErrorDurationTooLong]
 hash = "sha1-079cb9174494931fe6b2ae1389082893ef4fe805"
 other = "questo video è troppo lungo e supera la durata massima consentita per questa istanza"
@@ -177,5 +181,3 @@ other = "benvenuto {{.Name}} in govd, un bot telegram open-source per scaricare 
 [SupportedExtractorsMessage]
 hash = "sha1-c16d18ef8e24a2d2df3d011dbac5282bbd8783ca"
 other = "elenco degli estrattori supportati dal bot"
-[ErrorBusy]
-other = "Attendi la fine del download in corso oppure riprova fra un minuto."
